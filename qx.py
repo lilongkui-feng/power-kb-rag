@@ -86,12 +86,26 @@ def _cache():
         _cache.d = json.load(open(CACHE, encoding="utf-8")) if os.path.exists(CACHE) else {}
     return _cache.d
 
+QX_PROVIDER = os.environ.get("QX_LLM_PROVIDER", "local")   # local=ollama 3B；siliconflow=云端 V3（key 只从环境变量读）
+
 def _llm(kind: str, prompt: str, max_tokens: int = 120) -> str | None:
-    key = hashlib.sha1(f"{kind}|{prompt}".encode()).hexdigest()
+    prov = QX_PROVIDER
+    key = hashlib.sha1((f"{kind}|{prompt}" if prov == "local" else f"{prov}|{kind}|{prompt}").encode()).hexdigest()
     c = _cache()
     if key in c:
         return c[key]
     import httpx
+    if prov != "local":
+        import rag
+        try:
+            txt, _ = rag.call_llm([{"role": "user", "content": prompt}], rag.llm_config(prov), max_tokens=max_tokens, temperature=0.0)
+            txt = txt.strip()
+        except Exception:
+            return None
+        with _lock:
+            c[key] = txt
+            json.dump(c, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
+        return txt
     try:
         r = httpx.post("http://127.0.0.1:11434/v1/chat/completions", timeout=120,
                        json={"model": os.environ.get("QX_LLM_MODEL", "qwen2.5:3b-instruct"), "temperature": 0, "max_tokens": max_tokens,
@@ -177,6 +191,8 @@ def stage1(query: str, n: int, collection: str, filters=None, xlang="none", mult
     """每个改写各跑一次 hybrid_retrieve（dense+BM25 融合）取 per_n，按名次 RRF 合并去重，返回前 n；
     score = Σ w/(rrf_k+rank)，供后续重排的 β 混合使用；qx_variants 记录改写。"""
     from retrieve import hybrid_retrieve
+    if xlang in ("mismatch", "cap"):          # 两个门控变体都用 LLM 翻译
+        return _stage1_gated(query, n, collection, filters, gate=xlang, rrf_k=rrf_k, per_n=per_n, **kw)
     vs = variants(query, xlang, multiq)
     pool = {}
     for v, w in vs:
@@ -190,6 +206,37 @@ def stage1(query: str, n: int, collection: str, filters=None, xlang="none", mult
         e["score"] = round(e["score"], 6)
     if out:
         out[0]["qx_variants"] = [v for v, _ in vs]
+    return out
+
+def _stage1_gated(query, n, collection, filters, gate, rrf_k=60, per_n=30, **kw):
+    """mismatch：原句召回 Top-5 中与问句同语言的文档 <3 个时才加译句（语言不一致 → 跨语言）；
+    cap：总是加译句，但译句独有的候选最多占重排池 30%，其余位置留给原句召回"""
+    from retrieve import hybrid_retrieve
+    orig = hybrid_retrieve(query, per_n, collection, filters, **kw)
+    lang = detect_lang(query)
+    if gate == "mismatch":
+        same = sum((h.get("metadata", {}).get("lang") or "zh") == lang for h in orig[:5])
+        if same >= 3:
+            out = orig[:n]
+            for i, h in enumerate(out):
+                h["rank"] = i + 1
+            return out
+    t = translate(query, "llm")
+    trans = hybrid_retrieve(t, per_n, collection, filters, **kw) if t and t.strip() != query else []
+    if gate == "cap":
+        ids = {h["chunk_id"] for h in orig}
+        extra = [h for h in trans if h["chunk_id"] not in ids][: int(n * 0.3)]
+        out = orig[: n - len(extra)] + extra
+    else:
+        pool = {}
+        for lst in (orig, trans):
+            for h in lst:
+                e = pool.setdefault(h["chunk_id"], dict(h, score=0.0)); e["score"] += 1.0 / (rrf_k + h["rank"])
+        out = sorted(pool.values(), key=lambda e: -e["score"])[:n]
+    for i, h in enumerate(out):
+        h["rank"] = i + 1
+    if out:
+        out[0]["qx_variants"] = [query, t]
     return out
 
 if __name__ == "__main__":

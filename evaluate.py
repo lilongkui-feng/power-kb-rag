@@ -566,7 +566,7 @@ if __name__ == "__main__":
     ap.add_argument("--max-tokens", type=int, default=512)
     ap.add_argument("--refuse-below", type=float, default=None, help="Top-1 重排分低于该值直接拒答（默认关）")
     ap.add_argument("--retrieval-only", action="store_true")
-    ap.add_argument("--xlang", default="none", choices=["none", "dict", "llm", "auto", "auto_llm"], help="跨语言改写：词典 / 本地 3B 翻译；auto=按问句点名的设备门控")
+    ap.add_argument("--xlang", default="none", choices=["none", "dict", "llm", "auto", "auto_llm", "mismatch", "cap"], help="跨语言改写：词典 / 本地 3B 翻译；auto=按问句点名的设备门控")
     ap.add_argument("--multiq", default="none", choices=["none", "rule", "llm"], help="多查询：规则拆分 / 本地 3B")
     ap.add_argument("--prompt", default="p0", choices=["p0", "p1", "p2", "p3"], help="rag.PROMPTS 版本")
     ap.add_argument("--reflect", action="store_true", help="生成前自检（LLM 判断资料是否足够）+ 缺失点补检 1 轮")

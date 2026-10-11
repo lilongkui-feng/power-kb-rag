@@ -150,5 +150,45 @@
 50,
 "p3",
 "自检+补检1轮"
+],
+[
+"【v3·139题】云 V3 + p3 要点先行",
+"v3set_sf_v3_p3_2026",
+"heading_v2 max800",
+50,
+"p3",
+"检索复用 p2 基线；自动评分持平，人工抽查 15 道变化题净 +5；未设默认"
+],
+[
+"【v3·139题】云 V3 + p3 + reflect",
+"v3set_sf_v3_p3_reflect",
+"heading_v2 max800",
+50,
+"p3",
+"5 题触发补检；费用 ≈1.8×；未设默认"
+],
+[
+"【v3·检索】+ V3 翻译 xlang=llm（权重0.7）",
+"v3_xl_v3llm",
+"heading_v2 max800",
+50,
+"-",
+"retrieval-only；中文 MRR 0.904→0.878，退步"
+],
+[
+"【v3·检索】+ V3 翻译 mismatch 门控",
+"v3_xl_v3mismatch",
+"heading_v2 max800",
+50,
+"-",
+"retrieval-only；中性"
+],
+[
+"【v3·检索】+ V3 翻译 cap 30% ★云端默认",
+"v3_xl_v3cap",
+"heading_v2 max800",
+50,
+"-",
+"retrieval-only；MRR 0.896，中文持平；跨语言 36 题 MRR 0.657→0.745"
 ]
 ]

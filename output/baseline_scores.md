@@ -41,3 +41,11 @@
 | 10-11 13:24 | rf3b_p1 | heading_v2+hybrid+rr@20β0.8,k=5,p1 | qwen2.5:3b-instruct | 68% | 86% | 0.779 | 96% | 23% | 46% | 0.455 | 41% | - | 4% | 16.33 | output/eval_runs/rf3b_p1_20261011-132414 |
 | 10-11 13:34 | rf3b_p3 | heading_v2+hybrid+rr@20β0.8,k=5,p3 | qwen2.5:3b-instruct | 68% | 86% | 0.779 | 96% | 27% | 55% | 0.545 | 50% | - | 0% | 31.17 | output/eval_runs/rf3b_p3_20261011-133403 |
 | 10-11 13:47 | rf3b_p3_reflect | heading_v2+hybrid+rr@20β0.8,k=5,p3 | qwen2.5:3b-instruct | 68% | 86% | 0.779 | 96% | 27% | 50% | 0.523 | 46% | - | 0% | 39.68 | output/eval_runs/rf3b_p3_reflect_20261011-134700 |
+| 10-11 15:42 | xl_v3llm | heading_v2+hybrid+rr@20β0.8,k=5 | - | 61% | 75% | 0.667 | 92% | - | - | - | - | - | - | 8.07 | output/eval_runs/xl_v3llm_20261011-154205 |
+| 10-11 15:42 | v3set_sf_v3_p3 | heading_v2+hybrid+rr@20β0.8,k=5,p3 | deepseek-ai/DeepSeek-V3 | 84% | 97% | 0.893 | 99% | 86% | 10% | 0.906 | 89% | 100% | 1% | 12.83 | output/eval_runs/v3set_sf_v3_p3_20261011-154227 |
+| 10-11 16:08 | v3set_sf_v3_p3_reflect | heading_v2+hybrid+rr@20β0.8,k=5,p3 | deepseek-ai/DeepSeek-V3 | 84% | 97% | 0.893 | 99% | 86% | 11% | 0.917 | 90% | 100% | 1% | 46.35 | output/eval_runs/v3set_sf_v3_p3_reflect_20261011-160820 |
+| 10-11 16:23 | v3_xl_v3llm | heading_v2+hybrid+rr@20β0.8,k=5 | - | 81% | 95% | 0.875 | 97% | - | - | - | - | - | - | 17.27 | output/eval_runs/v3_xl_v3llm_20261011-162333 |
+| 10-11 16:31 | v3_xl_v3mismatch | heading_v2+hybrid+rr@20β0.8,k=5 | - | 83% | 97% | 0.889 | 99% | - | - | - | - | - | - | 3.18 | output/eval_runs/v3_xl_v3mismatch_20261011-163118 |
+| 10-11 16:42 | v3_xl_v3cap | heading_v2+hybrid+rr@20β0.8,k=5 | - | 84% | 97% | 0.896 | 99% | - | - | - | - | - | - | 4.54 | output/eval_runs/v3_xl_v3cap_20261011-164218 |
+| 10-11 16:47 | xl_v3mismatch | heading_v2+hybrid+rr@20β0.8,k=5 | - | 56% | 78% | 0.644 | 86% | - | - | - | - | - | - | 8.1 | output/eval_runs/xl_v3mismatch_20261011-164722 |
+| 10-11 16:51 | xl_v3cap | heading_v2+hybrid+rr@20β0.8,k=5 | - | 67% | 86% | 0.745 | 89% | - | - | - | - | - | - | 6.22 | output/eval_runs/xl_v3cap_20261011-165113 |

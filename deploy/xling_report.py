@@ -11,7 +11,7 @@ def m(rows, ids, key="chunk_rank"):
     n = len(rs); f = lambda k: sum(1 for x in rs if x and x <= k) / n
     return f"{f(1):.1%} | {f(5):.1%} | {sum(1 / x for x in rs if x) / n:.3f}"
 L = ["# 跨语言检索 / Contextual 前缀 / 多查询：retrieval-only 对比", ""]
-xs = {t: load(t) for t in ("xl_none", "xl_dict", "xl_llm", "xl_auto", "xl_auto_llm", "xl_ctx")}
+xs = {t: load(t) for t in ("xl_none", "xl_dict", "xl_llm", "xl_auto", "xl_auto_llm", "xl_ctx", "xl_v3llm", "xl_v3mismatch", "xl_v3cap")}
 items = [json.loads(l) for l in open(os.path.join(HERE, "eval_xling.jsonl"), encoding="utf-8")]
 groups = [("全部 36", [d["id"] for d in items]), ("中文问英文档 26", [d["id"] for d in items if d["lang"] == "zh"]),
           ("英文问中文档 10", [d["id"] for d in items if d["lang"] == "en"])]
@@ -23,11 +23,11 @@ if base:
     orig = {d["id"]: base[0].get(d["id"][:-1]) for d in items}
     orig = {k: v for k, v in orig.items() if v}
     L.append("| 原语言提问（参考上界） | " + " | ".join(m(orig, ids) for _, ids in groups) + " |")
-for t, name in (("xl_none", "跨语言提问·无改写"), ("xl_dict", "+ 词典翻译 (xlang=dict)"), ("xl_llm", "+ 本地 3B 翻译 (xlang=llm)"), ("xl_auto", "+ 门控词典 (xlang=auto, 权重0.7)"), ("xl_auto_llm", "+ 门控 3B (xlang=auto_llm)"), ("xl_ctx", "Contextual 前缀集合 (无改写)")):
+for t, name in (("xl_none", "跨语言提问·无改写"), ("xl_dict", "+ 词典翻译 (xlang=dict)"), ("xl_llm", "+ 本地 3B 翻译 (xlang=llm)"), ("xl_auto", "+ 门控词典 (xlang=auto, 权重0.7)"), ("xl_auto_llm", "+ 门控 3B (xlang=auto_llm)"), ("xl_ctx", "Contextual 前缀集合 (无改写)"), ("xl_v3llm", "+ 云端 V3 翻译 (xlang=llm)"), ("xl_v3mismatch", "+ V3 翻译·语言不一致门控 (mismatch)"), ("xl_v3cap", "+ V3 翻译·译句候选≤30% (cap)")):
     if xs[t]:
         L.append(f"| {name} | " + " | ".join(m(xs[t][0], ids) for _, ids in groups) + " |")
 L.append("")
-v3 = {t: load(t) for t in ("v3set_sf_v3_p2", "v3_xl_dict", "v3_xl_auto", "v3_ctx", "v3_mq_rule", "v3_ctx_xl_dict")}
+v3 = {t: load(t) for t in ("v3set_sf_v3_p2", "v3_xl_dict", "v3_xl_auto", "v3_ctx", "v3_mq_rule", "v3_ctx_xl_dict", "v3_xl_v3llm", "v3_xl_v3mismatch", "v3_xl_v3cap")}
 items3 = [json.loads(l) for l in open(os.path.join(HERE, "eval_set_v3.jsonl"), encoding="utf-8")]
 inkb = [d for d in items3 if d["category"] != "拒答"]
 g3 = [("全部 139", [d["id"] for d in inkb]), ("中文 113", [d["id"] for d in inkb if d["lang"] == "zh"]), ("英文 26", [d["id"] for d in inkb if d["lang"] == "en"]),
@@ -37,13 +37,13 @@ g3 = [g for g in g3 if g[1]]
 L += ["## 2. eval_set_v3（139 道库内题）：中文题是否退步", "", "chunk 级 Hit@1 | Hit@5 | MRR", "",
       "| 配置 | " + " | ".join(g for g, _ in g3) + " |", "|---|" + "---|" * len(g3)]
 for t, name in (("v3set_sf_v3_p2", "基线 heading_v2 hybrid+rerank"), ("v3_xl_dict", "+ 跨语言 xlang=dict"), ("v3_xl_auto", "+ 跨语言 xlang=auto（门控）"), ("v3_ctx", "Contextual 前缀集合 heading_v2_ctx"),
-                ("v3_mq_rule", "+ 多查询 multiq=rule"), ("v3_ctx_xl_dict", "ctx 集合 + xlang=dict")):
+                ("v3_mq_rule", "+ 多查询 multiq=rule"), ("v3_xl_v3llm", "+ V3 翻译 xlang=llm"), ("v3_xl_v3mismatch", "+ V3 翻译 mismatch 门控"), ("v3_xl_v3cap", "+ V3 翻译 cap 30%"), ("v3_ctx_xl_dict", "ctx 集合 + xlang=dict")):
     if v3[t]:
         L.append(f"| {name} | " + " | ".join(m(v3[t][0], ids) for _, ids in g3) + " |")
 L.append("")
 if v3["v3set_sf_v3_p2"]:
     b = v3["v3set_sf_v3_p2"][0]
-    for t in ("v3_xl_dict", "v3_xl_auto", "v3_ctx", "v3_mq_rule", "v3_ctx_xl_dict"):
+    for t in ("v3_xl_dict", "v3_xl_auto", "v3_ctx", "v3_mq_rule", "v3_ctx_xl_dict", "v3_xl_v3llm", "v3_xl_v3mismatch", "v3_xl_v3cap"):
         if not v3[t]: continue
         x = v3[t][0]; up = []; dn = []
         for d in inkb:

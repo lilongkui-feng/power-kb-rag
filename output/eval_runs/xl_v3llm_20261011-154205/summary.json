@@ -1,0 +1,130 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "xlang": "llm",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 2,
+ "n_inkb": 36,
+ "n_ood": 0,
+ "groups": {
+  "全部": {
+   "n": 36,
+   "chunk": {
+    "hit@1": 0.611,
+    "hit@3": 0.75,
+    "hit@5": 0.75,
+    "mrr": 0.667
+   },
+   "doc": {
+    "hit@1": 0.917,
+    "hit@3": 0.944,
+    "hit@5": 0.944,
+    "mrr": 0.926
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 15,
+   "chunk": {
+    "hit@1": 0.667,
+    "hit@3": 0.8,
+    "hit@5": 0.8,
+    "mrr": 0.711
+   },
+   "doc": {
+    "hit@1": 0.867,
+    "hit@3": 0.933,
+    "hit@5": 0.933,
+    "mrr": 0.889
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.375,
+    "hit@3": 0.625,
+    "hit@5": 0.625,
+    "mrr": 0.479
+   },
+   "doc": {
+    "hit@1": 0.875,
+    "hit@3": 0.875,
+    "hit@5": 0.875,
+    "mrr": 0.875
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 13,
+   "chunk": {
+    "hit@1": 0.692,
+    "hit@3": 0.769,
+    "hit@5": 0.769,
+    "mrr": 0.731
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 26,
+   "chunk": {
+    "hit@1": 0.654,
+    "hit@3": 0.846,
+    "hit@5": 0.846,
+    "mrr": 0.731
+   },
+   "doc": {
+    "hit@1": 0.962,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.974
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 10,
+   "chunk": {
+    "hit@1": 0.5,
+    "hit@3": 0.5,
+    "hit@5": 0.5,
+    "mrr": 0.5
+   },
+   "doc": {
+    "hit@1": 0.8,
+    "hit@3": 0.8,
+    "hit@5": 0.8,
+    "mrr": 0.8
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 8.07,
+  "rerank": 4.04,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/xl_v3llm_20261011-154205"
+}

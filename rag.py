@@ -94,6 +94,7 @@ TABLE_RULE = "\n5. 参考资料中的表格以 Markdown 给出（首行为表头
 TABLE_MAX_CHARS = 1500
 EXPAND_MAX_CHARS = 2000      # 父块/相邻块扩展后单条资料上限
 DEFAULT_EXPAND = os.environ.get("RAG_EXPAND", "none")
+CLOUD_PROVIDERS = ("siliconflow", "deepseek", "openai", "xai")
 DEFAULT_REFLECT = os.environ.get("RAG_REFLECT", "0") in ("1", "true", "on")   # 生成前自检+补检索（多一次 LLM 调用；默认关，待云端模型正式评测）
 RECOMMENDED_REFUSE_BELOW = 0.3   # 重排 Top-1 分阈值：库内 139 题误拒 0%、库外拦截 44%（output/threshold_scan.md）
 _rb = os.environ.get("RAG_REFUSE_BELOW", "").strip().lower()
@@ -257,6 +258,12 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
     t0 = time.time()
     if hits is None:                       # 评测脚本可传入已检索好的 hits，避免重复检索
         skw = dict(search_kw or {}); skw.setdefault("collection", os.environ.get("KB_COLLECTION", "heading_v2"))   # 默认走 v2 集合（表格父子块）
+        xl = os.environ.get("RAG_XLANG") or ("cap" if provider in CLOUD_PROVIDERS else "none")   # 云端默认跨语言 cap（Day 18 验证）
+        if xl != "none" and "xlang" not in skw:
+            import qx
+            if provider in CLOUD_PROVIDERS:
+                qx.QX_PROVIDER = provider       # 问句翻译与回答用同一云端模型（结果缓存）
+            skw["xlang"] = xl
         hits = search(question, k=k, filters=filters, rerank=rerank, rerank_use_cache=False, **skw)   # 实时计算重排，耗时真实
     else:
         hits = [dict(h) for h in hits[:k]]
@@ -295,6 +302,8 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
                 h["rank"] = i + 1
             rf["added"] = [f"{h['source']}｜{h.get('heading_path', '')}"[:80] for h in added]
     msgs = build_messages(question, hits, max_chars, prompt)
+    if (prompt or DEFAULT_PROMPT) == "p3":
+        max_tokens = max(max_tokens, 1024)          # p3 先写要点清单再作答，512 会截断
     text, info = call_llm(msgs, cfg, stream=stream, on_token=on_token, max_tokens=max_tokens)
     retried = False
     if len(CITE_RE.sub("", text).strip(" \n。.")) < 4:             # 小模型偶发只输出编号：补一次提示重试

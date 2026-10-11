@@ -93,3 +93,20 @@
 - [13:47] DONE rf3b_p3_reflect
 - [13:47] 第3项批跑结束
 - [13:48] 收尾：DEVLOG/README 已更新
+- [13:48] 收尾：make_zip + git push 完成
+- [13:49] 收尾：Streamlit 已重启
+
+## Day 18：云端验证 p3 与 V3 跨语言翻译
+
+- [15:37] 云端验证①：V3 + p3 全集（检索复用 v3set_sf_v3_p2）
+- [15:37] 云端验证②：V3 翻译问句 xlang=llm / mismatch / cap
+- [15:42] DONE xl_v3llm
+- [15:42] DONE v3set_sf_v3_p3
+- [15:54] 修复 _stage1_gated 参数冲突；xling 的 mismatch/cap 排队重跑
+- [16:08] DONE v3set_sf_v3_p3_reflect
+- [16:23] DONE v3_xl_v3llm
+- [16:31] DONE v3_xl_v3mismatch
+- [16:42] DONE v3_xl_v3cap
+- [16:47] DONE xl_v3mismatch
+- [16:51] DONE xl_v3cap
+- [16:53] Day18 收尾：cap 设为云端默认；p3 不默认；文档已更新

@@ -1,0 +1,130 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "xlang": "cap",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 2,
+ "n_inkb": 36,
+ "n_ood": 0,
+ "groups": {
+  "全部": {
+   "n": 36,
+   "chunk": {
+    "hit@1": 0.667,
+    "hit@3": 0.833,
+    "hit@5": 0.861,
+    "mrr": 0.745
+   },
+   "doc": {
+    "hit@1": 0.889,
+    "hit@3": 0.972,
+    "hit@5": 0.972,
+    "mrr": 0.92
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 15,
+   "chunk": {
+    "hit@1": 0.6,
+    "hit@3": 0.733,
+    "hit@5": 0.733,
+    "mrr": 0.653
+   },
+   "doc": {
+    "hit@1": 0.8,
+    "hit@3": 0.933,
+    "hit@5": 0.933,
+    "mrr": 0.852
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.854
+   },
+   "doc": {
+    "hit@1": 0.875,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.917
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 13,
+   "chunk": {
+    "hit@1": 0.692,
+    "hit@3": 0.846,
+    "hit@5": 0.923,
+    "mrr": 0.785
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 26,
+   "chunk": {
+    "hit@1": 0.731,
+    "hit@3": 0.923,
+    "hit@5": 0.923,
+    "mrr": 0.814
+   },
+   "doc": {
+    "hit@1": 0.923,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.949
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 10,
+   "chunk": {
+    "hit@1": 0.5,
+    "hit@3": 0.6,
+    "hit@5": 0.7,
+    "mrr": 0.566
+   },
+   "doc": {
+    "hit@1": 0.8,
+    "hit@3": 0.9,
+    "hit@5": 0.9,
+    "mrr": 0.844
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 6.22,
+  "rerank": 5.08,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/xl_v3cap_20261011-165113"
+}
