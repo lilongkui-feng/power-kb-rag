@@ -1096,3 +1096,29 @@ cap 在 139 题上逐题：变好 1（F40 未命中→1）、变差 2（P17 2→
 - 截图 output/app_api_screenshot.png（本地 qwen2.5:3b 经 API 回答 DL/T 724 核对性放电周期，13.1 s）。
 - Dockerfile + docker-compose.yml（api + web，卷挂载 chroma_db/bm25_index/emb_cache/output/uploads/模型缓存）：box 无 docker，未构建验证。
 - 局限：任务记录存在内存（重启丢失）；检索读与入库写之间没有读写锁（BM25 按 mtime 自动重载，写入期间的查询可能看到旧索引）；单进程 uvicorn（多 worker 会重复加载 ~5 GB 模型）；SSE 不支持断点续传。
+
+## Day 20：向量库抽象（Chroma / Milvus）+ 一键部署（Docker Compose）
+
+### 向量库抽象
+- `vector_store.py`：`VectorStore` 接口（upsert / delete(ids|where) / query(vec,k,where)→余弦分 / get / count / all_metadata / list_sources / all_vectors / drop），`get_store(method)` 按 `VECTOR_STORE=chroma|milvus` 返回实现，进程内缓存句柄。
+- `ChromaStore`：原有逻辑迁移过来（PersistentClient，`CHROMA_DIR`）。`MilvusStore`：pymilvus `MilvusClient`，`MILVUS_URI` 填本地路径时为 Milvus Lite，填 `http://...` 时为 Standalone；schema = id(VARCHAR pk) + vector(1024) + document + source（显式标量），其余 metadata 放动态字段；索引 HNSW(M=16, efConstruction=200) + COSINE（失败时退回 FLAT）；`where_to_expr()` 把 Chroma 风格过滤（$eq/$ne/$gt(e)/$lt(e)/$in/$nin/$and/$or、多键隐式 and）转成 Milvus 表达式，字符串用 JSON 转义。
+- 坑 1：pymilvus 导入时会读取环境变量 `MILVUS_URI`，而且只接受 http 地址，Lite 文件路径会导致 import 报错 → 导入期间临时移除这个变量。
+- 坑 2：Standalone 默认 Bounded 一致性，刚写入后 `count(*)` 偏小（迁移校验 count_ok=False）→ count 用 `consistency_level="Strong"`。
+- `embed_index.build`、`retrieve.retrieve/expand_parents`、`kb_store.ingest/delete`、`api.py` 的 /health 全部改走接口（`embed_index.get_client` 只保留作兼容）；`/health` 新增 `vector_store`、`vector_count` 字段。`evaluate.py` 在非 chroma 后端时把 `vector_store` 写进配置哈希，避免两个后端共用同一份检索缓存。
+- `migrate_chroma_to_milvus.py`：分批读出 Chroma 中的向量、文本和 metadata，upsert 到 Milvus；校验条数、来源分布、抽样 Top-5 重合率。
+- `rag.py` / `qx.py`：local provider 的地址改为读 `LOCAL_LLM_URL`（容器内要指向 ollama 服务）。
+
+### 验证（详见 output/vs_compare.md）
+- eval_set_v3 全集 retrieval-only：Chroma 与 Milvus Lite 指标完全相同（chunk Hit@1/3/5 = 83.5/95.0/97.1%，MRR 0.893，文档 MRR 0.992），144 题逐题名次也相同。
+- 迁移：Lite 2.9 s，Standalone 2.3 s；Top-5 重合率 0.967 / 0.983（HNSW 近似）。
+- 延迟（Top-50 稠密检索）：Chroma p50 4.5 ms，Milvus Lite 9.3 ms；带过滤时 7.1 / 4.9 ms。内存增量约 190 / 470 MB。端到端一阶段约 0.2–0.27 s/题，重排 2.5 s/题，选哪个向量库对整体延迟影响不到 1%。
+- tests/test_vector_store.py：同一套用例跑 chroma + milvus(Lite)，`KB_TEST_MILVUS_URI` 非空时再加 Standalone：34 passed（三种都测）；tests 全部：46 passed + 1 skipped。
+
+### Docker
+- 本机（Debian 13 沙箱，有 sudo）`apt install docker.io` 26.1.5 成功，dockerd 能起来（存储驱动 vfs）；Debian 源里没有 compose 插件，改从 GitHub release 装 docker-compose v2.39.4。
+- `Dockerfile`：多阶段，python:3.12-slim，CPU 版 torch 2.14.1，`requirements-docker.txt`（运行时精简依赖），非 root uid 1000，tini，HF 缓存在 /models/hf（卷），健康检查要求 models_loaded=true；hadolint 2.12 无告警（DL3008 apt 版本固定一项已注释忽略）。镜像 2.75 GB。
+- `docker-compose.yml`：ollama + ollama-pull（模型不存在才拉取）+ api + web；`--profile milvus`：etcd + minio + milvus v2.5.10；depends_on + healthcheck（milvus 依赖是 `required: false`，不开 profile 时不需要它）；`.env` 通过 env_file 读入。
+- `deploy/docker-entrypoint.sh`：把可写目录软链到 /data；索引为空时：有原件就建索引，用 Milvus 且已有 Chroma 索引就迁移，两样都没有就提示并照常启动；模型已在缓存中时设 HF_HUB_OFFLINE。还有 `deploy/up.sh`（[--hostnet] [milvus|down]）、`deploy/seed_data.sh`（把宿主机预建索引拷进 ./data）、`Makefile`。
+- 踩坑：① 本沙箱的自定义 bridge 网络里，容器到上游 DNS（10.0.0.2:53）和容器之间的 TCP 都超时（默认 bridge 上 `docker run` 能联网）→ 增加 `docker-compose.hostnet.yml`（宿主机网络）。② `.env` 由 `.env.example` 复制而来，里面的空值（`HF_HOME=` 等）会覆盖镜像的 ENV，导致模型目录为空、加载失败 → entrypoint 把所有空变量 unset，compose 里显式设置 HF_HOME。③ `/health` 在模型加载失败时也返回 200，docker 却判定为 healthy → 健康检查改为 grep `models_loaded:true`。④ Docker Hub 和 quay.io 上的 minio/minio 拉取被拒 → 默认改用 `cgr.dev/chainguard/minio`（`MINIO_IMAGE` 可覆盖；这个镜像没有 curl，所以不做健康检查）。⑤ 原件目录有 2–3 层子目录，entrypoint 原来的单层 glob 找不到 PDF → 改用 find。
+- 实测（hostnet）：Chroma 栈 api/web/ollama 全部 healthy，`/ask`（容器内 ollama）21 s 返回带引用的答案；milvus profile 下 api 自动迁移 3543 条，/search、/ask 正常。默认 bridge 模式在本机未能验证。
+- 首次自动建索引实测：`docker run ... powerkb build`，空数据目录 + 只读挂载 /workspace/power_docs（预置 emb_cache 以跳过 CPU 向量化），129 s 完成：解析 19 份文档 → 3355 块 → Chroma + BM25。除 NM1 外各文档块数与宿主机完全一致；NM1（扫描件）在镜像里只能用 RapidOCR（PaddleOCR 需要单独的 Python 3.11 环境，没打进镜像），表格识别不出来、标题切分也少，得到 16 块，宿主机用 Paddle 是 135 块。另外宿主机多出的 25 块是网页上传的 DL/T 1555。没有预置 emb_cache 的冷启动还要加上 bge-m3 在 CPU 上的向量化时间（约 3.5k 块，估计 10–20 分钟，未实测）。

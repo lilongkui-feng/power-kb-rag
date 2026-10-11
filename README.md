@@ -44,7 +44,7 @@ flowchart LR
         C --> E[章节识别 + 表格占位]
         D --> E
         E --> F[heading_v2 切分<br/>正文块 · 整表块 · 表格行描述块]
-        F --> G[(Chroma<br/>bge-m3 稠密向量)]
+        F --> G[(向量库接口 vector_store.py<br/>Chroma 默认 / Milvus 可切换<br/>bge-m3 稠密向量)]
         F --> H[(BM25<br/>jieba + 电力词典)]
     end
     subgraph 问答
@@ -68,7 +68,8 @@ flowchart LR
 | OCR | RapidOCR（ONNX）、PaddleOCR 3.x PP-StructureV3 | 扫描页自动 OCR；Paddle 放在独立 Python 3.11 环境，作为常驻子进程运行 |
 | 切分 | 自研 `chunk.py` / `tables.py` | 识别“1.2.3 / 第X章 / 附录A / 表N”等标题；表格父子块 |
 | 向量 | BAAI/bge-m3（sentence-transformers，CPU） | 归一化后用 cosine，带向量缓存 |
-| 向量库 | Chroma（本地持久化） | metadata：source / 章节路径 / page / chunk_type / table_id |
+| 向量库 | Chroma（默认）/ Milvus（Lite 或 Standalone） | `vector_store.py` 抽象接口，用 `VECTOR_STORE` 切换；metadata：source / 章节路径 / page / chunk_type / table_id |
+| 部署 | Docker Compose | api + web + ollama，`--profile milvus` 再加 etcd/minio/milvus；首次启动自动建索引或自动迁移 |
 | 关键词 | rank_bm25 + jieba | 自定义电力词典，数值和单位不拆开（`dict/`） |
 | 重排 | BAAI/bge-reranker-v2-m3（CrossEncoder） | 一阶段 Top-20 重排，最终分 = 0.8·重排分 + 0.2·一阶段分 |
 | LLM | OpenAI 兼容接口：硅基流动、DeepSeek、OpenAI、xAI、本地 Ollama | 环境变量配置；429/5xx 自动退避重试 |
@@ -130,7 +131,7 @@ sh deploy/start_app.sh      # 若 API 未运行先启动它，再后台起 Strea
 浏览器打开 `http://localhost:8501`（前端），接口文档在 `http://127.0.0.1:8000/docs`。云端 key 只需配置在 **API 进程**的环境变量里，前端拿不到 key；API 开了鉴权时，前端进程设置同一个 `KB_API_TOKEN` 即可。
 API 没启动时，前端会提示“后端 API 不可达”并给出启动命令。
 
-Docker（可选，`Dockerfile` + `docker-compose.yml`，api + web 两个服务，挂载索引/模型缓存卷）：`docker compose up -d`。本机没有 docker，这两个文件**未实际构建验证**。
+容器化部署见下文“[一键部署](#一键部署docker)”。
 
 ### 5. 命令行问答 / 检索
 
@@ -158,6 +159,49 @@ python -m pytest tests/test_api.py -v                           # API 集成测�
 
 每次运行输出到 `output/eval_runs/<tag>_<时间>/`（`per_item.jsonl`、`summary.json`、`report.md`），摘要追加到 `output/baseline_scores.md`。
 注意：`evaluate.py` 的 `--collection` 默认是 `heading`、`--prompt` 默认是 `p0`，这是为了能复现历史结果，评当前推荐配置时要显式传参（见上）。
+
+## 向量库选择
+
+向量库通过 `vector_store.py` 抽象（`upsert / delete / query / get / count / list_sources / all_metadata`，过滤条件统一用 Chroma 风格的 `where`，Milvus 侧自动转成布尔表达式）。`embed_index.py`、`retrieve.py`、`kb_store.py`、`api.py` 全部通过这个接口访问，代码里不再直接调用 chromadb。
+
+| | Chroma（默认） | Milvus Lite | Milvus Standalone |
+|---|---|---|---|
+| 形态 | 嵌入式，本地目录 | 嵌入式，单个 `.db` 文件 | 服务（etcd + minio + milvus） |
+| 适用规模 | ≤ 百万级，单机 | 原型、单机 | 百万到十亿级，可水平扩展 |
+| 索引 / 度量 | HNSW / cosine | HNSW / COSINE | HNSW（可换 IVF、DiskANN 等）/ COSINE |
+| 运维 | 无 | 无 | 3 个容器，需要监控与备份 |
+| 本项目实测：检索指标（eval_set_v3 139 题） | MRR 0.893，Hit@5 97.1% | **与 Chroma 逐题名次完全相同** | `/search`、`/ask` 已验证可用 |
+| Top-50 稠密检索 p50 | 4.5 ms | 9.3 ms | — |
+| 内存增量 | ≈ 190 MB | ≈ 470 MB | 另外 3 个容器 |
+
+结论：3.5k 块规模下，向量检索只占端到端耗时的不到 1%（重排约 2.5 s/题才是大头），所以**默认保留 Chroma**；需要扩展或多服务共享时再切 Milvus。详见 [`output/vs_compare.md`](output/vs_compare.md)。
+
+```bash
+pip install "pymilvus[milvus_lite]"
+python migrate_chroma_to_milvus.py --methods heading_v2 --drop                                  # 迁移到 Milvus Lite（milvus_db/power_kb.db），复用向量，约 3 s
+python migrate_chroma_to_milvus.py --methods heading_v2 --uri http://localhost:19530 --drop     # 或迁移到 Standalone
+export VECTOR_STORE=milvus MILVUS_URI=$PWD/milvus_db/power_kb.db                                 # 切换（Standalone 用 http://host:19530）
+sh deploy/start_api.sh                                                                            # /health 会显示 "vector_store": "milvus"
+VECTOR_STORE=milvus python evaluate.py --input eval_set_v3.jsonl --collection heading_v2 --retrieval-only --tag vs_milvus
+```
+
+注意：Milvus Lite 的 `.db` 文件同一时间只能被一个进程打开（API 运行时，不要再用另一个进程打开同一个文件跑评测）。
+
+## 一键部署（Docker）
+
+```bash
+cp .env.example .env            # 可选：填写 SILICONFLOW_API_KEY、KB_API_TOKEN 等（key 只会传给 api 容器）
+docker compose up -d            # 或 make up / sh deploy/up.sh：api :8000 + web :8501 + ollama（首次自动拉取 qwen2.5:3b-instruct）
+docker compose --profile milvus up -d     # 加 Milvus Standalone；需要在 .env 里设 VECTOR_STORE=milvus、MILVUS_URI=http://milvus:19530
+sh deploy/up.sh milvus                    # 等价的一条命令（自动设置上面两个变量）
+sh deploy/up.sh down
+```
+
+- **镜像**：`python:3.12-slim` 多阶段构建；torch 用 CPU 版（2.75 GB）；依赖层放在代码层之前，改代码不会重装依赖；以非 root（uid 1000）运行，用 tini 作 init 进程；api 的健康检查要求 `models_loaded=true`。
+- **卷**：`./data`（`KB_DATA_DIR`：索引、切块、上传文件、Milvus Lite 文件）、`./power_docs`（`POWER_DOCS_DIR`，只读，存放原件）、`hf_models`（`HF_CACHE_DIR`，模型约 4.5 GB）、`ollama_models`（`OLLAMA_MODELS_DIR`）。
+- **首次启动时自动建索引**（`deploy/docker-entrypoint.sh`）：如果索引为空且原件目录里有 PDF/DOCX，依次运行 `build_v2.py`、`embed_index.py`、`bm25_index.py`；如果用的是 Milvus 而集合为空，但已有 Chroma 索引，就直接迁移（不重新 embedding）；两样都没有则照常启动，`/health` 会报错。**没有原件时**，可以用 `sh deploy/seed_data.sh` 把宿主机已建好的索引拷进 `./data`。也可以手动重建：`docker compose run --rm api build`。
+- **bridge 网络不可用的环境**（例如本开发沙箱：自定义网络里 DNS 和容器间 TCP 都超时）：`sh deploy/up.sh --hostnet [milvus]`，即叠加 `docker-compose.hostnet.yml`，改用宿主机网络。
+- **实测（docker 26.1.5 + compose v2.39.4，hostnet 模式）**：Chroma 栈 4 个服务全部 healthy，`/health` 正常，`/ask`（容器内 ollama qwen2.5:3b）21 s 返回带引用的答案，web 返回 200；`--profile milvus` 栈 7 个服务启动，api 自动迁移 3543 条向量到 Standalone，`/search`、`/ask` 正常；用空数据目录 + 只读挂载原件测试首次自动建索引：129 s 生成 3355 块（预置了向量缓存；镜像里只有 RapidOCR，扫描件 NM1 的块数和表格少于宿主机的 PaddleOCR 结果）。**默认的 bridge 网络模式在本机无法验证**（沙箱网络限制），配置已通过 `docker compose config` 校验。
 
 ## API 接口
 
@@ -208,7 +252,9 @@ power_kb/
 ├── api.py                             # FastAPI 服务（/health /config /search /ask /ask/stream /documents /jobs）
 ├── kb_store.py / app.py               # 上传增量入库 / 删除；Streamlit 纯前端（只调 API）
 ├── tests/                             # test_api.py（接口集成测试）、test_numcheck.py
-├── Dockerfile / docker-compose.yml    # 可选容器化（未实际构建）
+├── vector_store.py                    # 向量库抽象：ChromaStore / MilvusStore（Lite / Standalone）
+├── migrate_chroma_to_milvus.py        # Chroma → Milvus 迁移（复用向量）
+├── Dockerfile / docker-compose*.yml   # 一键部署（api / web / ollama / milvus profile）；deploy/up.sh、Makefile
 ├── evaluate.py / judge_eval.py        # 统一评测入口；LLM 评委对比
 ├── threshold_scan.py / sf_cost.py     # 拒答阈值扫描；云端 token 与费用统计
 ├── eval_set_50.* / eval_set_v3.*      # 评测集（jsonl / md / xlsx）
@@ -297,7 +343,7 @@ power_kb/
 - 生成端：p3（要点清单先行）在本地 3B 难题子集上得分 0.455→0.545，需用云端模型在全集上正式验证；reflect 需更强的模型判断缺失点。
 - 表格：加入无框线表算法，尝试多模态模型直接读表格截图。
 - 评测：扩展到 300 题以上并邀请领域人员复核；做多次运行取置信区间；评分改为规则和 LLM 评委相结合。
-- 工程：重排换成 GPU 或 ONNX 量化；Docker 化部署；加权限控制和文档版本管理（标准新旧版本并存的问题）。
+- 工程：重排换成 GPU 或 ONNX 量化；加权限控制和文档版本管理（标准新旧版本并存的问题）。
 
 ## 数据与版权声明
 

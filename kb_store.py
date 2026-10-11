@@ -112,14 +112,11 @@ def ingest(path: str, name: str | None = None, progress=None) -> dict:
         os.remove(dst)
         return {"status": "empty", "source": name, "msg": "未提取到文本（可能是加密或纯图片且 OCR 失败）"}
     prog(0.55, f"切分为 {len(chunks)} 块，bge-m3 向量化…")
-    from embed_index import EmbCache, embed_texts, embed_input, _meta, get_client, COLLECTION
+    from embed_index import EmbCache, embed_texts, embed_input, _meta
+    from vector_store import get_store
     cache = EmbCache()
     vecs = embed_texts([embed_input(c) for c in chunks], cache)
-    col = get_client().get_or_create_collection(COLLECTION[METHOD], metadata={"hnsw:space": "cosine"})
-    for s in range(0, len(chunks), 200):
-        part = chunks[s:s + 200]
-        col.upsert(ids=[c["chunk_id"] for c in part], embeddings=vecs[s:s + 200].tolist(),
-                   documents=[c["text"] for c in part], metadatas=[_meta(c) for c in part])
+    get_store(METHOD, create=True).upsert([c["chunk_id"] for c in chunks], vecs, [c["text"] for c in chunks], [_meta(c) for c in chunks])
     _write_chunks(_uploaded_chunks() + chunks)
     prog(0.9, "写入 Chroma 完成，重建 BM25 索引…")
     _reindex_bm25()
@@ -138,10 +135,10 @@ def delete(source: str) -> dict:
     hs = [h for h, r in reg.items() if r["source"] == source]
     if not hs:
         return {"status": "not_found", "msg": f"《{source}》不是上传的文档（基础库文档不可在此删除）"}
-    from embed_index import get_client, COLLECTION
+    from vector_store import get_store
     for m, path in CHUNK_FILES.items():                 # 新旧两个集合里都删掉
         if os.path.exists(path):
-            get_client().get_or_create_collection(COLLECTION[m], metadata={"hnsw:space": "cosine"}).delete(where={"source": source})
+            get_store(m, create=True).delete(where={"source": source})
             _write_chunks([c for c in _uploaded_chunks(path) if c["source"] != source], path)
             if m != METHOD:
                 _reindex_bm25(m)

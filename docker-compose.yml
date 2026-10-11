@@ -1,33 +1,147 @@
-# docker compose up -d   → api :8000（加载模型、读写索引） + web :8501（纯前端，只调 api）
-# 未在本机实际构建验证（box 无 docker）。索引需先在宿主机按 README 构建，或进入 api 容器执行 build_v2.py / embed_index.py / bm25_index.py。
+# 一条命令启动：docker compose up -d                （api + web + ollama，向量库 Chroma）
+#             docker compose --profile milvus up -d （再加 etcd + minio + milvus-standalone；需在 .env 设 VECTOR_STORE=milvus、MILVUS_URI=http://milvus:19530，或用 deploy/up.sh milvus）
+# 本地模型：首次 up 时 ollama-pull 自动拉 ${OLLAMA_MODEL:-qwen2.5:3b-instruct}（约 2 GB，已存在则跳过）
+# 数据：${KB_DATA_DIR:-./data} 挂到 /data（索引、切块、上传文件）；原件目录 ${POWER_DOCS_DIR:-./power_docs} 只读挂到 /data/power_docs，
+#      索引为空时 api 首次启动自动建索引；没有原件时可用 deploy/seed_data.sh 把宿主机预建索引拷进 ./data
+name: powerkb
+
+x-app: &app
+  build: .
+  image: powerkb:latest
+  env_file:
+    - path: .env
+      required: false
+  restart: unless-stopped
+
 services:
-  api:
-    build: .
-    command: uvicorn api:app --host 0.0.0.0 --port 8000
-    ports: ["8000:8000"]
-    env_file: [.env]                 # SILICONFLOW_API_KEY、KB_API_TOKEN 等只给 api
+  ollama:
+    image: ollama/ollama:${OLLAMA_TAG:-latest}
     environment:
-      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434/v1}   # 本地 ollama 跑在宿主机时
-      KB_CORS_ORIGINS: http://localhost:8501
-    extra_hosts: ["host.docker.internal:host-gateway"]
+      OLLAMA_KEEP_ALIVE: 30m
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
     volumes:
-      - ./chroma_db:/app/chroma_db
-      - ./bm25_index:/app/bm25_index
-      - ./emb_cache:/app/emb_cache
-      - ./output:/app/output
-      - ./uploads:/app/uploads
-      - hf_models:/models            # bge-m3 / reranker 缓存（约 4.5 GB）
+      - ${OLLAMA_MODELS_DIR:-ollama_models}:/root/.ollama/models
     healthcheck:
-      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://127.0.0.1:8000/health').raise_for_status()"]
-      interval: 30s
-      start_period: 120s
-  web:
-    build: .
-    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
-    ports: ["8501:8501"]
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  ollama-pull:                       # 一次性初始化：模型不存在才拉取
+    image: ollama/ollama:${OLLAMA_TAG:-latest}
     environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["sh", "-c", "ollama show ${OLLAMA_MODEL:-qwen2.5:3b-instruct} >/dev/null 2>&1 && echo model present || ollama pull ${OLLAMA_MODEL:-qwen2.5:3b-instruct}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    command: ["api"]
+    ports: ["${KB_API_PORT:-8000}:8000"]
+    environment:
+      HF_HOME: /models/hf                                          # 显式指定，优先于 .env
+      LOCAL_LLM_URL: http://ollama:11434/v1                        # provider=local → ollama 容器
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434/v1}        # 不指定 provider 时
+      VECTOR_STORE: ${VECTOR_STORE:-chroma}
+      MILVUS_URI: ${MILVUS_URI:-/data/milvus_db/power_kb.db}
+      KB_CORS_ORIGINS: ${KB_CORS_ORIGINS:-http://localhost:8501,http://127.0.0.1:8501}
+    volumes:
+      - ${KB_DATA_DIR:-./data}:/data
+      - ${POWER_DOCS_DIR:-./power_docs}:/data/power_docs:ro
+      - ${HF_CACHE_DIR:-hf_models}:/models/hf
+    depends_on:
+      ollama:
+        condition: service_healthy
+      milvus:
+        condition: service_healthy
+        required: false               # 只有 --profile milvus 时才等待
+    healthcheck:                      # 模型加载完成才算健康（/health 在加载失败时也返回 200）
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health | grep -q '\"models_loaded\":true'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 300s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: ${API_MEM_LIMIT:-8g}
+
+  web:
+    <<: *app
+    command: ["web"]
+    ports: ["${KB_WEB_PORT:-8501}:8501"]
+    environment:
+      HF_HOME: /models/hf
       KB_API_URL: http://api:8000
-      KB_API_TOKEN: ${KB_API_TOKEN:-}
-    depends_on: [api]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ---------------- Milvus Standalone（profile milvus） ----------------
+  etcd:
+    profiles: ["milvus"]
+    image: quay.io/coreos/etcd:v3.5.18
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    volumes: [etcd_data:/etcd]
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    profiles: ["milvus"]
+    # Docker Hub / quay.io 的 minio/minio 在本环境拉取被拒（MinIO 已停止公开分发社区镜像），默认用 Chainguard 构建；MINIO_IMAGE 可覆盖
+    image: ${MINIO_IMAGE:-cgr.dev/chainguard/minio:latest}
+    user: "0"                         # 命名卷默认 root 所有
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    command: ["server", "/minio_data", "--console-address", ":9001"]
+    volumes: [minio_data:/minio_data]
+
+  milvus:
+    profiles: ["milvus"]
+    image: milvusdb/milvus:v2.5.10
+    command: ["milvus", "run", "standalone"]
+    security_opt: ["seccomp:unconfined"]
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MINIO_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes: [milvus_data:/var/lib/milvus]
+    ports: ["${MILVUS_PORT:-19530}:19530"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_started    # 镜像无 curl，不做健康检查；milvus 自身会重试连接
+
 volumes:
+  ollama_models:
   hf_models:
+  etcd_data:
+  minio_data:
+  milvus_data:

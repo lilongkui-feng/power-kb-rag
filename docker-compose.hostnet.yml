@@ -1,0 +1,43 @@
+# 宿主机网络覆盖文件：用于容器 bridge 网络不可用的环境（如本开发沙箱：自定义网络里 DNS 与容器间 TCP 均超时）
+#   docker compose -f docker-compose.yml -f docker-compose.hostnet.yml up -d
+#   （或 sh deploy/up.sh --hostnet）。各服务直接用 127.0.0.1 互联；端口仍由 KB_API_PORT / KB_WEB_PORT 控制
+services:
+  ollama:
+    network_mode: host
+    environment:
+      OLLAMA_HOST: 127.0.0.1:${OLLAMA_PORT:-11434}
+    healthcheck:
+      test: ["CMD", "env", "OLLAMA_HOST=127.0.0.1:${OLLAMA_PORT:-11434}", "ollama", "list"]
+  ollama-pull:
+    network_mode: host
+    environment:
+      OLLAMA_HOST: http://127.0.0.1:${OLLAMA_PORT:-11434}
+  api:
+    network_mode: host
+    ports: !reset []
+    environment:
+      LOCAL_LLM_URL: http://127.0.0.1:${OLLAMA_PORT:-11434}/v1
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://127.0.0.1:11434/v1}
+      API_HOST: 127.0.0.1
+      API_PORT: ${KB_API_PORT:-8000}
+      KB_CORS_ORIGINS: http://localhost:${KB_WEB_PORT:-8501},http://127.0.0.1:${KB_WEB_PORT:-8501}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${KB_API_PORT:-8000}/health | grep -q '\"models_loaded\":true'"]
+  web:
+    network_mode: host
+    ports: !reset []
+    environment:
+      KB_API_URL: http://127.0.0.1:${KB_API_PORT:-8000}
+      WEB_PORT: ${KB_WEB_PORT:-8501}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${KB_WEB_PORT:-8501}/_stcore/health"]
+  etcd:
+    network_mode: host
+  minio:
+    network_mode: host
+  milvus:
+    network_mode: host
+    ports: !reset []
+    environment:
+      ETCD_ENDPOINTS: 127.0.0.1:2379
+      MINIO_ADDRESS: 127.0.0.1:9000

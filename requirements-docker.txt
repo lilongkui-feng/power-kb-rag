@@ -1,0 +1,17 @@
+# 容器运行时依赖（torch CPU 版在 Dockerfile 里单独装；不含 playwright / pdfplumber / PaddleOCR）
+pymupdf==1.28.2
+python-docx==1.2.0
+rapidocr==3.10.0
+onnxruntime==1.31.0
+sentence-transformers==6.1.0
+transformers==5.19.0
+chromadb==1.5.9
+pymilvus[milvus_lite]==3.0.2
+rank_bm25==0.2.2
+jieba==0.42.1
+httpx==0.28.1
+numpy>=2
+streamlit==1.65.0
+fastapi==0.143.0
+uvicorn==0.54.0
+python-multipart==0.0.32

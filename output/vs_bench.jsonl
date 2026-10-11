@@ -1,0 +1,2 @@
+{"backend": "chroma", "count": 3543, "open_secs": 0.57, "rss_after_open_mb": 183.3, "top50": {"p50_ms": 4.45, "p95_ms": 5.56, "mean_ms": 4.59}, "top50_filter": {"p50_ms": 7.14, "p95_ms": 8.14, "mean_ms": 7.15}, "rss_total_mb_after_queries": 192.9, "children": 0}
+{"backend": "milvus", "count": 3543, "open_secs": 0.44, "rss_after_open_mb": 475.0, "top50": {"p50_ms": 9.28, "p95_ms": 9.98, "mean_ms": 9.34}, "top50_filter": {"p50_ms": 4.91, "p95_ms": 9.21, "mean_ms": 5.45}, "rss_total_mb_after_queries": 469.0, "children": 0}

@@ -40,12 +40,17 @@ JOBS: dict[str, dict] = {}
 STATE: dict[str, Any] = {"loaded": False, "load_error": None, "load_secs": None, "started": time.time()}
 TMP = os.path.join(HERE, "uploads", "tmp")
 
+def _vs_backend():
+    from vector_store import backend
+    return backend()
+
 def _load_models():
     t0 = time.time()
-    from embed_index import get_model, get_client, COLLECTION
+    from embed_index import get_model
+    from vector_store import get_store
     import rerank, bm25_index
     get_model(); rerank.get_reranker(); bm25_index.load(kb_store.METHOD)
-    STATE["chroma_count"] = get_client().get_collection(COLLECTION.get(kb_store.METHOD, f"power_{kb_store.METHOD}")).count()
+    STATE["vector_count"] = get_store(kb_store.METHOD).count()
     STATE.update(loaded=True, load_secs=round(time.time() - t0, 1))
 
 @asynccontextmanager
@@ -142,7 +147,9 @@ class Health(BaseModel):
     load_secs: Optional[float] = None
     load_error: Optional[str] = None
     collection: str
-    chroma_count: Optional[int] = None
+    vector_store: str = Field(..., description="chroma | milvus（VECTOR_STORE）")
+    vector_count: Optional[int] = None
+    chroma_count: Optional[int] = Field(None, description="兼容旧字段，等于 vector_count")
     bm25_docs: Optional[int] = None
     documents: int
     uptime_secs: float
@@ -255,14 +262,14 @@ def health():
     if STATE["loaded"]:                                       # 实时读取（入库/删除后 BM25 会重建、缓存失效）
         try:
             import bm25_index
-            from embed_index import get_client, COLLECTION
+            from vector_store import get_store
             bm = len(bm25_index.load(kb_store.METHOD).get("ids", [])) or None
-            STATE["chroma_count"] = get_client().get_collection(COLLECTION.get(kb_store.METHOD, f"power_{kb_store.METHOD}")).count()
+            STATE["vector_count"] = get_store(kb_store.METHOD).count()
         except Exception:
             pass
     st = "ok" if STATE["loaded"] else ("error" if STATE["load_error"] else "loading")
     return Health(status=st, version=VERSION, models_loaded=STATE["loaded"], load_secs=STATE["load_secs"], load_error=STATE["load_error"],
-                  collection=kb_store.METHOD, chroma_count=STATE.get("chroma_count"), bm25_docs=bm, documents=len(kb_store.list_docs()),
+                  collection=kb_store.METHOD, vector_store=_vs_backend(), vector_count=STATE.get("vector_count"), chroma_count=STATE.get("vector_count"), bm25_docs=bm, documents=len(kb_store.list_docs()),
                   uptime_secs=round(time.time() - STATE["started"], 1), jobs_running=sum(j["status"] in ("queued", "running") for j in JOBS.values()))
 
 @app.get("/config", response_model=ConfigResp, tags=["system"], dependencies=[Depends(auth)], responses=ERR, summary="可用 provider 与默认参数（不含任何 key）")
@@ -277,7 +284,7 @@ def config():
                       defaults={"top_k": 5, "rerank": True, "expand": rag.DEFAULT_EXPAND, "refuse_below": rag.DEFAULT_REFUSE_BELOW,
                                 "recommended_refuse_below": rag.RECOMMENDED_REFUSE_BELOW, "numcheck": rag.NUMCHECK},
                       retrieval={"collection": kb_store.METHOD, "mode": "hybrid", "alpha": 0.5, "rerank_model": "BAAI/bge-reranker-v2-m3",
-                                 "rerank_top_n": 20, "rerank_beta": 0.8, "embed_model": "BAAI/bge-m3"},
+                                 "rerank_top_n": 20, "rerank_beta": 0.8, "embed_model": "BAAI/bge-m3", "vector_store": _vs_backend()},
                       limits={"max_upload_mb": MAX_UPLOAD // 1024 // 1024, "max_concurrency": SEM._value if hasattr(SEM, "_value") else None,
                               "upload_types": [".pdf", ".docx"]},
                       auth_enabled=bool(os.environ.get("KB_API_TOKEN")))

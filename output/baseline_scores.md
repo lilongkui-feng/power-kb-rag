@@ -49,3 +49,5 @@
 | 10-11 16:42 | v3_xl_v3cap | heading_v2+hybrid+rr@20β0.8,k=5 | - | 84% | 97% | 0.896 | 99% | - | - | - | - | - | - | 4.54 | output/eval_runs/v3_xl_v3cap_20261011-164218 |
 | 10-11 16:47 | xl_v3mismatch | heading_v2+hybrid+rr@20β0.8,k=5 | - | 56% | 78% | 0.644 | 86% | - | - | - | - | - | - | 8.1 | output/eval_runs/xl_v3mismatch_20261011-164722 |
 | 10-11 16:51 | xl_v3cap | heading_v2+hybrid+rr@20β0.8,k=5 | - | 67% | 86% | 0.745 | 89% | - | - | - | - | - | - | 6.22 | output/eval_runs/xl_v3cap_20261011-165113 |
+| 10-11 17:48 | vs_chroma | heading_v2+hybrid+rr@20β0.8,k=5 | - | 84% | 97% | 0.893 | 99% | - | - | - | - | - | - | 2.99 | output/eval_runs/vs_chroma_20261011-174851 |
+| 10-11 17:55 | vs_milvus | heading_v2+hybrid+rr@20β0.8,k=5 | - | 84% | 97% | 0.893 | 99% | - | - | - | - | - | - | 2.73 | output/eval_runs/vs_milvus_20261011-175528 |

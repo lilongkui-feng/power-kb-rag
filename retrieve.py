@@ -14,21 +14,12 @@ filters 为 Chroma where 语法：{"source": "..."}、{"category": {"$in": ["标
 """
 from __future__ import annotations
 import argparse, json, os, sys
-from embed_index import COLLECTION, get_client, get_model
+from embed_index import COLLECTION, get_model
+from vector_store import get_store, norm_where as _norm_filters
 
-_cols = {}
 def _collection(name: str):
-    cname = COLLECTION.get(name) or (name if name.startswith("power_") else f"power_{name}")
-    if cname not in _cols:
-        _cols[cname] = get_client().get_collection(cname)
-    return _cols[cname]
-
-def _norm_filters(filters: dict | None):
-    if not filters:
-        return None
-    if len(filters) > 1 and not any(k.startswith("$") for k in filters):
-        return {"$and": [{k: v} for k, v in filters.items()]}
-    return filters
+    """向量库集合句柄（VECTOR_STORE=chroma|milvus，见 vector_store.py）"""
+    return get_store(name)
 
 def encode_query(query: str):
     return get_model().encode([query], normalize_embeddings=True, convert_to_numpy=True)[0]
@@ -38,11 +29,10 @@ def retrieve(query: str, k: int = 5, collection: str = "heading", filters: dict 
     """返回 [{rank, score, chunk_id, source, heading_path, page_start, page_end, text, metadata}]，score = 余弦相似度"""
     col = _collection(collection)
     qv = encode_query(query) if query_vec is None else query_vec
-    res = col.query(query_embeddings=[list(map(float, qv))], n_results=k, where=_norm_filters(filters),
-                    include=["documents", "metadatas", "distances"])
     out = []
-    for i, (doc, meta, dist) in enumerate(zip(res["documents"][0], res["metadatas"][0], res["distances"][0])):
-        out.append({"rank": i + 1, "score": round(1.0 - float(dist), 4), "chunk_id": meta["chunk_id"],
+    for i, r in enumerate(col.query(qv, k, filters)):
+        doc, meta = r["document"], r["metadata"]
+        out.append({"rank": i + 1, "score": round(float(r["score"]), 4), "chunk_id": meta["chunk_id"],
                     "source": meta["source"], "heading_path": meta.get("heading_path", ""),
                     "page_start": meta.get("page_start"), "page_end": meta.get("page_end"),
                     "text": doc, "metadata": meta})
@@ -103,8 +93,7 @@ def expand_parents(hits: list[dict], collection: str, k: int) -> list[dict]:
     need = {h["metadata"]["parent_id"] for h in hits if h["metadata"].get("chunk_type") == "table_row" and h["metadata"].get("parent_id")}
     parents = {}
     if need:
-        r = _collection(collection).get(ids=list(need), include=["documents", "metadatas"])
-        parents = {i: (d, m) for i, d, m in zip(r["ids"], r["documents"], r["metadatas"])}
+        parents = {r["id"]: (r["document"], r["metadata"]) for r in _collection(collection).get(list(need))}
     out, seen = [], set()
     rr_secs = hits[0].get("_rerank_secs") if hits else None
     for h in hits:

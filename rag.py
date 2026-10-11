@@ -19,7 +19,7 @@ import argparse, json, os, re, sys, time
 import httpx
 
 PROVIDERS = {
-    "local": {"base_url": "http://127.0.0.1:11434/v1", "model": "qwen2.5:3b-instruct", "key_env": None},
+    "local": {"base_url": os.environ.get("LOCAL_LLM_URL", "http://127.0.0.1:11434/v1"), "model": os.environ.get("LOCAL_LLM_MODEL", "qwen2.5:3b-instruct"), "key_env": None},   # 容器内 LOCAL_LLM_URL=http://ollama:11434/v1
     "deepseek": {"base_url": "https://api.deepseek.com", "model": "deepseek-chat", "key_env": "DEEPSEEK_API_KEY"},
     "openai": {"base_url": "https://api.openai.com/v1", "model": os.environ.get("OPENAI_MODEL", "gpt-4o-mini"), "key_env": "OPENAI_API_KEY"},
     "siliconflow": {"base_url": "https://api.siliconflow.cn/v1", "model": os.environ.get("SILICONFLOW_MODEL", "deepseek-ai/DeepSeek-V3"), "key_env": "SILICONFLOW_API_KEY"},   # 备选 Qwen/Qwen2.5-72B-Instruct

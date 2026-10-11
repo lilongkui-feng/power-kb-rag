@@ -35,3 +35,6 @@ fastapi>=0.115         # 实测 0.143.0
 uvicorn>=0.30          # 实测 0.54.0
 python-multipart>=0.0.9  # 文件上传
 pytest>=8              # tests/
+# --- Day 20：向量库抽象 / Milvus ---
+pymilvus[milvus_lite]==3.0.2   # 只有 VECTOR_STORE=milvus 时才需要（Milvus Lite 本地文件或 Standalone）
+# 容器运行时依赖精简版见 requirements-docker.txt

@@ -113,3 +113,11 @@
 - [16:54] Day18 收尾：zip/push/streamlit 完成
 - [17:15] API：api.py + app.py 纯前端 + tests/test_api.py，开始跑测试
 - [17:20] API 测试 14 passed/1 skipped（云端 1 次通过），截图完成，README/DEVLOG/Docker 已写
+- [17:41] vs_compare 开始：chroma
+- [17:45] docker.io 26.1.5 安装成功（dockerd vfs），compose v2.39.4；开始 docker build
+- [17:48] chroma 完成，开始 milvus(Lite)
+- [17:55] vs_compare 完成
+- [17:57] docker 实测：seed ./data，暂停宿主机 API/ollama，compose up（端口 8000/8502）
+- [18:10] docker chroma 栈通过（/health ok，/ask local 21s）；开始 --profile milvus
+- [18:16] docker milvus profile 通过（自动迁移 3543、/search /ask ok）；已 down，宿主机 API/前端/ollama 已恢复
+- [18:18] docker 首次建索引实测：空数据目录 + 只读挂载 /workspace/power_docs（emb_cache 预置）

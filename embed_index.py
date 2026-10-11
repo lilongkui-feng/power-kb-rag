@@ -23,7 +23,7 @@ DB_DIR = os.path.join(HERE, "chroma_db")
 CACHE_DIR = os.path.join(HERE, "emb_cache")
 MODEL_NAME = os.environ.get("BGE_MODEL", "BAAI/bge-m3")
 MAX_SEQ = 1024          # 最长块 800 字 + 前缀，中文约 1 字≈0.7–1 token，1024 足够不截断
-COLLECTION = {"heading": "power_heading", "fixed": "power_fixed", "recursive": "power_recursive", "heading_v2": "power_heading_v2"}
+from vector_store import COLLECTION, get_store, forget as _forget_store   # 向量库抽象层（VECTOR_STORE=chroma|milvus）
 
 _model = None
 def get_model():
@@ -98,9 +98,9 @@ def embed_input(c: dict) -> str:
     return f"【{c['source']}" + (f"｜{hp}" if hp else "") + f"】\n{c['text']}"     # fixed/recursive 也加来源前缀，保证可比
 
 def get_client():
-    import chromadb
-    from chromadb.config import Settings
-    return chromadb.PersistentClient(path=DB_DIR, settings=Settings(anonymized_telemetry=False))
+    """兼容旧脚本：直接拿 Chroma 客户端（新代码请用 vector_store.get_store）"""
+    from vector_store import chroma_client
+    return chroma_client()
 
 UPLOAD_CHUNKS = os.path.join(HERE, "uploads", "chunks_uploaded.jsonl")
 UPLOAD_CHUNKS_BY_METHOD = {"heading": UPLOAD_CHUNKS, "heading_v2": os.path.join(HERE, "uploads", "chunks_uploaded_v2.jsonl")}
@@ -118,19 +118,15 @@ def load_chunks(method: str, include_docx: bool = False) -> list[dict]:
 
 def build(method: str, rebuild: bool = False, cache: EmbCache | None = None, include_docx: bool = False) -> dict:
     chunks = load_chunks(method, include_docx)
-    client = get_client()
     name = COLLECTION.get(method, f"power_{method}")       # 调参变体：power_<method>
     if rebuild:
         try:
-            client.delete_collection(name)
+            get_store(method, create=True).drop()
         except Exception:
             pass
-    col = client.get_or_create_collection(name, metadata={"hnsw:space": "cosine", "model": MODEL_NAME, "method": method})
-    existing = {}
-    total = col.count()
-    for off in range(0, total, 5000):
-        got = col.get(include=["metadatas"], limit=5000, offset=off)
-        existing.update({i: m.get("text_hash") for i, m in zip(got["ids"], got["metadatas"])})
+        _forget_store(method)
+    col = get_store(method, create=True, meta={"model": MODEL_NAME, "method": method})
+    existing = {i: m.get("text_hash") for i, m in col.all_metadata().items()}
     want = {c["chunk_id"]: c for c in chunks}
     stale = [i for i in existing if i not in want]
     todo = [c for c in chunks if existing.get(c["chunk_id"]) != _meta(c)["text_hash"]]
@@ -140,11 +136,8 @@ def build(method: str, rebuild: bool = False, cache: EmbCache | None = None, inc
     print(f"[{name}] 共 {len(chunks)} 块：已有 {len(existing)}，需写入 {len(todo)}，删除 {len(stale)}", flush=True)
     if todo:
         vecs = embed_texts([embed_input(c) for c in todo], cache)
-        for s in range(0, len(todo), 500):
-            part = todo[s:s + 500]
-            col.upsert(ids=[c["chunk_id"] for c in part], embeddings=vecs[s:s + 500].tolist(),
-                       documents=[c["text"] for c in part], metadatas=[_meta(c) for c in part])
-    info = {"collection": name, "chunks": len(chunks), "written": len(todo), "deleted": len(stale),
+        col.upsert([c["chunk_id"] for c in todo], vecs, [c["text"] for c in todo], [_meta(c) for c in todo])
+    info = {"collection": name, "backend": col.backend, "chunks": len(chunks), "written": len(todo), "deleted": len(stale),
             "count": col.count(), "secs": round(time.time() - t0, 1)}
     print(f"[{name}] 完成：{info}", flush=True)
     return info

@@ -107,7 +107,7 @@ def _llm(kind: str, prompt: str, max_tokens: int = 120) -> str | None:
             json.dump(c, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
         return txt
     try:
-        r = httpx.post("http://127.0.0.1:11434/v1/chat/completions", timeout=120,
+        r = httpx.post(os.environ.get("LOCAL_LLM_URL", "http://127.0.0.1:11434/v1") + "/chat/completions", timeout=120,
                        json={"model": os.environ.get("QX_LLM_MODEL", "qwen2.5:3b-instruct"), "temperature": 0, "max_tokens": max_tokens,
                              "messages": [{"role": "user", "content": prompt}]})
         txt = r.json()["choices"][0]["message"]["content"].strip()
