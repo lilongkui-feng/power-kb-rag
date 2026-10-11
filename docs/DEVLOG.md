@@ -1122,3 +1122,42 @@ cap 在 139 题上逐题：变好 1（F40 未命中→1）、变差 2（P17 2→
 - 踩坑：① 本沙箱的自定义 bridge 网络里，容器到上游 DNS（10.0.0.2:53）和容器之间的 TCP 都超时（默认 bridge 上 `docker run` 能联网）→ 增加 `docker-compose.hostnet.yml`（宿主机网络）。② `.env` 由 `.env.example` 复制而来，里面的空值（`HF_HOME=` 等）会覆盖镜像的 ENV，导致模型目录为空、加载失败 → entrypoint 把所有空变量 unset，compose 里显式设置 HF_HOME。③ `/health` 在模型加载失败时也返回 200，docker 却判定为 healthy → 健康检查改为 grep `models_loaded:true`。④ Docker Hub 和 quay.io 上的 minio/minio 拉取被拒 → 默认改用 `cgr.dev/chainguard/minio`（`MINIO_IMAGE` 可覆盖；这个镜像没有 curl，所以不做健康检查）。⑤ 原件目录有 2–3 层子目录，entrypoint 原来的单层 glob 找不到 PDF → 改用 find。
 - 实测（hostnet）：Chroma 栈 api/web/ollama 全部 healthy，`/ask`（容器内 ollama）21 s 返回带引用的答案；milvus profile 下 api 自动迁移 3543 条，/search、/ask 正常。默认 bridge 模式在本机未能验证。
 - 首次自动建索引实测：`docker run ... powerkb build`，空数据目录 + 只读挂载 /workspace/power_docs（预置 emb_cache 以跳过 CPU 向量化），129 s 完成：解析 19 份文档 → 3355 块 → Chroma + BM25。除 NM1 外各文档块数与宿主机完全一致；NM1（扫描件）在镜像里只能用 RapidOCR（PaddleOCR 需要单独的 Python 3.11 环境，没打进镜像），表格识别不出来、标题切分也少，得到 16 块，宿主机用 Paddle 是 135 块。另外宿主机多出的 25 块是网页上传的 DL/T 1555。没有预置 emb_cache 的冷启动还要加上 bge-m3 在 CPU 上的向量化时间（约 3.5k 块，估计 10–20 分钟，未实测）。
+
+---
+
+## 配置 / 日志 / 异常处理 + 部署教程（2026-10-11）
+
+### 配置（config.py）
+- pydantic-settings 的 `Settings`，字段名与原环境变量同名（小写），**旧的 export 写法全部兼容**。数据源顺序（高→低）：init > 环境变量 > `.env`（项目根，`env_ignore_empty`）> `config.yaml`（自定义 `YamlSource`，可分节，加载时拍平；`CONFIG_FILE` 可改路径）> 默认值。
+- 密钥 7 项（SILICONFLOW/DEEPSEEK/OPENAI/XAI/LLM_API_KEY、KB_API_TOKEN、MILVUS_TOKEN）为 `SecretStr`；YamlSource 发现 `SECRET_FIELDS` 或键名匹配 `api_?key|token|secret|password` → `ConfigError`（不回显值）；未知键、非法 YAML、校验失败也报 `ConfigError`，校验错误只列字段名和原因，不回显输入。
+- `settings()` 带缓存，`reload_settings()` 给测试和改环境变量后用；`summary()` 脱敏（密钥只显示已设置/未设置）；`python config.py [get <key>]`。
+- 收口：rag（provider 模型名、本地地址、Prompt/expand/阈值/reflect/numcheck/xlang、KB_COLLECTION）、api（上传/并发/CORS/预加载/鉴权 token）、vector_store（VECTOR_STORE/CHROMA_DIR/MILVUS_*）、embed_index/rerank（模型名、设备）、qx、ocr、kb_store、app（KB_API_URL/KB_API_TOKEN）、evaluate（缓存键里的 vector_store）。仅保留 vector_store 里 pymilvus 导入前临时移走 `MILVUS_URI` 的那段（必须改真实环境变量）。研究脚本（evalset/、deploy/ 里的批量脚本）的少量环境变量未迁移。
+- `rag.llm_config` 缺 key 时由 `SystemExit` 改为抛 `ProviderNotReady`；未知 provider 同样。
+- 新增可配置项：`llm_connect_timeout`、`llm_max_retries`、`llm_timeout_retries`、`llm_backoff_base/cap`、`llm_fallback`、`chunk_max_size/overlap`（上传入库用）、`log_*`、`kb_api_host/port`（start_api.sh 通过 `config.py get` 读取）。
+
+### 日志（kblog.py）
+- 根 logger：stderr + `RotatingFileHandler(logs/powerkb.log)`；text 格式 `时间 级别 logger [rid=…] 消息 k=v…`，json 格式每行一个对象（字段平铺）。uvicorn 的 logger 清空 handler 改为向上传播；access 日志调到 WARNING，由 api 中间件的 `request` 事件替代（带耗时和 rid）。
+- `request_id` contextvar：中间件生成/沿用 `X-Request-ID`（过滤非法字符、≤64 字符），响应头回写；`run_in_threadpool` 自带上下文复制，`run_in_executor`（流式）和入库线程池用 `contextvars.copy_context().run` 显式带过去——实测 /ask 的 `rag.answer` 事件（在工作线程里）带着客户端传入的 rid。
+- 打码在 Formatter 层做（覆盖消息、字段、异常堆栈）：已注册的密钥原值 + 正则（Authorization/Bearer/X-API-Key/sk-/xai-/api_key=/token:）。问句默认 `<len=… sha1=…>`，`LOG_QUESTIONS=true` 才记原文。
+- 踩坑：第一版 Formatter 直接改 `record.msg` 拼字段，多个 handler 共用同一个 record，第二个 handler 输出时字段重复了 3 遍 → 改为 `copy.copy(record)`。pytest 结束时 milvus_lite 在解释器退出阶段写日志到已关闭的流，刷出一屏 `ValueError: I/O operation on closed file` → `logging.raiseExceptions = False`。
+- library 里的 print 换成 logger（embed_index 进度、bm25 构建、milvus 索引回退、kb_store 默认进度回调）；CLI 的结果输出（`__main__` 里）保留 print。
+
+### 异常（errors.py）与降级
+- `PowerKBError(status, code, message, detail)` 派生：ConfigError、BadRequest、AuthError、Forbidden、NotFound、Busy、UnsupportedFile、FileTooLarge、DocumentParseError、RetrievalError、IndexNotReady、ProviderNotReady、LLMError → LLMTimeout(504) / LLMRateLimited(429) / LLMAuthError(502) / LLMUnavailable(503)。旧的 `ApiError` 保留为别名。
+- api 全局处理器：PowerKBError → 对应状态码 + 统一错误体；HTTPException、RequestValidationError 同格式；其它异常 → 500 `internal_error` + 固定文案（以前会把 `类型: 消息前 200 字` 返回给客户端，可能带出路径/key），堆栈只进日志。流式接口的 `error` 事件同样只发 code/message/status/request_id。
+- `call_llm`：按异常类型映射（见 README 错误码表），401/403 和其它 4xx 不重试，429/5xx/网络错误按 `llm_max_retries` 退避、遵守 Retry-After，超时单独计数（默认只重试 1 次，避免 180 s × 6）；流式已经吐出 token 后不重试。
+- `answer()`：检索异常包成 RetrievalError/IndexNotReady；生成失败按 `LLM_FALLBACK`：`retrieval`（默认，返回 Top-3 资料 + `degraded: true`）/ `local` / `local_then_retrieval` / `none`。结果新增 `provider`、`fallback`、`degraded`、`error`、`top_rerank`；每次问答一条 `rag.answer` 结构化日志。
+- 入库：`kb_store.ingest` 解析异常 → 删除副本并抛 DocumentParseError；任务状态 `error` 改为 `failed` 并带 `error: {code, message}`；上传按文件头校验（`%PDF` / `PK\x03\x04`），改扩展名的文件直接 415。
+- 前端：错误码 → 中文处理建议（`HINT` 表），显示 request_id；降级时显示黄色提示，回退本地时显示蓝色提示；连不上 API 单独提示。
+- 测试中发现：TestClient 每次退出都会触发 lifespan 关闭 `INGEST_POOL`，同一进程第二个 TestClient 提交任务失败 → lifespan 启动时发现线程池已关闭就重建。
+
+### 测试
+- 新增 `tests/test_config.py`（优先级 yaml < .env < env、空值忽略、off、5 种 yaml 密钥写法被拒、未知键/非法 YAML/非法值、密钥不出现在 summary/repr、config.example.yaml 自身合法）、`tests/test_logging.py`（各种打码、文件日志含 rid 不含 key、堆栈打码、JSON 格式、问句开关）、`tests/test_errors.py`（MockTransport 模拟 200/401/429→成功/429 用尽/超时/503/连接拒绝/400/坏 JSON/SSE 流式；ProviderNotReady；4 种降级；TestClient 测 9 种异常映射、未知异常不泄露、流式 error 事件、降级透传、入库 failed、文件头不符、token 鉴权）；`test_api.py` 增加“损坏 PDF → failed 且服务正常”“错误体带客户端 request_id”两条线上用例。
+- 全部：**90 passed, 1 skipped**（跳过的是默认关闭的云端端到端）。
+
+### 部署
+- `docs/DEPLOY.md`：选型（8 核 16 GB、磁盘 100 GB；内存/磁盘数字来自本机实测）、安全组、SSH、swap、bootstrap、手动装 Docker（官方脚本 `--mirror Aliyun`）、镜像加速、.env/config.yaml、数据准备（scp/rsync、按 sources.md 下载、网页上传、迁移 data/）、启动与验证、Nginx（WebSocket 头、client_max_body_size、/api/ 关闭缓冲以支持 SSE）+ htpasswd + certbot、故障排查表、更新/备份/成本控制。
+- `deploy/bootstrap.sh`（bash，set -euo pipefail）：系统检查 → git/curl → Docker（已装跳过）→ 可选 registry mirror（daemon.json 已有内容时不改）→ clone 或 `pull --ff-only`（有本地修改时跳过）→ .env 不存在才生成（600，国内写 HF_ENDPOINT）→ config.yaml → data/ 归 uid 1000 → `deploy/up.sh` → 轮询 /health。shellcheck 全部通过（up.sh 的 `$F` 有意不加引号，加了文件级 disable）。
+- 在干净 `ubuntu:24.04` 容器里以 `SKIP_DOCKER=1` 连跑两次：第 1 次装 curl、clone、生成 .env（600，HF_ENDPOINT 已写）和 config.yaml；第 2 次识别已有代码、.env 保持不变（插入的标记行仍在）。Docker 安装和 up 部分没有在干净机器上跑过。
+- compose：新增 `KB_BIND`（端口绑定地址，Nginx 场景设 127.0.0.1；Docker 发布的端口会绕过 ufw）；`build.args` 传 `PIP_MIRROR`、`TORCH_INDEX_URL`；entrypoint 把 `logs` 也链接到 /data。
+- 踩坑：hostnet 验证时 ollama-pull 拉模型被沙箱网络拦截（redirect 到非公网地址）→ 容器内 ollama 没有模型，`/ask` 返回 404 → **正好触发了 retrieval 降级**，接口仍返回 200 + 检索资料；改为挂载宿主机的 `/workspace/ollama_models` 后 `/ask` 15.8 s 返回带引用的正确答案（≤300 μL/L）。期间磁盘被 Docker 构建缓存写满（126 GB 100%），`docker builder prune -af` + `image prune -f` 释放后，下一次构建报 `failed to register layer … file exists`：磁盘写满时留下一个孤立的 layerdb 条目（计算所有镜像的 chainID 确认无人引用），停 Docker 后把它移到 `/var/lib/docker/orphan_backup/` 再构建。

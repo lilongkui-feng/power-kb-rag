@@ -291,7 +291,7 @@ $ sudo certbot renew --dry-run                    # 验证自动续期（certbot
 
 ```bash
 $ grep "<request_id>" data/logs/powerkb.log
-$ LOG_FORMAT=json sh deploy/up.sh        # 想要 JSON 日志（接 ELK/Loki）时；或写进 .env
+$ echo 'LOG_FORMAT=json' >> .env && docker compose up -d --force-recreate api   # 想要 JSON 日志（接 ELK/Loki）时
 ```
 
 | 现象 | 可能原因 | 处理 |
