@@ -52,3 +52,7 @@ output/eval_runs/*/records.jsonl
 data/
 power_docs/
 milvus_db/
+
+# 本机配置（从 config.example.yaml 复制）与日志
+config.yaml
+logs/

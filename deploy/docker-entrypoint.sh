@@ -8,9 +8,9 @@ set -e
 for v in $(env | sed -n "s/^\([A-Za-z_][A-Za-z0-9_]*\)=$/\1/p"); do unset "$v"; done
 export HF_HOME="${HF_HOME:-/models/hf}"           # .env 里的空 HF_HOME= 会覆盖镜像 ENV，这里兜底
 D=${KB_DATA:-/data}
-mkdir -p "$D/output" "$D/chroma_db" "$D/bm25_index" "$D/emb_cache" "$D/uploads" "$D/milvus_db" "$D/power_docs" 2>/dev/null || true
+mkdir -p "$D/output" "$D/chroma_db" "$D/bm25_index" "$D/emb_cache" "$D/uploads" "$D/milvus_db" "$D/power_docs" "$D/logs" 2>/dev/null || true
 cp -rn /app/output.dist/. "$D/output/" 2>/dev/null || true          # 报告等小文件（不覆盖卷里已有的）
-for x in output chroma_db bm25_index emb_cache uploads milvus_db; do
+for x in output chroma_db bm25_index emb_cache uploads milvus_db logs; do
   [ -L "/app/$x" ] || { rm -rf "/app/$x"; ln -s "$D/$x" "/app/$x"; }
 done
 role=${1:-api}; shift 2>/dev/null || true

@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC2086  # $F 有意不加引号（为空或含两个 -f 参数）
 # 一键部署：sh deploy/up.sh            → docker compose up -d --build（Chroma）
 #          sh deploy/up.sh milvus     → 加 Milvus Standalone，并让 api 使用它（首次自动从 Chroma 迁移向量）
 #          sh deploy/up.sh down       → 停止

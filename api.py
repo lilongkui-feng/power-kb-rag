@@ -12,12 +12,16 @@
   SILICONFLOW_API_KEY 等云端 key 只在服务端读取，任何接口都不会返回 key
 """
 from __future__ import annotations
-import asyncio, json, logging, os, shutil, threading, time, uuid
+import asyncio, contextvars, json, logging, os, shutil, threading, time, uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Any, Literal, Optional
 
-os.environ.setdefault("HF_HOME", "/workspace/hf_cache")
+from config import settings, secret                      # 先加载配置（校验失败直接报 ConfigError，进程退出）
+from errors import (PowerKBError, AuthError, Busy, DocumentParseError, FileTooLarge, Forbidden, IndexNotReady, NotFound,
+                    ProviderNotReady, UnsupportedFile, BadRequest)
+import kblog
+kblog.setup_logging()
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,9 +35,9 @@ import kb_store, rag
 HERE = os.path.dirname(os.path.abspath(__file__))
 VERSION = "1.0.0"
 log = logging.getLogger("powerkb.api")
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-MAX_UPLOAD = int(os.environ.get("KB_MAX_UPLOAD_MB", "50")) * 1024 * 1024
-SEM = asyncio.Semaphore(int(os.environ.get("KB_MAX_CONCURRENCY", "2")))
+CFG = settings()
+MAX_UPLOAD = CFG.kb_max_upload_mb * 1024 * 1024
+SEM = asyncio.Semaphore(CFG.kb_max_concurrency)
 WRITE_LOCK = threading.Lock()                    # 索引写入（入库/删除）串行；Chroma + BM25 + 登记表一起改
 INGEST_POOL = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ingest")
 JOBS: dict[str, dict] = {}
@@ -55,12 +59,19 @@ def _load_models():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if os.environ.get("KB_PRELOAD", "1") != "0":
+    global INGEST_POOL
+    if getattr(INGEST_POOL, "_shutdown", False):                # 同一进程内重复启动（测试）时重建
+        INGEST_POOL = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ingest")
+    kblog.event(log, "config.summary", **{k: v for k, v in CFG.summary().items()
+                                          if k.endswith(("_api_key", "_token")) or k in ("vector_store", "kb_collection", "kb_method", "rerank_model",
+                                          "bge_model", "llm_fallback", "llm_timeout", "llm_max_retries", "log_level", "log_format", "log_questions",
+                                          "kb_max_upload_mb", "kb_max_concurrency", "rag_refuse_below", "rag_expand", "_config_file")})
+    if CFG.kb_preload:
         try:
             await run_in_threadpool(_load_models)          # 一次性加载 bge-m3 / reranker / BM25 / Chroma
             log.info("models loaded in %ss", STATE["load_secs"])
         except Exception as e:                              # 加载失败也启动，/health 报告
-            STATE["load_error"] = str(e)[:300]; log.exception("model load failed")
+            STATE["load_error"] = kblog.redact(f"{type(e).__name__}: {str(e)[:300]}"); log.exception("model load failed")
     yield
     INGEST_POOL.shutdown(wait=False, cancel_futures=True)
 
@@ -68,7 +79,7 @@ TAGS = [{"name": "system", "description": "健康检查与配置"}, {"name": "re
         {"name": "qa", "description": "问答（RAG）"}, {"name": "documents", "description": "文档入库 / 列表 / 删除 / 任务进度"}]
 app = FastAPI(title="PowerKB API", version=VERSION, lifespan=lifespan, openapi_tags=TAGS,
               description="电力设备运维知识库 RAG 服务：hybrid 检索（bge-m3 + BM25）+ bge-reranker 重排 + LLM 生成与引用校验。")
-origins = [o.strip() for o in os.environ.get("KB_CORS_ORIGINS", "http://localhost:8501,http://127.0.0.1:8501").split(",") if o.strip()]
+origins = [o.strip() for o in CFG.kb_cors_origins.split(",") if o.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"], allow_credentials="*" not in origins)
 
 # ---------------- 统一错误格式 + 请求日志 ----------------
@@ -82,16 +93,17 @@ class ErrorResp(BaseModel):
     error: ErrorBody
 
 def _err(status_code: int, code: str, message: str, detail=None, request: Request | None = None):
-    rid = getattr(getattr(request, "state", None), "rid", None) if request else None
-    return JSONResponse(status_code=status_code, content={"error": {"code": code, "message": message, "detail": detail, "request_id": rid}})
+    rid = kblog.request_id.get()
+    return JSONResponse(status_code=status_code, content={"error": {"code": code, "message": kblog.redact(message), "detail": detail, "request_id": rid}},
+                        headers={"X-Request-ID": rid})
 
-class ApiError(Exception):
-    def __init__(self, status_code: int, code: str, message: str, detail=None):
-        self.status_code, self.code, self.message, self.detail = status_code, code, message, detail
+ApiError = PowerKBError                                  # 兼容旧名
 
-@app.exception_handler(ApiError)
-async def _api_err(request: Request, e: ApiError):
-    return _err(e.status_code, e.code, e.message, e.detail, request)
+@app.exception_handler(PowerKBError)
+async def _kb_err(request: Request, e: PowerKBError):
+    kblog.event(log, "request.error", logging.ERROR if e.status >= 500 else logging.WARNING, code=e.code, status=e.status,
+                path=request.url.path, message=e.message)
+    return _err(e.status, e.code, e.message, e.detail, request)
 
 @app.exception_handler(HTTPException)
 async def _http_err(request: Request, e: HTTPException):
@@ -104,17 +116,24 @@ async def _val_err(request: Request, e: RequestValidationError):
 
 @app.exception_handler(Exception)
 async def _unhandled(request: Request, e: Exception):
-    log.exception("unhandled error")
-    return _err(500, "internal_error", f"{type(e).__name__}: {str(e)[:200]}", None, request)
+    log.exception("unhandled error path=%s", request.url.path)          # 堆栈只进日志（已打码），不返回给客户端
+    return _err(500, "internal_error", "服务器内部错误，请凭 request_id 查看服务端日志", None, request)
 
 @app.middleware("http")
 async def _reqlog(request: Request, call_next):
     rid = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+    rid = "".join(ch for ch in rid if ch.isalnum() or ch in "-_")[:64] or uuid.uuid4().hex[:12]
+    token = kblog.request_id.set(rid)
     request.state.rid = rid
     t0 = time.time()
-    resp = await call_next(request)
+    try:
+        resp = await call_next(request)
+    except Exception:
+        log.exception("request crashed")
+        resp = _err(500, "internal_error", "服务器内部错误，请凭 request_id 查看服务端日志")
     resp.headers["X-Request-ID"] = rid
-    log.info("%s %s %s %.0fms rid=%s", request.method, request.url.path, resp.status_code, (time.time() - t0) * 1000, rid)
+    kblog.event(log, "request", method=request.method, path=request.url.path, status=resp.status_code, ms=round((time.time() - t0) * 1000))
+    kblog.request_id.reset(token)
     return resp
 
 # ---------------- 鉴权（KB_API_TOKEN 为空则关闭） ----------------
@@ -122,19 +141,19 @@ _bearer = HTTPBearer(auto_error=False)
 _apikey = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 def auth(cred: HTTPAuthorizationCredentials | None = Depends(_bearer), key: str | None = Depends(_apikey)):
-    tok = os.environ.get("KB_API_TOKEN", "")
+    tok = secret("kb_api_token") or ""
     if not tok:
         return
     if (cred and cred.credentials == tok) or key == tok:
         return
-    raise ApiError(401, "unauthorized", "缺少或错误的 API Token（Authorization: Bearer <token> 或 X-API-Key）")
+    raise AuthError("缺少或错误的 API Token（Authorization: Bearer <token> 或 X-API-Key）")
 
 def need_models():
     if not STATE["loaded"]:
         try:
             _load_models()                                  # KB_PRELOAD=0 时按需加载
         except Exception as e:
-            raise ApiError(503, "models_not_ready", f"模型/索引未就绪：{e}")
+            raise IndexNotReady(f"模型/索引未就绪（{type(e).__name__}），请稍后重试或查看服务端日志") from None
 
 # ---------------- 数据模型 ----------------
 Provider = Literal["local", "siliconflow", "deepseek", "openai", "xai"]
@@ -232,10 +251,13 @@ class AskResp(BaseModel):
     usage: dict = {}
     model: str
     provider: Optional[str] = None
+    degraded: bool = Field(False, description="LLM 失败后降级为“仅检索结果”")
+    fallback: Optional[dict] = Field(None, description="降级/回退信息 {from, to, reason, message}")
 
 class JobResp(BaseModel):
     job_id: str
-    status: Literal["queued", "running", "done", "duplicate", "error"]
+    status: Literal["queued", "running", "done", "duplicate", "failed"]
+    error: Optional[dict] = Field(None, description="failed 时 {code, message}")
     progress: float = 0.0
     message: str = ""
     filename: str
@@ -278,8 +300,8 @@ def config():
     for name in rag.PROVIDERS:
         ok, info = rag.provider_ready(name)
         cloud = name in rag.CLOUD_PROVIDERS
-        ps.append(ProviderInfo(name=name, ready=ok, info=info, default_prompt=os.environ.get("RAG_PROMPT") or ("p2" if cloud else rag.DEFAULT_PROMPT),
-                               default_xlang=os.environ.get("RAG_XLANG") or ("cap" if cloud else "none")))
+        ps.append(ProviderInfo(name=name, ready=ok, info=info, default_prompt=CFG.rag_prompt or ("p2" if cloud else rag.DEFAULT_PROMPT),
+                               default_xlang=CFG.rag_xlang or ("cap" if cloud else "none")))
     return ConfigResp(providers=ps, default_provider="local",
                       defaults={"top_k": 5, "rerank": True, "expand": rag.DEFAULT_EXPAND, "refuse_below": rag.DEFAULT_REFUSE_BELOW,
                                 "recommended_refuse_below": rag.RECOMMENDED_REFUSE_BELOW, "numcheck": rag.NUMCHECK},
@@ -287,7 +309,7 @@ def config():
                                  "rerank_top_n": 20, "rerank_beta": 0.8, "embed_model": "BAAI/bge-m3", "vector_store": _vs_backend()},
                       limits={"max_upload_mb": MAX_UPLOAD // 1024 // 1024, "max_concurrency": SEM._value if hasattr(SEM, "_value") else None,
                               "upload_types": [".pdf", ".docx"]},
-                      auth_enabled=bool(os.environ.get("KB_API_TOKEN")))
+                      auth_enabled=bool(secret("kb_api_token")))
 
 # ---------------- retrieval ----------------
 def _filters(sources, filters):
@@ -320,7 +342,7 @@ def _check_provider(p):
     if p and p in rag.PROVIDERS:
         ok, info = rag.provider_ready(p)
         if not ok:
-            raise ApiError(400, "provider_not_ready", info)
+            raise ProviderNotReady(info)
 
 def _ask_kwargs(req: AskReq) -> dict:
     skw = {"collection": kb_store.METHOD}
@@ -333,13 +355,11 @@ def _to_resp(q: str, r: dict, provider) -> AskResp:
     return AskResp(question=q, answer=r["answer"], refused=r["refused"], threshold_refused=r.get("threshold_refused", False),
                    citations=[Citation(**{k: s.get(k) for k in Citation.model_fields}) for s in r["sources"]],
                    invalid_citations=r.get("invalid_citations", []), warnings=r.get("support_warnings", []), retrieved=r.get("retrieved", []),
-                   timing=r["timing"], usage=r.get("usage") or {}, model=r["model"], provider=provider)
+                   timing=r["timing"], usage=r.get("usage") or {}, model=r["model"], provider=r.get("provider") or provider,
+                   degraded=r.get("degraded", False), fallback=r.get("fallback"))
 
 def _run_answer(req: AskReq, **extra):
-    try:
-        return rag.answer(req.question, **_ask_kwargs(req), **extra)
-    except SystemExit as e:                                  # rag.llm_config 缺 key 时 SystemExit
-        raise ApiError(400, "provider_not_ready", str(e))
+    return rag.answer(req.question, **_ask_kwargs(req), **extra)     # 异常（LLMError / RetrievalError …）由全局处理器映射
 
 @app.post("/ask", response_model=AskResp, tags=["qa"], dependencies=[Depends(auth)], responses={**ERR, 400: {"model": ErrorResp}, 502: {"model": ErrorResp}},
           summary="RAG 问答（检索 → 重排 → 拒答阈值 → LLM → 引用校验）")
@@ -347,12 +367,7 @@ async def ask(req: AskReq):
     _check_provider(req.provider)
     await run_in_threadpool(need_models)
     async with SEM:
-        try:
-            r = await run_in_threadpool(_run_answer, req)
-        except ApiError:
-            raise
-        except Exception as e:                               # LLM 网络错误等
-            raise ApiError(502, "llm_error", f"{type(e).__name__}: {str(e)[:200]}")
+        r = await run_in_threadpool(_run_answer, req)
     return _to_resp(req.question, r, req.provider)
 
 def _sse(event: str, data) -> bytes:
@@ -371,16 +386,19 @@ async def ask_stream(req: AskReq):
         try:
             r = _run_answer(req, stream=True, on_token=lambda t: loop.call_soon_threadsafe(q.put_nowait, ("token", {"t": t})))
             loop.call_soon_threadsafe(q.put_nowait, ("done", _to_resp(req.question, r, req.provider).model_dump()))
-        except ApiError as e:
-            loop.call_soon_threadsafe(q.put_nowait, ("error", {"code": e.code, "message": e.message}))
-        except BaseException as e:                           # noqa
-            loop.call_soon_threadsafe(q.put_nowait, ("error", {"code": "llm_error", "message": f"{type(e).__name__}: {str(e)[:200]}"}))
+        except PowerKBError as e:
+            kblog.event(log, "request.error", logging.WARNING, code=e.code, status=e.status, path="/ask/stream", message=e.message)
+            loop.call_soon_threadsafe(q.put_nowait, ("error", {"code": e.code, "message": e.message, "status": e.status, "request_id": kblog.request_id.get()}))
+        except BaseException:                                # noqa：不把内部异常文本发给客户端
+            log.exception("stream crashed")
+            loop.call_soon_threadsafe(q.put_nowait, ("error", {"code": "internal_error", "message": "服务器内部错误，请凭 request_id 查看服务端日志",
+                                                               "status": 500, "request_id": kblog.request_id.get()}))
         loop.call_soon_threadsafe(q.put_nowait, None)
 
     async def gen():
         async with SEM:
             yield _sse("start", {"question": req.question})
-            fut = loop.run_in_executor(None, work)
+            fut = loop.run_in_executor(None, contextvars.copy_context().run, work)     # request_id 带进线程
             while True:
                 item = await q.get()
                 if item is None:
@@ -398,20 +416,26 @@ def _ingest_job(jid: str, path: str, name: str):
         with WRITE_LOCK:
             j.update(status="running", message="开始入库…")
             res = kb_store.ingest(path, name, progress=prog)
-        j.update(status={"ok": "done", "duplicate": "duplicate"}.get(res["status"], "error"), result=res, message=res["msg"], progress=1.0)
+        st = {"ok": "done", "duplicate": "duplicate"}.get(res["status"], "failed")
+        j.update(status=st, result=res, message=res["msg"], progress=1.0,
+                 error=None if st != "failed" else {"code": "document_empty", "message": res["msg"]})
+    except PowerKBError as e:                                 # 解析失败等：任务 failed，服务不受影响
+        j.update(status="failed", message=e.message, error={"code": e.code, "message": e.message})
     except Exception as e:
         log.exception("ingest failed")
-        j.update(status="error", message=f"{type(e).__name__}: {str(e)[:300]}")
+        j.update(status="failed", message="入库失败（内部错误），请查看服务端日志", error={"code": "internal_error", "message": type(e).__name__})
     finally:
         j["finished"] = time.time()
         shutil.rmtree(os.path.dirname(path), ignore_errors=True)
+        kblog.event(log, "ingest.job", job_id=jid, file=name, status=j["status"], code=(j.get("error") or {}).get("code"),
+                    chunks=(j.get("result") or {}).get("chunks"), secs=round(time.time() - j["created"], 1))
 
 @app.post("/documents", response_model=JobResp, status_code=202, tags=["documents"], dependencies=[Depends(auth)],
           responses={**ERR, 413: {"model": ErrorResp}, 415: {"model": ErrorResp}}, summary="上传 PDF/docx，后台异步入库，返回 job_id")
 async def upload(file: UploadFile = File(..., description="PDF 或 docx")):
     name = os.path.basename(file.filename or "")
     if not name.lower().endswith((".pdf", ".docx")):
-        raise ApiError(415, "unsupported_type", "只支持 .pdf / .docx")
+        raise UnsupportedFile("只支持 .pdf / .docx")
     jid = uuid.uuid4().hex[:12]
     d = os.path.join(TMP, jid); os.makedirs(d, exist_ok=True)
     path = os.path.join(d, name); size = 0
@@ -420,19 +444,25 @@ async def upload(file: UploadFile = File(..., description="PDF 或 docx")):
             size += len(chunk)
             if size > MAX_UPLOAD:
                 w.close(); shutil.rmtree(d, ignore_errors=True)
-                raise ApiError(413, "payload_too_large", f"文件超过 {MAX_UPLOAD // 1024 // 1024} MB 上限")
+                raise FileTooLarge(f"文件超过 {MAX_UPLOAD // 1024 // 1024} MB 上限")
             w.write(chunk)
     if size == 0:
         shutil.rmtree(d, ignore_errors=True)
-        raise ApiError(422, "empty_file", "空文件")
-    JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0.0, "message": "排队中", "filename": name, "created": time.time(), "finished": None, "result": None}
-    INGEST_POOL.submit(_ingest_job, jid, path, name)           # 单线程池：入库串行，且不阻塞事件循环
+        raise BadRequest("空文件", code="empty_file", status=422)
+    with open(path, "rb") as f:                                 # 按文件头校验类型（防止改扩展名）
+        head = f.read(8)
+    if not (head.startswith(b"%PDF") if name.lower().endswith(".pdf") else head.startswith(b"PK\x03\x04")):
+        shutil.rmtree(d, ignore_errors=True)
+        raise UnsupportedFile("文件内容与扩展名不符（不是有效的 PDF / DOCX）")
+    JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0.0, "message": "排队中", "filename": name, "created": time.time(), "finished": None,
+                 "result": None, "error": None}
+    INGEST_POOL.submit(contextvars.copy_context().run, _ingest_job, jid, path, name)           # 单线程池：入库串行，且不阻塞事件循环
     return JobResp(**JOBS[jid])
 
 @app.get("/jobs/{job_id}", response_model=JobResp, tags=["documents"], dependencies=[Depends(auth)], responses={**ERR, 404: {"model": ErrorResp}}, summary="入库任务进度")
 def job(job_id: str):
     if job_id not in JOBS:
-        raise ApiError(404, "not_found", f"任务 {job_id} 不存在（服务重启后任务记录会清空）")
+        raise NotFound(f"任务 {job_id} 不存在（服务重启后任务记录会清空）")
     return JobResp(**JOBS[job_id])
 
 @app.get("/documents", response_model=list[Doc], tags=["documents"], dependencies=[Depends(auth)], responses=ERR, summary="库中文档列表")
@@ -445,11 +475,11 @@ async def delete_document(doc_id: str):
     docs = kb_store.list_docs()
     d = next((x for x in docs if x.get("sha256") == doc_id or x["source"] == doc_id or "base:" + x["source"] == doc_id), None)
     if not d:
-        raise ApiError(404, "not_found", f"文档 {doc_id} 不存在")
+        raise NotFound(f"文档 {doc_id} 不存在")
     if not d["deletable"]:
-        raise ApiError(403, "forbidden", "基础库文档不可通过 API 删除")
+        raise Forbidden("基础库文档不可通过 API 删除")
     if not WRITE_LOCK.acquire(timeout=1):
-        raise ApiError(409, "busy", "有入库任务正在写索引，请稍后重试")
+        raise Busy("有入库任务正在写索引，请稍后重试")
     try:
         r = await run_in_threadpool(kb_store.delete, d["source"])
     finally:

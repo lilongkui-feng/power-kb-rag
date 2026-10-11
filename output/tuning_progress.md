@@ -121,3 +121,14 @@
 - [18:10] docker chroma 栈通过（/health ok，/ask local 21s）；开始 --profile milvus
 - [18:16] docker milvus profile 通过（自动迁移 3543、/search /ask ok）；已 down，宿主机 API/前端/ollama 已恢复
 - [18:18] docker 首次建索引实测：空数据目录 + 只读挂载 /workspace/power_docs（emb_cache 预置）
+- [18:26] Day 20 完成：zip 1.8MB（按 gitignore），已 push
+
+## Day: 日志/异常/配置 + 部署教程（2026-10-11 19:48:26）
+- config.py/errors.py/kblog.py 完成；pytest 90 passed 1 skipped；宿主机 API 已用新代码重启
+[2026-10-11 19:48:26] docker build start
+[2026-10-11 19:48:50] build done, up
+[2026-10-11 19:50:44] health: {"status":"ok","version":"1.0.0","models_loaded":true,"load_secs":24.0,"load_error":null,"collection":"heading_v2","vector_store":"chroma","vector_count":3543,"chroma_count":3543,"bm25_docs":3543,"documents":19,"uptime_secs":27.9,"jobs_running":0}
+[2026-10-11 19:57:02] rebuild (build args) start
+[2026-10-11 19:57:03] rebuild FAILED
+[2026-10-11 20:00:14] 构建失败（磁盘写满后遗留孤立 layer），已移走孤立 layerdb 条目，重新构建
+[2026-10-11 20:15:27] rebuild（PIP_MIRROR 构建参数 + 显式 pydantic-settings/PyYAML）start

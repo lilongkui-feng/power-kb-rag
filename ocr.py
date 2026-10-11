@@ -22,11 +22,12 @@ CACHE_DIR = os.path.join(HERE, ".ocr_cache")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 MIN_SCORE = 0.6           # 低于此置信度的文本框丢弃（多为图形线条误识别）
 
-PADDLE_PY = os.environ.get("PADDLE_PY", "/workspace/paddle_env/bin/python")
+from config import settings as _cfg
+PADDLE_PY = _cfg().paddle_py
 PADDLE_WORKER = os.path.join(HERE, "paddle", "paddle_worker.py")
 
 def default_engine() -> str:
-    e = os.environ.get("OCR_ENGINE")
+    e = _cfg().ocr_engine
     if e:
         return e
     return "paddle" if os.path.exists(PADDLE_PY) else "rapid"

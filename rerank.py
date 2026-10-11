@@ -13,7 +13,8 @@ import hashlib, json, math, os, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(HERE, "emb_cache")
-DEFAULT_MODEL = os.environ.get("RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
+from config import settings as _cfg
+DEFAULT_MODEL = _cfg().rerank_model
 MAX_LEN = 512
 _models, _caches = {}, {}
 
@@ -21,7 +22,7 @@ def get_reranker(name: str = DEFAULT_MODEL):
     if name not in _models:
         from sentence_transformers import CrossEncoder
         import torch
-        dev = os.environ.get("BGE_DEVICE") or ("cuda" if torch.cuda.is_available() else "cpu")
+        dev = _cfg().bge_device or ("cuda" if torch.cuda.is_available() else "cpu")
         _models[name] = CrossEncoder(name, max_length=MAX_LEN, device=dev)   # fp32
     return _models[name]
 

@@ -20,6 +20,8 @@ from rank_bm25 import BM25Okapi
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "output")
+import logging as _logging
+log = _logging.getLogger("powerkb.bm25")
 IDX_DIR = os.path.join(HERE, "bm25_index")
 DICT = os.path.join(HERE, "dict", "power_terms.txt")
 VERSION = 2
@@ -115,7 +117,7 @@ def build(method: str, rebuild=False, include_docx=False) -> dict:
     if not rebuild and os.path.exists(p):
         old = pickle.load(open(p, "rb"))
         if old.get("version") == VERSION and old.get("sig") == sig and old.get("tok_sig") == _tok_sig():
-            print(f"[bm25:{method}] 未变化，跳过（{len(cs)} 块）")
+            log.info("[bm25:%s] unchanged, skip (%d chunks)", method, len(cs))
             return {"method": method, "chunks": len(cs), "rebuilt": False}
     t = time.time()
     # 与 dense 一致：索引文本 = 来源/章节前缀 + 正文（前缀让"RM6""8.2 相对温差法"等标题词也能命中）
@@ -126,7 +128,7 @@ def build(method: str, rebuild=False, include_docx=False) -> dict:
                  "docs": [c["text"] for c in cs], "bm25": bm, "sig": sig, "tok_sig": _tok_sig()},
                 open(p, "wb"), protocol=pickle.HIGHEST_PROTOCOL)
     secs = time.time() - t
-    print(f"[bm25:{method}] 构建 {len(cs)} 块，平均 {sum(map(len, corpus)) / len(corpus):.0f} token/块，{secs:.1f}s -> {p}")
+    log.info("[bm25:%s] built %d chunks, avg %.0f tokens/chunk, %.1fs -> %s", method, len(cs), sum(map(len, corpus)) / len(corpus), secs, p)
     return {"method": method, "chunks": len(cs), "rebuilt": True, "secs": round(secs, 1)}
 
 # ---------- 查询 ----------

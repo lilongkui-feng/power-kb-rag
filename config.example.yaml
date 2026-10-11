@@ -1,0 +1,74 @@
+# PowerKB 非敏感配置示例：cp config.example.yaml config.yaml 后按需修改（config.yaml 不提交 git）
+# 优先级：环境变量 > .env > config.yaml > 代码默认值。分节只为可读，加载时会拍平（键名与环境变量同名，小写）。
+# ⚠ 不要在这里写任何 API Key / Token（*_api_key、kb_api_token、milvus_token 等），检测到会直接报错；请放 .env 或环境变量。
+
+paths:
+  kb_method: heading_v2            # 上传入库 / API 使用的切分方法
+  kb_collection: heading_v2
+  chroma_dir: chroma_db            # 相对路径按项目根目录解析
+  # milvus_uri: milvus_db/power_kb.db   # Milvus Lite 文件；Standalone 写 http://host:19530
+  milvus_index: HNSW
+  # hf_home: /workspace/hf_cache   # 模型缓存目录
+  # hf_endpoint: https://hf-mirror.com   # 国内下载模型可用镜像
+
+vector_store: chroma               # chroma | milvus
+
+retrieval:
+  bge_model: BAAI/bge-m3
+  rerank_model: BAAI/bge-reranker-v2-m3
+  retrieval_mode: hybrid           # hybrid | dense | bm25
+  hybrid_alpha: 0.5
+  rerank: true
+  rerank_top_n: 20
+  rerank_beta: 0.8
+  top_k: 5
+  # bge_device: cpu                # 不填自动选 cuda/cpu
+
+chunking:                          # 只影响网页/API 上传的新文档；基础库重建用 build_v2.py 参数
+  chunk_max_size: 800
+  chunk_overlap: 50
+
+ocr:
+  # ocr_engine: rapid              # paddle | rapid；不填时有 Paddle 环境就用 paddle
+  paddle_py: /workspace/paddle_env/bin/python
+
+rag:
+  # rag_prompt: p2                 # 不填：本地 p1、云端 p2
+  rag_expand: none                 # none | neighbor | parent
+  rag_refuse_below: 0.3            # off 关闭阈值拒答
+  rag_reflect: false
+  rag_numcheck: v2
+  # rag_xlang: cap                 # 不填：云端 cap、本地 none
+
+llm:
+  local_llm_url: http://127.0.0.1:11434/v1
+  local_llm_model: qwen2.5:3b-instruct
+  siliconflow_model: deepseek-ai/DeepSeek-V3
+  deepseek_model: deepseek-chat
+  openai_model: gpt-4o-mini
+  xai_model: grok-3-mini
+  llm_timeout: 180                 # 秒
+  llm_connect_timeout: 10
+  llm_max_retries: 5               # 429 / 5xx / 网络错误
+  llm_timeout_retries: 1
+  llm_backoff_base: 2.0            # 退避 min(cap, base·2^n) 秒，优先遵守 Retry-After
+  llm_backoff_cap: 60
+  llm_fallback: retrieval          # none | local | retrieval | local_then_retrieval
+
+api:
+  kb_api_host: 127.0.0.1
+  kb_api_port: 8000
+  kb_api_url: http://127.0.0.1:8000     # 前端访问 API 的地址
+  kb_cors_origins: http://localhost:8501,http://127.0.0.1:8501
+  kb_max_upload_mb: 50
+  kb_max_concurrency: 2
+  kb_preload: true
+
+logging:
+  log_level: INFO                  # DEBUG | INFO | WARNING | ERROR
+  log_format: text                 # text | json
+  log_dir: logs
+  log_file: powerkb.log            # off 关闭文件日志
+  log_max_bytes: 10485760
+  log_backup_count: 5
+  log_questions: false             # true 才在日志中记录问句原文（默认只记长度+哈希）

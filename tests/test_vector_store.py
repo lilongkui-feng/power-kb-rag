@@ -2,6 +2,7 @@
 import os, sys
 import numpy as np, pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import config
 import vector_store as vs
 
 BACKENDS = ["chroma", "milvus"] + (["milvus_standalone"] if os.environ.get("KB_TEST_MILVUS_URI") else [])   # 例：KB_TEST_MILVUS_URI=http://127.0.0.1:19530
@@ -10,7 +11,7 @@ BACKENDS = ["chroma", "milvus"] + (["milvus_standalone"] if os.environ.get("KB_T
 def store(request, tmp_path_factory):
     d = tmp_path_factory.mktemp(request.param)
     if request.param == "chroma":
-        os.environ["CHROMA_DIR"] = str(d); vs._chroma_client = None
+        os.environ["CHROMA_DIR"] = str(d); config.reload_settings(); vs._chroma_client = None
         s = vs.get_store("pytest_vs", create=True, backend_name="chroma")
     elif request.param == "milvus_standalone":
         s = vs.get_store("pytest_vs", create=True, backend_name="milvus", uri=os.environ["KB_TEST_MILVUS_URI"])
@@ -27,7 +28,7 @@ def store(request, tmp_path_factory):
     yield s
     s.drop(); vs.forget("pytest_vs")
     if request.param == "chroma":
-        os.environ.pop("CHROMA_DIR", None); vs._chroma_client = None
+        os.environ.pop("CHROMA_DIR", None); config.reload_settings(); vs._chroma_client = None
 
 def test_count_sources(store):
     assert store.count() == 8

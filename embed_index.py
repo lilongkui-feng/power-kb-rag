@@ -21,7 +21,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "output")
 DB_DIR = os.path.join(HERE, "chroma_db")
 CACHE_DIR = os.path.join(HERE, "emb_cache")
-MODEL_NAME = os.environ.get("BGE_MODEL", "BAAI/bge-m3")
+from config import settings as _cfg
+from kblog import get_logger
+log = get_logger("powerkb.embed")
+MODEL_NAME = _cfg().bge_model
 MAX_SEQ = 1024          # 最长块 800 字 + 前缀，中文约 1 字≈0.7–1 token，1024 足够不截断
 from vector_store import COLLECTION, get_store, forget as _forget_store   # 向量库抽象层（VECTOR_STORE=chroma|milvus）
 
@@ -30,7 +33,7 @@ def get_model():
     global _model
     if _model is None:
         from sentence_transformers import SentenceTransformer
-        dev = os.environ.get("BGE_DEVICE")
+        dev = _cfg().bge_device
         if not dev:
             import torch
             dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -73,7 +76,7 @@ def embed_texts(texts: list[str], cache: EmbCache | None = None, batch_size: int
             done = min(s + len(part), len(order))
             if done % log_every < len(part) or done == len(order):
                 el = time.time() - t0
-                print(f"    embedded {done}/{len(order)}  {el:.0f}s  ({el / done:.2f}s/块)", flush=True)
+                log.info("embedded %d/%d %.0fs (%.2fs/chunk)", done, len(order), el, el / done)
             if cache is not None and (s // (batch_size * 10)) % 5 == 4:
                 cache.save()                                       # 定期落盘，中断后可续跑
         if cache is not None:
@@ -133,13 +136,13 @@ def build(method: str, rebuild: bool = False, cache: EmbCache | None = None, inc
     if stale:
         col.delete(ids=stale)
     t0 = time.time()
-    print(f"[{name}] 共 {len(chunks)} 块：已有 {len(existing)}，需写入 {len(todo)}，删除 {len(stale)}", flush=True)
+    log.info("[%s] %d chunks: existing %d, to write %d, to delete %d", name, len(chunks), len(existing), len(todo), len(stale))
     if todo:
         vecs = embed_texts([embed_input(c) for c in todo], cache)
         col.upsert([c["chunk_id"] for c in todo], vecs, [c["text"] for c in todo], [_meta(c) for c in todo])
     info = {"collection": name, "backend": col.backend, "chunks": len(chunks), "written": len(todo), "deleted": len(stale),
             "count": col.count(), "secs": round(time.time() - t0, 1)}
-    print(f"[{name}] 完成：{info}", flush=True)
+    log.info("[%s] done: %s", name, info)
     return info
 
 if __name__ == "__main__":

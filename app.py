@@ -8,8 +8,27 @@ import json, os, time
 import httpx
 import streamlit as st
 
-API = os.environ.get("KB_API_URL", "http://127.0.0.1:8000").rstrip("/")
-HDR = {"Authorization": f"Bearer {os.environ['KB_API_TOKEN']}"} if os.environ.get("KB_API_TOKEN") else {}
+from config import settings, secret                     # 只读前端需要的两项：API 地址与访问 token（不接触任何云端 key）
+API = settings().kb_api_url.rstrip("/")
+HDR = {"Authorization": f"Bearer {secret('kb_api_token')}"} if secret("kb_api_token") else {}
+HINT = {   # 错误码 → 面向用户的处理建议
+    "unauthorized": "前端与 API 的 KB_API_TOKEN 不一致，请检查前端进程的环境变量。",
+    "provider_not_ready": "该提供方的 API Key 未在 API 服务端配置，可换用其他提供方或联系管理员。",
+    "llm_timeout": "大模型响应超时，可稍后重试，或在侧栏改用其他提供方。",
+    "llm_rate_limited": "云端接口限流，请稍等几十秒再试。",
+    "llm_auth_failed": "服务端配置的 API Key 无效或已过期，请联系管理员更换。",
+    "llm_unavailable": "大模型服务暂时不可用（本地 ollama 未启动或云端故障）。",
+    "index_not_ready": "检索模型/索引还在加载或尚未构建，请稍后重试。",
+    "retrieval_error": "检索出错，请凭 request_id 查看服务端日志。",
+    "payload_too_large": "文件过大，请压缩或拆分后上传。",
+    "unsupported_type": "只支持 PDF / DOCX 文件。",
+    "document_parse_error": "文件可能已加密或损坏，请换一份再试。",
+    "internal_error": "服务内部错误，请凭 request_id 查看服务端日志。",
+}
+
+def friendly(code: str, message: str, rid: str | None = None) -> str:
+    h = HINT.get(code)
+    return f"{message}" + (f"\n\n💡 {h}" if h else "") + (f"\n\n（错误码 {code}" + (f"，request_id {rid}" if rid else "") + "）")
 st.set_page_config(page_title="电力运维知识库问答", page_icon="⚡", layout="wide")
 ss = st.session_state
 ss.setdefault("messages", [])
@@ -23,9 +42,9 @@ def api(method: str, path: str, timeout: float = 30, **kw):
         return None, f"无法连接 API {API}（{type(e).__name__}）"
     if r.status_code >= 400:
         try:
-            e = r.json()["error"]; return None, f"{e['message']}（{e['code']}，HTTP {r.status_code}）"
+            e = r.json()["error"]; return None, friendly(e["code"], e["message"], e.get("request_id"))
         except Exception:
-            return None, f"HTTP {r.status_code}：{r.text[:200]}"
+            return None, f"HTTP {r.status_code}（API 返回了非标准错误）"
     return r.json(), None
 
 health, err = api("GET", "/health", timeout=5)
@@ -59,7 +78,8 @@ with st.sidebar:
                 j = j2
                 bar.progress(min(j["progress"], 1.0), text=f"{f.name}：{j['message']}")
             bar.empty()
-            ss.ingest_log.append((f.name, {"done": "ok"}.get(j["status"], j["status"]), e or j["message"]))
+            msg = e or (friendly(j["error"]["code"], j["error"]["message"]) if j.get("error") else j["message"])
+            ss.ingest_log.append((f.name, {"done": "ok"}.get(j["status"], j["status"]), msg))
     for name, status, msg in ss.ingest_log[-6:]:
         (st.success if status == "ok" else st.warning if status == "duplicate" else st.error)(f"{name}：{msg}")
 
@@ -131,9 +151,10 @@ def ask_stream(body: dict, ph):
         if resp.status_code >= 400:
             resp.read()
             try:
-                e = resp.json()["error"]; raise RuntimeError(f"{e['message']}（{e['code']}）")
+                e = resp.json()["error"]
             except (ValueError, KeyError):
-                raise RuntimeError(f"HTTP {resp.status_code}")
+                raise RuntimeError(f"HTTP {resp.status_code}（API 返回了非标准错误）")
+            raise RuntimeError(friendly(e["code"], e["message"], e.get("request_id")))
         for line in resp.iter_lines():
             if line.startswith("event:"):
                 ev = line[6:].strip()
@@ -144,7 +165,7 @@ def ask_stream(body: dict, ph):
                 elif ev == "done":
                     result = data
                 elif ev == "error":
-                    raise RuntimeError(f"{data['message']}（{data['code']}）")
+                    raise RuntimeError(friendly(data["code"], data["message"], data.get("request_id")))
     return result
 
 for m in ss.messages:
@@ -167,9 +188,16 @@ if q:
         try:
             with st.spinner("检索、重排中…（经 API）"):
                 r = ask_stream(body, ph)
-        except (httpx.HTTPError, RuntimeError) as e:
+        except httpx.HTTPError as e:
+            ph.empty(); msg = f"无法连接 API {API}（{type(e).__name__}），请确认后端已启动"
+            st.error(msg); ss.messages.append({"role": "assistant", "content": msg}); st.stop()
+        except RuntimeError as e:
             ph.empty(); st.error(f"出错：{e}"); ss.messages.append({"role": "assistant", "content": f"出错：{e}"}); st.stop()
         ph.empty()
+        if r.get("degraded"):
+            st.warning("大模型暂时不可用，下面只给出检索到的资料（未生成回答）。")
+        elif r.get("fallback"):
+            st.info(f"云端模型调用失败（{r['fallback'].get('reason')}），本回答由本地模型生成。")
         st.markdown(r["answer"])
         show_details(r)
         ss.messages.append({"role": "assistant", "content": r["answer"], "result": r})

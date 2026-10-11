@@ -18,18 +18,32 @@ from __future__ import annotations
 import argparse, json, os, re, sys, time
 import httpx
 
-PROVIDERS = {
-    "local": {"base_url": os.environ.get("LOCAL_LLM_URL", "http://127.0.0.1:11434/v1"), "model": os.environ.get("LOCAL_LLM_MODEL", "qwen2.5:3b-instruct"), "key_env": None},   # 容器内 LOCAL_LLM_URL=http://ollama:11434/v1
-    "deepseek": {"base_url": "https://api.deepseek.com", "model": "deepseek-chat", "key_env": "DEEPSEEK_API_KEY"},
-    "openai": {"base_url": "https://api.openai.com/v1", "model": os.environ.get("OPENAI_MODEL", "gpt-4o-mini"), "key_env": "OPENAI_API_KEY"},
-    "siliconflow": {"base_url": "https://api.siliconflow.cn/v1", "model": os.environ.get("SILICONFLOW_MODEL", "deepseek-ai/DeepSeek-V3"), "key_env": "SILICONFLOW_API_KEY"},   # 备选 Qwen/Qwen2.5-72B-Instruct
-    "xai": {"base_url": "https://api.x.ai/v1", "model": os.environ.get("XAI_MODEL", "grok-3-mini"), "key_env": "XAI_API_KEY"},
+from config import settings, secret
+from errors import (PowerKBError, ProviderNotReady, LLMError, LLMTimeout, LLMRateLimited, LLMAuthError, LLMUnavailable,
+                    RetrievalError, IndexNotReady)
+from kblog import get_logger, event, q_repr
+import logging
+log = get_logger("powerkb.rag")
+
+# provider 静态信息；模型名 / 本地地址来自 config（config.yaml / 环境变量），key 只从环境变量 / .env 读
+_PROVIDER_DEF = {
+    "local": (None, "local_llm_model", None),
+    "deepseek": ("https://api.deepseek.com", "deepseek_model", "DEEPSEEK_API_KEY"),
+    "openai": ("https://api.openai.com/v1", "openai_model", "OPENAI_API_KEY"),
+    "siliconflow": ("https://api.siliconflow.cn/v1", "siliconflow_model", "SILICONFLOW_API_KEY"),   # 备选 Qwen/Qwen2.5-72B-Instruct
+    "xai": ("https://api.x.ai/v1", "xai_model", "XAI_API_KEY"),
 }
+
+def providers() -> dict:
+    st = settings()
+    return {n: {"base_url": base or st.local_llm_url, "model": getattr(st, mf), "key_env": ke} for n, (base, mf, ke) in _PROVIDER_DEF.items()}
+
+PROVIDERS = providers()
 
 def provider_ready(provider: str) -> tuple[bool, str]:
     """界面用：检查提供方是否可用（只检查 key 是否存在，不发请求）"""
-    p = PROVIDERS[provider]
-    if p["key_env"] and not os.environ.get(p["key_env"]):
+    p = providers()[provider]
+    if p["key_env"] and not secret(p["key_env"]):
         return False, f"未设置环境变量 {p['key_env']}，无法使用 {provider}"
     return True, f"{p['base_url']} · {p['model']}"
 
@@ -78,27 +92,29 @@ def reflect(question: str, hits: list[dict], cfg: dict, max_chars: int = 700) ->
         return {"enough": True, "missing": [], "error": str(e)[:80], "secs": round(time.time() - t0, 2), "usage": {}}
     miss = [str(x)[:60] for x in (d.get("missing") or []) if str(x).strip()][:2]
     return {"enough": bool(d.get("enough", not miss)) and not miss, "missing": miss, "secs": round(time.time() - t0, 2), "usage": info.get("usage", {})}
-DEFAULT_PROMPT = os.environ.get("RAG_PROMPT", "p1")   # 调参结论：p1（逐条作答+步骤编号），见 output/version_scores.md
+DEFAULT_PROMPT = settings().rag_prompt or "p1"   # 调参结论：p1（逐条作答+步骤编号），见 output/version_scores.md
 
 def llm_config(provider: str | None = None) -> dict:
-    p = PROVIDERS[provider or "local"]
-    base = os.environ.get("LLM_BASE_URL") if provider is None else None
-    cfg = {"base_url": (base or p["base_url"]).rstrip("/"),
-           "model": (os.environ.get("LLM_MODEL") if provider is None else None) or p["model"],
-           "api_key": (os.environ.get(p["key_env"]) if p["key_env"] else None) or os.environ.get("LLM_API_KEY") or "ollama"}
-    if p["key_env"] and not os.environ.get(p["key_env"]):
-        raise SystemExit(f"未设置 {p['key_env']}")
-    return cfg
+    ps = providers()
+    if provider is not None and provider not in ps:
+        raise ProviderNotReady(f"未知的 LLM 提供方：{provider}（可选 {', '.join(ps)}）")
+    p = ps[provider or "local"]
+    st = settings()
+    if p["key_env"] and not secret(p["key_env"]):
+        raise ProviderNotReady(f"未设置环境变量 {p['key_env']}，无法使用 {provider}")
+    base = st.llm_base_url if provider is None else None
+    return {"provider": provider or ("custom" if base else "local"), "base_url": (base or p["base_url"]).rstrip("/"),
+            "model": (st.llm_model if provider is None else None) or p["model"],
+            "api_key": (secret(p["key_env"]) if p["key_env"] else None) or secret("llm_api_key") or "ollama"}
 
 TABLE_RULE = "\n5. 参考资料中的表格以 Markdown 给出（首行为表头）。引用表格数值时须对应正确的行和列，并写明该数值所在列的表头含义（如单位、适用条件）。"
 TABLE_MAX_CHARS = 1500
 EXPAND_MAX_CHARS = 2000      # 父块/相邻块扩展后单条资料上限
-DEFAULT_EXPAND = os.environ.get("RAG_EXPAND", "none")
+DEFAULT_EXPAND = settings().rag_expand
 CLOUD_PROVIDERS = ("siliconflow", "deepseek", "openai", "xai")
-DEFAULT_REFLECT = os.environ.get("RAG_REFLECT", "0") in ("1", "true", "on")   # 生成前自检+补检索（多一次 LLM 调用；默认关，待云端模型正式评测）
+DEFAULT_REFLECT = settings().rag_reflect   # 生成前自检+补检索（多一次 LLM 调用；默认关，待云端模型正式评测）
 RECOMMENDED_REFUSE_BELOW = 0.3   # 重排 Top-1 分阈值：库内 139 题误拒 0%、库外拦截 44%（output/threshold_scan.md）
-_rb = os.environ.get("RAG_REFUSE_BELOW", "").strip().lower()
-DEFAULT_REFUSE_BELOW = None if _rb in ("off", "none", "0") else (float(_rb) if _rb else RECOMMENDED_REFUSE_BELOW)   # 默认开启；RAG_REFUSE_BELOW=off 关闭
+DEFAULT_REFUSE_BELOW = settings().rag_refuse_below    # 默认 0.3；RAG_REFUSE_BELOW=off 关闭   # 默认开启；RAG_REFUSE_BELOW=off 关闭
 
 def _is_table(h) -> bool:
     return (h.get("metadata") or {}).get("chunk_type") in ("table", "table_row") or h["text"].startswith("【表格】")
@@ -147,25 +163,58 @@ def build_messages(question: str, hits: list[dict], max_chars: int = 700, prompt
     return [{"role": "system", "content": sp}, {"role": "user", "content": user}]
 
 def call_llm(messages, cfg, stream=False, max_tokens=512, temperature=0.1, on_token=None) -> tuple[str, dict]:
+    """OpenAI 兼容 /chat/completions。失败映射：超时→LLMTimeout，429→LLMRateLimited，401/403→LLMAuthError（不重试），
+    5xx/网络→LLMUnavailable，其它 4xx→LLMError。429/5xx/网络错误按 LLM_MAX_RETRIES 指数退避重试（遵守 Retry-After），
+    超时另按 LLM_TIMEOUT_RETRIES 计数；流式已输出部分 token 后不再重试（避免重复内容）。"""
+    st = settings()
     url = cfg["base_url"] + "/chat/completions"
     body = {"model": cfg["model"], "messages": messages, "max_tokens": max_tokens, "temperature": temperature, "stream": stream}
     headers = {"Authorization": f"Bearer {cfg['api_key']}"}
-    for attempt in range(6):            # 限流 / 临时故障重试：429、5xx、网络错误，指数退避
+    attempt = t_retries = 0
+    while True:
+        emitted = [False]
+        def tok(t):
+            emitted[0] = True
+            on_token(t)
+        retry_after = None
         try:
-            return _call_llm_once(url, body, headers, stream, on_token)
-        except (httpx.HTTPStatusError, httpx.TransportError) as e:
-            code = getattr(getattr(e, "response", None), "status_code", None)
-            if attempt == 5 or (code is not None and code != 429 and code < 500):
-                raise
-            ra = getattr(getattr(e, "response", None), "headers", {}).get("retry-after") if code else None
-            time.sleep(float(ra) if ra and ra.replace(".", "").isdigit() else min(60, 2 ** attempt * 2))
+            text, info = _call_llm_once(url, body, headers, stream, tok if on_token else None, st)
+            info["attempts"] = attempt + 1
+            return text, info
+        except httpx.TimeoutException:
+            err = LLMTimeout(f"大模型响应超时（>{st.llm_timeout:g}s）"); retry = t_retries < st.llm_timeout_retries; t_retries += 1
+        except httpx.HTTPStatusError as e:
+            code = e.response.status_code
+            retry_after = e.response.headers.get("retry-after")
+            if code in (401, 403):
+                err, retry = LLMAuthError(detail={"upstream_status": code}), False
+            elif code == 429:
+                err, retry = LLMRateLimited(detail={"upstream_status": code}), True
+            elif code >= 500:
+                err, retry = LLMUnavailable(f"大模型服务端错误（HTTP {code}）", detail={"upstream_status": code}), True
+            else:
+                err, retry = LLMError(f"大模型请求被拒绝（HTTP {code}）", detail={"upstream_status": code}), False
+        except httpx.TransportError as e:
+            err, retry = LLMUnavailable(f"无法连接大模型服务（{type(e).__name__}）"), True
+        except (KeyError, IndexError, ValueError, TypeError):
+            err, retry = LLMError("大模型返回格式异常"), False
+        if emitted[0]:
+            retry = False
+        if not retry or attempt >= st.llm_max_retries:
+            event(log, "llm.failed", logging.WARNING, provider=cfg.get("provider"), model=cfg["model"], code=err.code, attempts=attempt + 1)
+            raise err
+        wait = float(retry_after) if retry_after and retry_after.replace(".", "").isdigit() else min(st.llm_backoff_cap, st.llm_backoff_base * 2 ** attempt)
+        event(log, "llm.retry", logging.WARNING, provider=cfg.get("provider"), model=cfg["model"], code=err.code, attempt=attempt + 1, wait_secs=wait)
+        time.sleep(wait)
+        attempt += 1
 
-def _call_llm_once(url, body, headers, stream, on_token):
+def _call_llm_once(url, body, headers, stream, on_token, st=None):
+    st = st or settings()
     t0, first, usage, out = time.time(), None, {}, []
-    with httpx.Client(timeout=httpx.Timeout(float(os.environ.get("LLM_TIMEOUT", "180")), connect=10.0)) as cli:
+    with httpx.Client(timeout=httpx.Timeout(st.llm_timeout, connect=st.llm_connect_timeout)) as cli:
         if not stream:
             r = cli.post(url, json=body, headers=headers); r.raise_for_status()
-            d = r.json(); usage = d.get("usage", {})
+            d = r.json(); usage = d.get("usage", {}) or {}
             text = d["choices"][0]["message"]["content"]
         else:
             with cli.stream("POST", url, json=body, headers=headers) as r:
@@ -213,7 +262,7 @@ def _nums(s: str) -> set[str]:
 
 SENT_RE = re.compile(r"[^。；;!?\n]+[。；;!?\n]?(?:\s*\[\d+(?:\s*[,，、]\s*\d+)*\])*")
 
-NUMCHECK = os.environ.get("RAG_NUMCHECK", "v2")   # v2 = numcheck.py（单位换算/范围/表头单位）；v1 = 旧版字符串包含
+NUMCHECK = settings().rag_numcheck   # v2 = numcheck.py（单位换算/范围/表头单位）；v1 = 旧版字符串包含
 
 def support_check(answer: str, hits: list[dict]) -> list[str]:
     if NUMCHECK == "v1":
@@ -251,20 +300,20 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
     """expand: none|neighbor|parent（默认 RAG_EXPAND）；refuse_below: 重排 Top-1 分低于该值直接拒答、不调用 LLM（-1=用默认 RAG_REFUSE_BELOW，None=关闭）"""
     from retrieve import search
     cfg = llm_config(provider)
-    if prompt is None and provider in ("siliconflow", "deepseek", "openai", "xai") and "RAG_PROMPT" not in os.environ:
+    if prompt is None and provider in CLOUD_PROVIDERS and settings().rag_prompt is None:
         prompt = "p2"                 # 云端大模型推荐 p2（见 version_scores.md），本地 3B 保持 p1
     if model:
-        cfg["model"] = model            # 先校验 LLM 配置（如缺 DEEPSEEK_API_KEY 直接退出），再检索
+        cfg["model"] = model            # 先校验 LLM 配置（如缺 DEEPSEEK_API_KEY 直接报 ProviderNotReady），再检索
     t0 = time.time()
     if hits is None:                       # 评测脚本可传入已检索好的 hits，避免重复检索
-        skw = dict(search_kw or {}); skw.setdefault("collection", os.environ.get("KB_COLLECTION", "heading_v2"))   # 默认走 v2 集合（表格父子块）
-        xl = os.environ.get("RAG_XLANG") or ("cap" if provider in CLOUD_PROVIDERS else "none")   # 云端默认跨语言 cap（Day 18 验证）
+        skw = dict(search_kw or {}); skw.setdefault("collection", settings().kb_collection)   # 默认走 v2 集合（表格父子块）
+        xl = settings().rag_xlang or ("cap" if provider in CLOUD_PROVIDERS else "none")   # 云端默认跨语言 cap（Day 18 验证）
         if xl != "none" and "xlang" not in skw:
             import qx
             if provider in CLOUD_PROVIDERS:
                 qx.QX_PROVIDER = provider       # 问句翻译与回答用同一云端模型（结果缓存）
             skw["xlang"] = xl
-        hits = search(question, k=k, filters=filters, rerank=rerank, rerank_use_cache=False, **skw)   # 实时计算重排，耗时真实
+        hits = _search_safe(search, question, k=k, filters=filters, rerank=rerank, rerank_use_cache=False, **skw)   # 实时计算重排，耗时真实
     else:
         hits = [dict(h) for h in hits[:k]]
     t_search = time.time() - t0
@@ -277,21 +326,22 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
         msg = "根据现有资料无法回答该问题。"
         if stream and on_token:
             on_token(msg)
-        return {"question": question, "answer": msg, "raw_answer": msg, "sources": [], "invalid_citations": [], "refused": True,
+        return _logged(question, {"question": question, "answer": msg, "raw_answer": msg, "sources": [], "invalid_citations": [], "refused": True,
                 "threshold_refused": True, "retried": False, "support_warnings": [], "model": cfg["model"], "base_url": cfg["base_url"],
                 "retrieved": [{"rank": h["rank"], "source": h["source"], "section": h.get("heading_path"), "score": h["score"],
                                "rerank_score": h.get("rerank_score"), "page_start": h.get("page_start"), "page_end": h.get("page_end")} for h in hits],
                 "timing": {"retrieval_secs": round(t_search - t_rr, 2), "rerank_secs": round(t_rr, 2), "generation_secs": 0.0,
-                           "first_token_secs": None, "total_secs": round(time.time() - t0, 2)}, "usage": {}, "prompt_chars": 0}
+                           "first_token_secs": None, "total_secs": round(time.time() - t0, 2)}, "usage": {}, "prompt_chars": 0,
+                "provider": cfg.get("provider"), "top_rerank": top})
     ex = expand if expand is not None else DEFAULT_EXPAND
     if ex and ex != "none":
         from context_expand import expand_hits
-        hits = expand_hits(hits, method=(search_kw or {}).get("collection") or os.environ.get("KB_COLLECTION", "heading_v2"), mode=ex)
+        hits = expand_hits(hits, method=(search_kw or {}).get("collection") or settings().kb_collection, mode=ex)
     rf = None
     if (DEFAULT_REFLECT if reflect_round is None else reflect_round):     # 自检 → 缺失点补检 1 轮（每个缺失点取 Top-2，去重后追加，最多 +3 条）
         rf = reflect(question, hits, cfg, max_chars)
         if not rf["enough"] and rf["missing"]:
-            skw = dict(search_kw or {}); skw.setdefault("collection", os.environ.get("KB_COLLECTION", "heading_v2"))
+            skw = dict(search_kw or {}); skw.setdefault("collection", settings().kb_collection)
             have = {h["chunk_id"] for h in hits}; added = []
             for mq in rf["missing"]:
                 for h in search(mq, k=2, filters=filters, rerank=rerank, **skw):
@@ -304,16 +354,28 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
     msgs = build_messages(question, hits, max_chars, prompt)
     if (prompt or DEFAULT_PROMPT) == "p3":
         max_tokens = max(max_tokens, 1024)          # p3 先写要点清单再作答，512 会截断
-    text, info = call_llm(msgs, cfg, stream=stream, on_token=on_token, max_tokens=max_tokens)
-    retried = False
-    if len(CITE_RE.sub("", text).strip(" \n。.")) < 4:             # 小模型偶发只输出编号：补一次提示重试
-        retried = True
-        msgs2 = msgs + [{"role": "assistant", "content": text},
-                        {"role": "user", "content": "请用完整的中文句子回答问题，并在句末标注引用编号。"}]
-        if stream and on_token:
-            on_token("\n（重新生成）\n")
-        text, info2 = call_llm(msgs2, cfg, stream=stream, on_token=on_token, max_tokens=max_tokens)
-        info = {"usage": info2["usage"], "secs": round(info["secs"] + info2["secs"], 2), "first_token_secs": info["first_token_secs"]}
+    fallback = None
+    try:
+        text, info, retried = _generate(msgs, cfg, stream, on_token, max_tokens)
+    except LLMError as e:
+        fb = settings().llm_fallback
+        if fb in ("local", "local_then_retrieval") and cfg.get("provider") in CLOUD_PROVIDERS:
+            try:
+                lcfg = llm_config("local")
+                event(log, "llm.fallback", logging.WARNING, frm=cfg.get("provider"), to="local", reason=e.code)
+                if stream and on_token:
+                    on_token("\n（云端大模型调用失败，已改用本地模型）\n")
+                text, info, retried = _generate(msgs, lcfg, stream, on_token, max_tokens)
+                fallback = {"from": cfg.get("provider"), "to": "local", "reason": e.code, "message": e.message}
+                cfg = lcfg
+            except LLMError as e2:
+                if fb == "local":
+                    raise
+                return _logged(question, _retrieval_only(question, hits, e2, cfg, t0, t_search, t_rr, stream, on_token, first_error=e))
+        elif fb in ("retrieval", "local_then_retrieval"):
+            return _logged(question, _retrieval_only(question, hits, e, cfg, t0, t_search, t_rr, stream, on_token))
+        else:
+            raise
     if (prompt or DEFAULT_PROMPT) == "p3":
         text = strip_checklist(text)
     used, bad = parse_citations(text, len(hits))
@@ -330,7 +392,9 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
                         "pages": f"{m['page_start']}" + (f"-{m['page_end']}" if m.get("page_end") and m["page_end"] != m["page_start"] else ""),
                         "chunk_id": h["chunk_id"], "excerpt": excerpt(h["text"], text_clean),
                         "score": h.get("score"), "rerank_score": h.get("rerank_score"), "stage1_rank": h.get("stage1_rank")})
-    return {"question": question, "answer": text_clean, "raw_answer": text, "sources": sources, "reflect": rf,
+    if fallback:
+        warnings = [f"云端模型调用失败（{fallback['message']}），本回答由本地模型生成"] + warnings
+    return _logged(question, {"question": question, "answer": text_clean, "raw_answer": text, "sources": sources, "reflect": rf,
             "extra_hits": [{"rank": h["rank"], "chunk_id": h["chunk_id"], "source": h["source"], "heading_path": h.get("heading_path", ""),
                             "page_start": h.get("page_start"), "page_end": h.get("page_end"), "text": h["text"], "metadata": h.get("metadata", {})}
                            for h in hits[k:]] if rf and rf.get("added") else [],
@@ -341,7 +405,75 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
                        "generation_secs": round(info["secs"] + ((rf or {}).get("secs") or 0), 2), "first_token_secs": info["first_token_secs"],
                        "reflect_secs": (rf or {}).get("secs"),
                        "total_secs": round(time.time() - t0, 2)},
-            "usage": info["usage"], "prompt_chars": sum(len(m["content"]) for m in msgs)}
+            "usage": info["usage"], "prompt_chars": sum(len(m["content"]) for m in msgs),
+            "provider": cfg.get("provider"), "fallback": fallback, "degraded": False, "top_rerank": top})
+
+def _generate(msgs, cfg, stream, on_token, max_tokens):
+    text, info = call_llm(msgs, cfg, stream=stream, on_token=on_token, max_tokens=max_tokens)
+    retried = False
+    if len(CITE_RE.sub("", text).strip(" \n。.")) < 4:             # 小模型偶发只输出编号：补一次提示重试
+        retried = True
+        msgs2 = msgs + [{"role": "assistant", "content": text},
+                        {"role": "user", "content": "请用完整的中文句子回答问题，并在句末标注引用编号。"}]
+        if stream and on_token:
+            on_token("\n（重新生成）\n")
+        text, info2 = call_llm(msgs2, cfg, stream=stream, on_token=on_token, max_tokens=max_tokens)
+        info = {"usage": info2["usage"], "secs": round(info["secs"] + info2["secs"], 2), "first_token_secs": info["first_token_secs"]}
+    return text, info, retried
+
+def _search_safe(search, question, **kw):
+    """检索异常 → RetrievalError / IndexNotReady（集合不存在、模型未下载等）"""
+    try:
+        return search(question, **kw)
+    except PowerKBError:
+        raise
+    except Exception as e:
+        msg = str(e).lower()
+        log.exception("retrieval failed")
+        if "does not exist" in msg or "not exist" in msg or "no such file" in msg or "collection" in msg and "not found" in msg:
+            raise IndexNotReady("向量索引不存在或未构建（请先建索引，见 README“准备文档并重建索引”）") from None
+        raise RetrievalError(f"检索失败（{type(e).__name__}）") from None
+
+def _retrieval_only(question, hits, err, cfg, t0, t_search, t_rr, stream, on_token, first_error=None):
+    """降级：LLM 不可用时直接返回检索到的资料（不生成）"""
+    event(log, "llm.fallback", logging.WARNING, frm=cfg.get("provider"), to="retrieval_only", reason=err.code)
+    top = hits[:min(3, len(hits))]
+    lines = [f"⚠ 大模型暂时不可用（{(first_error or err).message}），以下是检索到的最相关资料，请直接查阅原文："]
+    sources = []
+    for i, h in enumerate(top, 1):
+        m = h.get("metadata", {}) or {}
+        ex = re.sub(r"\s+", " ", h["text"]).strip()[:160]
+        lines.append(f"[{i}] {h['source']}｜{h.get('heading_path') or '-'}（p{h.get('page_start')}）：{ex}…")
+        sources.append({"id": i, "source": h["source"], "section": h.get("heading_path") or "-", "pages": str(h.get("page_start")),
+                        "chunk_id": h["chunk_id"], "excerpt": ex, "score": h.get("score"), "rerank_score": h.get("rerank_score"),
+                        "stage1_rank": h.get("stage1_rank")})
+    text = "\n\n".join(lines)
+    if stream and on_token:
+        on_token(text)
+    msgs = [first_error.message] if first_error else []
+    return {"question": question, "answer": text, "raw_answer": "", "sources": sources, "reflect": None, "extra_hits": [],
+            "invalid_citations": [], "refused": False, "retried": False, "support_warnings": msgs + [err.message],
+            "model": cfg["model"], "base_url": cfg["base_url"], "provider": cfg.get("provider"),
+            "retrieved": [{"rank": h["rank"], "source": h["source"], "section": h.get("heading_path"), "score": h["score"],
+                           "rerank_score": h.get("rerank_score"), "page_start": h.get("page_start"), "page_end": h.get("page_end")} for h in hits],
+            "timing": {"retrieval_secs": round(t_search - t_rr, 2), "rerank_secs": round(t_rr, 2), "generation_secs": 0.0,
+                       "first_token_secs": None, "total_secs": round(time.time() - t0, 2)},
+            "usage": {}, "prompt_chars": 0, "degraded": True, "fallback": {"from": cfg.get("provider"), "to": "retrieval_only", "reason": err.code,
+                                                                          "message": err.message},
+            "error": {"code": err.code, "message": err.message}, "top_rerank": hits[0].get("rerank_score") if hits else None}
+
+def _logged(question: str, r: dict) -> dict:
+    """每次问答一条结构化日志：各阶段耗时、provider、token、拒答、降级"""
+    t, u = r.get("timing", {}), r.get("usage") or {}
+    event(log, "rag.answer", provider=r.get("provider"), model=r.get("model"), q=q_repr(question),
+          retrieval_secs=t.get("retrieval_secs"), rerank_secs=t.get("rerank_secs"), generation_secs=t.get("generation_secs"),
+          first_token_secs=t.get("first_token_secs"), total_secs=t.get("total_secs"),
+          prompt_tokens=u.get("prompt_tokens"), completion_tokens=u.get("completion_tokens"), total_tokens=u.get("total_tokens"),
+          top_rerank=round(r["top_rerank"], 3) if isinstance(r.get("top_rerank"), (int, float)) else None,
+          refused=r.get("refused"), threshold_refused=r.get("threshold_refused", False), n_citations=len(r.get("sources", [])),
+          invalid_citations=len(r.get("invalid_citations", [])), numcheck_warnings=len(r.get("support_warnings", [])),
+          degraded=r.get("degraded", False), fallback=(r.get("fallback") or {}).get("to"))
+    return r
 
 def format_result(r: dict, show_answer=True) -> str:
     L = []
@@ -379,9 +511,14 @@ if __name__ == "__main__":
     a = ap.parse_args()
     rb = -1.0 if a.refuse_below is None else (None if a.refuse_below.lower() in ("off", "none") else float(a.refuse_below))
     kw = dict(model=a.model, prompt=a.prompt, expand=a.expand, refuse_below=rb, reflect_round=a.reflect or None)
-    if a.stream and not a.json:
-        r = answer(a.question, a.k, not a.no_rerank, a.provider, stream=True, on_token=lambda t: print(t, end="", flush=True), **kw)
-        print("\n"); print(format_result(r, show_answer=False))
-    else:
-        r = answer(a.question, a.k, not a.no_rerank, a.provider, **kw)
-        print(json.dumps(r, ensure_ascii=False, indent=1) if a.json else format_result(r))
+    from kblog import setup_logging
+    setup_logging()
+    try:
+        if a.stream and not a.json:
+            r = answer(a.question, a.k, not a.no_rerank, a.provider, stream=True, on_token=lambda t: print(t, end="", flush=True), **kw)
+            print("\n"); print(format_result(r, show_answer=False))
+        else:
+            r = answer(a.question, a.k, not a.no_rerank, a.provider, **kw)
+            print(json.dumps(r, ensure_ascii=False, indent=1) if a.json else format_result(r))
+    except PowerKBError as e:                  # 友好提示，不打印堆栈
+        print(f"\n错误 [{e.code}]：{e.message}", file=sys.stderr); sys.exit(1)

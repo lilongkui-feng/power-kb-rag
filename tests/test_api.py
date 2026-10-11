@@ -167,3 +167,23 @@ def test_upload_too_large(authsrv):
     r = httpx.post(authsrv + "/documents", headers={"X-API-Key": "testtoken"}, timeout=60,
                    files={"file": ("big.pdf", b"%PDF-1.4\n" + b"0" * (1024 * 1024 + 10), "application/pdf")})
     assert r.status_code == 413; _err(r, "payload_too_large")
+
+def test_corrupt_pdf_job_failed_service_ok(c):
+    """损坏 PDF：任务进入 failed（document_parse_error），服务与知识库不受影响"""
+    before = c.get("/health").json()["documents"]
+    data = b"%PDF-1.7\n1 0 obj << /Type /Catalog >>\n" + os.urandom(2000)          # 有 PDF 头但结构损坏
+    r = c.post("/documents", files={"file": (f"corrupt_{int(time.time())}.pdf", data, "application/pdf")})
+    assert r.status_code == 202, r.text
+    for _ in range(120):
+        j = c.get(f"/jobs/{r.json()['job_id']}").json()
+        if j["status"] not in ("queued", "running"):
+            break
+        time.sleep(0.5)
+    assert j["status"] == "failed" and j["error"]["code"] in ("document_parse_error", "document_empty"), j
+    h = c.get("/health").json()
+    assert h["status"] == "ok" and h["documents"] == before
+
+def test_error_body_has_request_id(c):
+    r = c.get("/jobs/doesnotexist", headers={"X-Request-ID": "rid-live-404"})
+    e = r.json()["error"]
+    assert r.status_code == 404 and e["code"] == "not_found" and e["request_id"] == "rid-live-404" and r.headers["x-request-id"] == "rid-live-404"

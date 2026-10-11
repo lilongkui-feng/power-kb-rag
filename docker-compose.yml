@@ -6,7 +6,11 @@
 name: powerkb
 
 x-app: &app
-  build: .
+  build:
+    context: .
+    args:
+      PIP_MIRROR: ${PIP_MIRROR:-}
+      TORCH_INDEX_URL: ${TORCH_INDEX_URL:-https://download.pytorch.org/whl/cpu}
   image: powerkb:latest
   env_file:
     - path: .env
@@ -42,7 +46,7 @@ services:
   api:
     <<: *app
     command: ["api"]
-    ports: ["${KB_API_PORT:-8000}:8000"]
+    ports: ["${KB_BIND:-0.0.0.0}:${KB_API_PORT:-8000}:8000"]                # KB_BIND=127.0.0.1 = 只允许本机/Nginx 访问
     environment:
       HF_HOME: /models/hf                                          # 显式指定，优先于 .env
       LOCAL_LLM_URL: http://ollama:11434/v1                        # provider=local → ollama 容器
@@ -74,7 +78,7 @@ services:
   web:
     <<: *app
     command: ["web"]
-    ports: ["${KB_WEB_PORT:-8501}:8501"]
+    ports: ["${KB_BIND:-0.0.0.0}:${KB_WEB_PORT:-8501}:8501"]
     environment:
       HF_HOME: /models/hf
       KB_API_URL: http://api:8000

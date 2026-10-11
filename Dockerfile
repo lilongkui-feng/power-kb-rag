@@ -5,9 +5,12 @@ FROM python:3.12-slim AS builder
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1
 RUN python -m venv /opt/venv
 ENV PATH=/opt/venv/bin:$PATH
-RUN pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+# 国内构建可加速：PIP_MIRROR=https://mirrors.aliyun.com/pypi/simple/（compose 从 .env 传入）；TORCH_INDEX_URL 可换成可用的 CPU wheel 源
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+ARG PIP_MIRROR=
+RUN pip install torch==2.14.1 --index-url "$TORCH_INDEX_URL"
 COPY requirements-docker.txt /tmp/requirements-docker.txt
-RUN pip install -r /tmp/requirements-docker.txt
+RUN pip install ${PIP_MIRROR:+-i "$PIP_MIRROR"} -r /tmp/requirements-docker.txt
 
 FROM python:3.12-slim
 # hadolint ignore=DL3008

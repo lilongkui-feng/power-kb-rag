@@ -18,6 +18,9 @@ from collections import Counter
 from typing import Iterable
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+from config import settings as _cfg, secret as _secret
+from kblog import get_logger
+log = get_logger("powerkb.vector_store")
 DIM = 1024                                                     # bge-m3
 COLLECTION = {"heading": "power_heading", "fixed": "power_fixed", "recursive": "power_recursive", "heading_v2": "power_heading_v2"}
 
@@ -66,7 +69,7 @@ def chroma_client():
         if _chroma_client is None:
             import chromadb
             from chromadb.config import Settings
-            _chroma_client = chromadb.PersistentClient(path=os.environ.get("CHROMA_DIR", os.path.join(HERE, "chroma_db")),
+            _chroma_client = chromadb.PersistentClient(path=_cfg().path(_cfg().chroma_dir),
                                                        settings=Settings(anonymized_telemetry=False))
         return _chroma_client
 
@@ -143,7 +146,7 @@ def where_to_expr(where: dict | None) -> str:
 _milvus_clients: dict[str, object] = {}
 
 def milvus_client(uri: str | None = None):
-    uri = uri or os.environ.get("MILVUS_URI") or os.path.join(HERE, "milvus_db", "power_kb.db")
+    uri = uri or _cfg().path(_cfg().milvus_uri) or os.path.join(HERE, "milvus_db", "power_kb.db")
     with _lock:
         if uri not in _milvus_clients:
             env = os.environ.pop("MILVUS_URI", None)          # pymilvus 导入时会读取 MILVUS_URI 且只接受 http 地址，Lite 文件路径会报错
@@ -154,7 +157,7 @@ def milvus_client(uri: str | None = None):
                     os.environ["MILVUS_URI"] = env
             if not uri.startswith(("http://", "https://", "tcp://")):
                 os.makedirs(os.path.dirname(os.path.abspath(uri)), exist_ok=True)       # Milvus Lite：本地文件
-            _milvus_clients[uri] = MilvusClient(uri=uri, token=os.environ.get("MILVUS_TOKEN", ""))
+            _milvus_clients[uri] = MilvusClient(uri=uri, token=_secret("milvus_token") or "")
         return _milvus_clients[uri]
 
 class MilvusStore(VectorStore):
@@ -176,7 +179,7 @@ class MilvusStore(VectorStore):
         sch.add_field("vector", DataType.FLOAT_VECTOR, dim=DIM)
         sch.add_field("document", DataType.VARCHAR, max_length=65535)
         sch.add_field("source", DataType.VARCHAR, max_length=1024)
-        want = os.environ.get("MILVUS_INDEX", "HNSW").upper()
+        want = _cfg().milvus_index
         for it in dict.fromkeys([want, "FLAT"]):
             ip = self.c.prepare_index_params()
             ip.add_index(field_name="vector", index_type=it, metric_type="COSINE",
@@ -188,7 +191,7 @@ class MilvusStore(VectorStore):
             except Exception as e:                            # Milvus Lite 只支持 FLAT/IVF_FLAT/AUTOINDEX 等
                 if self.c.has_collection(self.name):
                     self.c.drop_collection(self.name)
-                print(f"[milvus] 索引 {it} 不可用（{str(e)[:120]}），改用下一个", flush=True)
+                log.warning("milvus index %s unavailable (%s), trying next", it, str(e)[:120])
     def _rows(self, ids, embeddings, documents, metadatas):
         emb = embeddings.tolist() if hasattr(embeddings, "tolist") else embeddings
         rows = []
@@ -250,10 +253,7 @@ class MilvusStore(VectorStore):
 _stores: dict[tuple, VectorStore] = {}
 
 def backend() -> str:
-    b = (os.environ.get("VECTOR_STORE") or "chroma").lower()          # 空值视为默认
-    if b not in ("chroma", "milvus"):
-        raise ValueError(f"VECTOR_STORE 只能是 chroma 或 milvus，当前 {b}")
-    return b
+    return _cfg().vector_store                                       # config 已校验 chroma|milvus
 
 def get_store(method_or_name: str, create: bool = False, backend_name: str | None = None, meta: dict | None = None, **kw) -> VectorStore:
     """按 VECTOR_STORE（或显式 backend_name）返回集合句柄；进程内缓存同一集合的句柄"""

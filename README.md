@@ -72,7 +72,8 @@ flowchart LR
 | 部署 | Docker Compose | api + web + ollama，`--profile milvus` 再加 etcd/minio/milvus；首次启动自动建索引或自动迁移 |
 | 关键词 | rank_bm25 + jieba | 自定义电力词典，数值和单位不拆开（`dict/`） |
 | 重排 | BAAI/bge-reranker-v2-m3（CrossEncoder） | 一阶段 Top-20 重排，最终分 = 0.8·重排分 + 0.2·一阶段分 |
-| LLM | OpenAI 兼容接口：硅基流动、DeepSeek、OpenAI、xAI、本地 Ollama | 环境变量配置；429/5xx 自动退避重试 |
+| LLM | OpenAI 兼容接口：硅基流动、DeepSeek、OpenAI、xAI、本地 Ollama | 429/5xx/超时分类重试（指数退避 + Retry-After）；失败可降级到本地模型或“仅检索结果” |
+| 配置 / 日志 / 异常 | pydantic-settings、logging | `config.py` 集中配置（环境变量 > .env > config.yaml > 默认，密钥只认环境变量）；`kblog.py` text/json 日志 + 轮转 + request_id + 自动打码；`errors.py` 异常体系 → 统一错误体 |
 | 服务 | FastAPI + uvicorn | lifespan 预加载模型；Pydantic 模型 + OpenAPI 文档；SSE 流式；入库异步任务 + 写锁；可选 `KB_API_TOKEN` 鉴权、CORS、上传大小限制、统一错误格式、请求日志 |
 | 界面 | Streamlit（纯前端，httpx 调 API） | 流式输出、出处展开、上传进度轮询、按哈希去重；不加载任何模型 |
 | 评测 | 自研 `evaluate.py` | 检索 Hit@k/MRR、要点覆盖自动评分、引用、拒答、耗时；支持缓存续跑和并发 |
@@ -108,7 +109,9 @@ python bm25_index.py  --methods heading_v2                # BM25 → bm25_index/
 ### 3. 配置 LLM（任选其一）
 
 ```bash
-cp .env.example .env    # 只是变量清单；程序读取的是进程环境变量，需要 export 或 set -a; source .env
+cp .env.example .env              # 密钥写这里（.env 已被 .gitignore 忽略）；程序启动时自动读取项目根目录的 .env
+cp config.example.yaml config.yaml   # 可选：非敏感参数（检索/重排/切分/端口/模型名/日志）
+python config.py                  # 校验并打印生效配置（密钥只显示“已设置/未设置”）
 ```
 
 | 提供方 | 需要的环境变量 | 说明 |
@@ -118,7 +121,26 @@ cp .env.example .env    # 只是变量清单；程序读取的是进程环境变
 | 本地 Ollama | 无 | 先 `sh deploy/start_ollama.sh`（端口 11434），再 `ollama pull qwen2.5:3b-instruct`（或用 `deploy/Modelfile.qwen2.5-3b` 从 GGUF 创建同名模型） |
 | 任意兼容接口 | `LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY` | 不传 `--provider` 时生效 |
 
-其它可选变量：`RAG_PROMPT`（p0/p1/p2，默认本地 p1、云端 p2）、`RAG_EXPAND`（默认 none）、`RAG_REFUSE_BELOW`（默认 0.3，填 off 关闭）、`LLM_TIMEOUT`（默认 180 秒）。
+其它常用项：`RAG_PROMPT`（p0–p3，默认本地 p1、云端 p2）、`RAG_EXPAND`（默认 none）、`RAG_REFUSE_BELOW`（默认 0.3，off 关闭）、`LLM_TIMEOUT`（默认 180 秒）、`LLM_FALLBACK`（默认 retrieval）。全部配置项及注释见 [`config.example.yaml`](config.example.yaml)。
+
+#### 配置优先级与密钥规则
+
+**环境变量 > `.env` > `config.yaml` > 代码默认值**（`config.py`，pydantic-settings）。
+
+- 字段名与环境变量同名（不区分大小写），以前的环境变量写法全部继续有效；值为空字符串视为未设置。`config.yaml` 可以按小节写（`retrieval:`、`llm:` …），加载时拍平；用 `CONFIG_FILE` 指定其他路径。
+- **API Key / Token（`SILICONFLOW_API_KEY`、`DEEPSEEK_API_KEY`、`OPENAI_API_KEY`、`XAI_API_KEY`、`LLM_API_KEY`、`KB_API_TOKEN`、`MILVUS_TOKEN`）只能来自环境变量或 `.env`**，类型是 `SecretStr`；`config.yaml` 里出现 `*api_key / *token / secret / password` 这类键会直接报 `ConfigError` 拒绝启动。拼错的配置项和非法取值（如 `log_format: xml`）同样会在启动时报错，错误信息不回显输入值。
+- API 启动时在日志里打一条脱敏的 `config.summary`；`python config.py get kb_api_port` 可在脚本里读取单项（`deploy/start_api.sh` 就是这样取 host/port 的）。
+
+#### LLM 失败时的处理（`LLM_FALLBACK`）
+
+| 取值 | 云端调用失败（重试用尽后） |
+|---|---|
+| `retrieval`（默认） | 不报错，返回检索到的 Top-3 资料（`degraded: true`），前端提示“大模型暂时不可用” |
+| `local` | 改用本地 Ollama 重新生成（`fallback: {from, to: "local", reason}`），本地也失败则报错 |
+| `local_then_retrieval` | 先本地，再仅检索结果 |
+| `none` | 直接返回错误（504/429/502/503，见下方错误码表） |
+
+重试：429、5xx、网络错误最多 `LLM_MAX_RETRIES`（默认 5）次，退避 `min(LLM_BACKOFF_CAP, LLM_BACKOFF_BASE·2^n)` 秒并遵守 `Retry-After`；超时单独计 `LLM_TIMEOUT_RETRIES`（默认 1）次；401/403 不重试；流式已输出部分内容后不再重试（避免重复）。
 
 ### 4. 启动 API 服务与 Web 前端
 
@@ -189,6 +211,8 @@ VECTOR_STORE=milvus python evaluate.py --input eval_set_v3.jsonl --collection he
 
 ## 一键部署（Docker）
 
+> 第一次在云服务器上部署？看 **[docs/DEPLOY.md](docs/DEPLOY.md)**：服务器选型、安全组、Docker 安装与国内镜像加速、数据准备、HF 镜像、Nginx + HTTPS + 基本鉴权、故障排查、备份与成本控制。干净的 Ubuntu 上可以直接 `sudo bash deploy/bootstrap.sh`（装 Docker → 拉代码 → 生成 .env → 启动，可重复运行）。
+
 ```bash
 cp .env.example .env            # 可选：填写 SILICONFLOW_API_KEY、KB_API_TOKEN 等（key 只会传给 api 容器）
 docker compose up -d            # 或 make up / sh deploy/up.sh：api :8000 + web :8501 + ollama（首次自动拉取 qwen2.5:3b-instruct）
@@ -213,12 +237,53 @@ sh deploy/up.sh down
 | POST | `/ask` | `question, provider, model, prompt, top_k, rerank, expand, refuse_below, sources, xlang` → `answer, citations, invalid_citations, warnings, retrieved, timing, usage` |
 | POST | `/ask/stream` | 同 `/ask`，SSE：`start` → 多个 `token`（`{"t": "..."}`）→ `done`（完整结果，与 `/ask` 相同）；出错为 `error` 事件 |
 | POST | `/documents` | multipart 上传 PDF/DOCX → 202 + `job_id`；后台单线程入库（写锁） |
-| GET | `/jobs/{job_id}` | 入库进度 `queued/running/done/duplicate/error`、`progress` 0–1、`message`、`result` |
+| GET | `/jobs/{job_id}` | 入库进度 `queued/running/done/duplicate/failed`、`progress` 0–1、`message`、`result`；`failed` 时带 `error: {code, message}`（解析失败不影响服务） |
 | GET | `/documents` | 库中文档（上传文档 `id` 为 sha256 前 12 位；基础库为 `base:<文件名>`） |
 | DELETE | `/documents/{id}` | 删除上传文档（同时删 Chroma、切块文件，重建 BM25）；基础库文档返回 403 |
 
-`refuse_below`：不传 = 服务端默认 0.3；`null` = 关闭阈值拒答。所有错误统一为 `{"error": {"code", "message", "detail", "request_id"}}`，每个响应带 `X-Request-ID`。
-环境变量：`KB_API_TOKEN`（非空即开启鉴权，`Authorization: Bearer` 或 `X-API-Key`）、`KB_CORS_ORIGINS`、`KB_MAX_UPLOAD_MB`（默认 50）、`KB_MAX_CONCURRENCY`（同时执行的检索/问答数，默认 2）。
+`refuse_below`：不传 = 服务端默认 0.3；`null` = 关闭阈值拒答。`/ask` 结果里的 `degraded`、`fallback` 表示是否发生了降级。
+相关配置：`KB_API_TOKEN`（非空即开启鉴权，`Authorization: Bearer` 或 `X-API-Key`）、`KB_CORS_ORIGINS`、`KB_MAX_UPLOAD_MB`（默认 50）、`KB_MAX_CONCURRENCY`（同时执行的检索/问答数，默认 2）。
+
+### 错误码
+
+所有错误统一为 `{"error": {"code", "message", "detail", "request_id"}}`，响应头带 `X-Request-ID`（客户端传入的会沿用）。message 面向用户，不包含堆栈和 key；未预期的异常一律返回 `internal_error`，堆栈只写进（已打码的）服务端日志。异常类定义在 [`errors.py`](errors.py)。
+
+| HTTP | code | 异常类 | 场景 |
+|---|---|---|---|
+| 400 | `provider_not_ready` | ProviderNotReady | 选了云端 provider 但服务端没配置对应 key；未知 provider |
+| 400 / 422 | `bad_request` / `empty_file` | BadRequest | 请求不合法、空文件 |
+| 401 | `unauthorized` | AuthError | 开启鉴权后缺少或错误的 token |
+| 403 | `forbidden` | Forbidden | 删除基础库文档 |
+| 404 | `not_found` | NotFound | 任务 / 文档不存在 |
+| 409 | `busy` | Busy | 入库任务正在写索引时删除文档 |
+| 413 | `payload_too_large` | FileTooLarge | 超过 `KB_MAX_UPLOAD_MB` |
+| 415 | `unsupported_type` | UnsupportedFile | 不是 .pdf/.docx，或文件头与扩展名不符 |
+| 422 | `validation_error` | — | 请求参数校验失败（detail 列出字段） |
+| 422 | `document_parse_error` | DocumentParseError | 文档损坏/加密（入库任务里以 `failed` 状态体现） |
+| 429 | `llm_rate_limited` | LLMRateLimited | 上游限流，重试用尽 |
+| 500 | `retrieval_error` | RetrievalError | 检索内部错误 |
+| 500 | `config_error` | ConfigError | 配置非法 |
+| 500 | `internal_error` | — | 未预期异常 |
+| 502 | `llm_auth_failed` | LLMAuthError | 上游 401/403（服务端 key 无效） |
+| 502 | `llm_error` | LLMError | 上游其他 4xx、返回格式异常 |
+| 503 | `llm_unavailable` | LLMUnavailable | 连不上 LLM 或上游 5xx，重试用尽 |
+| 503 | `index_not_ready` | IndexNotReady | 模型未加载完 / 索引不存在 |
+| 504 | `llm_timeout` | LLMTimeout | 上游超时 |
+
+流式接口在已经开始输出后出错时，以 SSE `error` 事件给出同样的 `code / message / status / request_id`。前端（`app.py`）按错误码显示中文处理建议。
+
+### 日志
+
+`kblog.py` 统一配置：`LOG_LEVEL`（默认 INFO）、`LOG_FORMAT=text|json`、`LOG_DIR`（默认 `logs/`，容器内为 `data/logs/`）、`LOG_FILE`（off 关闭文件日志）、按大小轮转（`LOG_MAX_BYTES` 10 MB × `LOG_BACKUP_COUNT` 5）。
+
+- **request_id** 用 contextvar 贯穿：中间件生成（或沿用客户端的 `X-Request-ID`），带进线程池（检索、生成、流式、入库任务），每行日志都有 `[rid=…]`。
+- **结构化事件**：`request`（方法、路径、状态码、耗时）、`rag.answer`（provider、model、检索/重排/生成/首 token/总耗时、prompt/completion tokens、Top-1 重排分、是否拒答/阈值拒答、引用数、降级）、`llm.retry` / `llm.failed` / `llm.fallback`、`ingest.job`、`request.error`、启动时的 `config.summary`。
+- **打码**：输出前统一过滤——已配置的密钥原值、`Authorization: Bearer …`、`X-API-Key`、`sk-…`/`xai-…`、`api_key=…`/`token: …`，包括异常堆栈；问句默认只记长度和哈希，`LOG_QUESTIONS=true` 才记原文（截断 200 字）。uvicorn 的日志也走同一套格式。
+
+```text
+2026-10-11 19:47:38,561 INFO powerkb.rag [rid=demo-ask-1] rag.answer provider=local model=qwen2.5:3b-instruct q=<len=16 sha1=41aec0a4a6> retrieval_secs=0.08 rerank_secs=4.31 generation_secs=5.37 total_secs=9.76 prompt_tokens=2137 completion_tokens=42 total_tokens=2179 top_rerank=0.997 refused=False threshold_refused=False n_citations=2 ...
+2026-10-11 19:47:38,561 INFO powerkb.api [rid=demo-ask-1] request method=POST path=/ask status=200 ms=9764
+```
 
 ```bash
 curl -s localhost:8000/health
@@ -234,7 +299,7 @@ curl -s -X DELETE localhost:8000/documents/<sha12>
 # 开启鉴权后每个请求加：-H "Authorization: Bearer $KB_API_TOKEN"
 ```
 
-测试：`python -m pytest tests/test_api.py -v`（需先启动 API 和本地 Ollama；`KB_TEST_CLOUD=1` 额外跑 1 次硅基流动端到端）。
+测试：`python -m pytest tests -q`。`test_api.py` 需要先启动 API 和本地 Ollama（否则自动跳过），`KB_TEST_CLOUD=1` 额外跑 1 次硅基流动端到端；`test_errors.py` 用 `httpx.MockTransport` 模拟超时 / 429 / 401 / 5xx 和降级，不调用任何真实云端接口。
 
 ![前端经 API 问答](output/app_api_screenshot.png)
 
@@ -251,7 +316,9 @@ power_kb/
 ├── rag.py                             # Prompt、LLM 调用、引用校验、拒答阈值、CLI
 ├── api.py                             # FastAPI 服务（/health /config /search /ask /ask/stream /documents /jobs）
 ├── kb_store.py / app.py               # 上传增量入库 / 删除；Streamlit 纯前端（只调 API）
-├── tests/                             # test_api.py（接口集成测试）、test_numcheck.py
+├── config.py / config.example.yaml    # 集中配置（pydantic-settings；密钥只认环境变量 / .env）
+├── errors.py / kblog.py               # 异常体系（→ HTTP 状态码与错误码）；统一日志（request_id、打码、轮转）
+├── tests/                             # test_api（集成）、test_errors（异常映射/LLM 模拟/降级）、test_config、test_logging、test_vector_store、test_numcheck
 ├── vector_store.py                    # 向量库抽象：ChromaStore / MilvusStore（Lite / Standalone）
 ├── migrate_chroma_to_milvus.py        # Chroma → Milvus 迁移（复用向量）
 ├── Dockerfile / docker-compose*.yml   # 一键部署（api / web / ollama / milvus profile）；deploy/up.sh、Makefile
@@ -260,7 +327,8 @@ power_kb/
 ├── eval_set_50.* / eval_set_v3.*      # 评测集（jsonl / md / xlsx）
 ├── eval_ood.jsonl / evalset/          # 库外与边界题、出题与审阅脚本
 ├── dict/                              # jieba 电力词典
-├── deploy/                            # 启动脚本、批量评测脚本、make_zip.py、出图脚本
+├── deploy/                            # bootstrap.sh（干净 Ubuntu 一键部署）、up.sh、启动脚本、批量评测脚本、make_zip.py
+├── docs/DEPLOY.md                     # 新手部署教程（云服务器 + Nginx/HTTPS + 排障）
 ├── docs/DEVLOG.md                     # 完整开发日志（Day 3–16 的全部技术细节）
 ├── docs/images/                       # README 用图
 └── output/                            # 评测报告、统计、人工核对记录（切块原文不入库，见版权说明）

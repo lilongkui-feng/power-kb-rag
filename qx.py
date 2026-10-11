@@ -86,7 +86,8 @@ def _cache():
         _cache.d = json.load(open(CACHE, encoding="utf-8")) if os.path.exists(CACHE) else {}
     return _cache.d
 
-QX_PROVIDER = os.environ.get("QX_LLM_PROVIDER", "local")   # local=ollama 3B；siliconflow=云端 V3（key 只从环境变量读）
+from config import settings as _cfg
+QX_PROVIDER = _cfg().qx_llm_provider   # local=ollama 3B；siliconflow=云端 V3（key 只从环境变量读）
 
 def _llm(kind: str, prompt: str, max_tokens: int = 120) -> str | None:
     prov = QX_PROVIDER
@@ -107,8 +108,8 @@ def _llm(kind: str, prompt: str, max_tokens: int = 120) -> str | None:
             json.dump(c, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
         return txt
     try:
-        r = httpx.post(os.environ.get("LOCAL_LLM_URL", "http://127.0.0.1:11434/v1") + "/chat/completions", timeout=120,
-                       json={"model": os.environ.get("QX_LLM_MODEL", "qwen2.5:3b-instruct"), "temperature": 0, "max_tokens": max_tokens,
+        r = httpx.post(_cfg().local_llm_url + "/chat/completions", timeout=120,
+                       json={"model": _cfg().qx_llm_model, "temperature": 0, "max_tokens": max_tokens,
                              "messages": [{"role": "user", "content": prompt}]})
         txt = r.json()["choices"][0]["message"]["content"].strip()
     except Exception:

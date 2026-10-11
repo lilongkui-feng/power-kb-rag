@@ -258,7 +258,11 @@ def config_from_args(a):
             "max_tokens": a.max_tokens, "refuse_below": a.refuse_below, "prompt_sha": hashlib.sha1(rag.PROMPTS[a.prompt].encode()).hexdigest()[:8],
             **({"prompt": a.prompt} if a.prompt != "p0" else {}), **({"expand": a.expand} if a.expand != "none" else {}),
             **({"xlang": a.xlang} if a.xlang != "none" else {}), **({"multiq": a.multiq} if a.multiq != "none" else {}), **({"reflect": True} if a.reflect else {}), "kb_sig": kb_sig(a.collection),
-           **({"vector_store": os.environ.get("VECTOR_STORE", "chroma")} if (os.environ.get("VECTOR_STORE") or "chroma") != "chroma" else {})}
+           **({"vector_store": _vs()} if _vs() != "chroma" else {})}
+
+def _vs():
+    from config import settings
+    return settings().vector_store
 
 def cache_path(cfg):
     keys = {k: cfg[k] for k in sorted(cfg)}

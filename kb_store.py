@@ -15,7 +15,10 @@ UP_DIR = os.path.join(HERE, "uploads")
 FILES = os.path.join(UP_DIR, "files")
 REG = os.path.join(UP_DIR, "registry.json")
 # 网页上传默认走 v2 管线（表格结构化 + 表格父子块 + PaddleOCR），写入 power_heading_v2；KB_METHOD=heading 可退回旧管线
-METHOD = os.environ.get("KB_METHOD", "heading_v2")
+from config import settings as _cfg
+from kblog import get_logger
+log = get_logger("powerkb.kb_store")
+METHOD = _cfg().kb_method
 CHUNK_FILES = {"heading": os.path.join(UP_DIR, "chunks_uploaded.jsonl"), "heading_v2": os.path.join(UP_DIR, "chunks_uploaded_v2.jsonl")}
 CHUNKS = CHUNK_FILES[METHOD]
 
@@ -86,7 +89,7 @@ def chunk_uploaded(path: str, h: str, max_size: int = 800, overlap: int = 50) ->
 
 def ingest(path: str, name: str | None = None, progress=None) -> dict:
     """progress(frac, msg) 回调用于界面进度条"""
-    prog = progress or (lambda f, m: print(f"[{f:.0%}] {m}", flush=True))
+    prog = progress or (lambda f, m: log.info("[%.0f%%] %s", f * 100, m))
     name = name or os.path.basename(path)
     t0 = time.time()
     h = sha256(path)
@@ -100,7 +103,14 @@ def ingest(path: str, name: str | None = None, progress=None) -> dict:
     if os.path.abspath(path) != os.path.abspath(dst):
         shutil.copyfile(path, dst)
     prog(0.05, "解析文档（扫描页自动 OCR，可能较慢）…")
-    chunks, info, doc = chunk_uploaded(dst, h)
+    try:
+        chunks, info, doc = chunk_uploaded(dst, h, _cfg().chunk_max_size, _cfg().chunk_overlap)
+    except Exception as e:                    # 加密 / 损坏 / 非 PDF：清理副本，交给上层标记任务 failed，不影响服务
+        log.warning("parse failed source=%s err=%s", name, type(e).__name__)
+        if os.path.exists(dst):
+            os.remove(dst)
+        from errors import DocumentParseError
+        raise DocumentParseError(f"《{name}》解析失败（{type(e).__name__}）：文件可能已加密、损坏或不是有效的 PDF/DOCX") from None
     try:
         from ocr import PaddleClient
         PaddleClient.close()                 # 释放 PP-StructureV3 子进程（峰值 ~4.5 GB）
