@@ -1,0 +1,129 @@
+{
+ "config": {
+  "collection": "v2s400o50",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "kb_sig": "88ebac4022"
+ },
+ "rules_version": 2,
+ "n_inkb": 50,
+ "n_ood": 5,
+ "groups": {
+  "全部": {
+   "n": 50,
+   "chunk": {
+    "hit@1": 0.68,
+    "hit@3": 0.94,
+    "hit@5": 0.98,
+    "mrr": 0.813
+   },
+   "doc": {
+    "hit@1": 0.98,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.987
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 18,
+   "chunk": {
+    "hit@1": 0.667,
+    "hit@3": 0.944,
+    "hit@5": 1.0,
+    "mrr": 0.81
+   },
+   "doc": {
+    "hit@1": 0.944,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.963
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.875
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.625,
+    "hit@3": 0.875,
+    "hit@5": 0.938,
+    "mrr": 0.755
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 42,
+   "chunk": {
+    "hit@1": 0.762,
+    "hit@3": 0.976,
+    "hit@5": 1.0,
+    "mrr": 0.863
+   },
+   "doc": {
+    "hit@1": 0.976,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.984
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.25,
+    "hit@3": 0.75,
+    "hit@5": 0.875,
+    "mrr": 0.552
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 12.95,
+  "rerank": 12.61,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/retr_v2s400o50_20261010-222128"
+}

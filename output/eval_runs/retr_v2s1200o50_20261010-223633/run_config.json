@@ -1,0 +1,24 @@
+{
+ "config": {
+  "collection": "v2s1200o50",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "kb_sig": "3912dcb8b8"
+ },
+ "input": "eval_set_50.jsonl",
+ "retrieval_only": true,
+ "tag": "retr_v2s1200o50",
+ "judge": null
+}

@@ -1,0 +1,1119 @@
+{
+ "n_questions": 32,
+ "query_encode_secs_total": 0.62,
+ "metrics": {
+  "heading": {
+   "all": {
+    "Hit@1": 0.812,
+    "Hit@3": 0.969,
+    "Hit@5": 1.0,
+    "Hit@10": 1.0,
+    "MRR@10": 0.881,
+    "n": 32
+   },
+   "zh": {
+    "Hit@1": 0.88,
+    "Hit@3": 0.96,
+    "Hit@5": 1.0,
+    "Hit@10": 1.0,
+    "MRR@10": 0.921,
+    "n": 25
+   },
+   "en": {
+    "Hit@1": 0.571,
+    "Hit@3": 1.0,
+    "Hit@5": 1.0,
+    "Hit@10": 1.0,
+    "MRR@10": 0.738,
+    "n": 7
+   },
+   "SrcHit@1": 0.969,
+   "SrcHit@5": 1.0,
+   "query_latency_ms(chroma)": 14.0
+  },
+  "fixed": {
+   "all": {
+    "Hit@1": 0.562,
+    "Hit@3": 0.812,
+    "Hit@5": 0.875,
+    "Hit@10": 0.938,
+    "MRR@10": 0.691,
+    "n": 32
+   },
+   "zh": {
+    "Hit@1": 0.6,
+    "Hit@3": 0.92,
+    "Hit@5": 0.92,
+    "Hit@10": 0.96,
+    "MRR@10": 0.738,
+    "n": 25
+   },
+   "en": {
+    "Hit@1": 0.429,
+    "Hit@3": 0.429,
+    "Hit@5": 0.714,
+    "Hit@10": 0.857,
+    "MRR@10": 0.524,
+    "n": 7
+   },
+   "SrcHit@1": 0.969,
+   "SrcHit@5": 0.969,
+   "query_latency_ms(chroma)": 2.6
+  },
+  "recursive": {
+   "all": {
+    "Hit@1": 0.656,
+    "Hit@3": 0.875,
+    "Hit@5": 0.906,
+    "Hit@10": 0.969,
+    "MRR@10": 0.776,
+    "n": 32
+   },
+   "zh": {
+    "Hit@1": 0.68,
+    "Hit@3": 0.88,
+    "Hit@5": 0.92,
+    "Hit@10": 0.96,
+    "MRR@10": 0.789,
+    "n": 25
+   },
+   "en": {
+    "Hit@1": 0.571,
+    "Hit@3": 0.857,
+    "Hit@5": 0.857,
+    "Hit@10": 1.0,
+    "MRR@10": 0.729,
+    "n": 7
+   },
+   "SrcHit@1": 1.0,
+   "SrcHit@5": 1.0,
+   "query_latency_ms(chroma)": 3.1
+  }
+ },
+ "per_question": {
+  "q01": {
+   "query": "红外诊断中相对温差法怎么计算？适用于哪类缺陷？",
+   "lang": "zh",
+   "gold": "DL_T_664-2025_带电设备红外诊断应用规范.pdf / 8.2 相对温差法",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.763 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 8 诊断方法 > 8.2 相对温差法 | p12",
+     "0.711 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 8 诊断方法 > 8.3 同类温差法 | p12",
+     "0.691 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 6 热像仪管理和检验 > 6.2 仪器检验 > 6.2.2 检验基本方法 > 6.2.2.7 最小可 | p10"
+    ]
+   },
+   "fixed": {
+    "rank": 3,
+    "src_rank": 1,
+    "top3": [
+     "0.728 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p12",
+     "0.698 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p8",
+     "0.677 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p12"
+    ]
+   },
+   "recursive": {
+    "rank": 3,
+    "src_rank": 1,
+    "top3": [
+     "0.706 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p9",
+     "0.703 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p12",
+     "0.688 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p12"
+    ]
+   }
+  },
+  "q02": {
+   "query": "带电设备红外检测对环境温度、相对湿度和风速有什么要求？",
+   "lang": "zh",
+   "gold": "DL_T_664-2025_带电设备红外诊断应用规范.pdf / 4.3 环境和设备要求",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.788 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 4 现场检测 > 4.2 安全要求 | p6",
+     "0.726 DL_T_2544-2022_继电保护装置状态检修导则.pdf | 附录F | p30",
+     "0.721 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 6 热像仪管理和检验 > 6.2 仪器检验 > 6.2.3 检验实验室的基本要求 | p10"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.808 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p6",
+     "0.731 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p8",
+     "0.730 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p16"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.800 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p6",
+     "0.759 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p11",
+     "0.743 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p10"
+    ]
+   }
+  },
+  "q03": {
+   "query": "500kV变电站设备红外检测周期一年几次？",
+   "lang": "zh",
+   "gold": "DL_T_664-2025_带电设备红外诊断应用规范.pdf / 7.2 变、配电设备",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.710 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 7 红外检测周期 > 7.2 变、配电设备 | p11",
+     "0.699 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 7 红外检测周期 > 7.3 输、配电线路 | p11",
+     "0.657 DL_T_2544-2022_继电保护装置状态检修导则.pdf | 附录E | p28"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.718 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p11",
+     "0.695 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p11",
+     "0.668 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p28"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.697 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p11",
+     "0.686 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p11",
+     "0.654 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p29"
+    ]
+   }
+  },
+  "q04": {
+   "query": "六氟化硫气瓶存放和使用有哪些安全规定？",
+   "lang": "zh",
+   "gold": "DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf / 4.2 六氟化硫气瓶的安全使用",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.784 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf | 4 六氟化硫瓶装气的监督与管理 > 4.2 六氟化硫气瓶的安全使用 | p5",
+     "0.734 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf | 4 六氟化硫瓶装气的监督与管理 | p5",
+     "0.722 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf | 3 术语和定义 | p4"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.770 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf |  | p5",
+     "0.761 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf |  | p5",
+     "0.713 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf |  | p4"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.781 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf |  | p5",
+     "0.766 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf |  | p5",
+     "0.723 DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf |  | p4"
+    ]
+   }
+  },
+  "q05": {
+   "query": "SF6设备故障气体分析以哪些组分作为判断依据？SO2和H2S的注意值是多少？",
+   "lang": "zh",
+   "gold": "DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf / 6 判断依据",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.759 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf | 6 判断依据 | p5",
+     "0.728 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf | 6 判断依据 | p5",
+     "0.689 平高_ZF12B-126_GIS_安装使用说明书.pdf | 6 产品的运行和维护 > 6.2 检查项目和推荐周期 > 6.2.4 SF6气体 | p15"
+    ]
+   },
+   "fixed": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.746 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p5",
+     "0.731 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p5",
+     "0.701 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p5"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.770 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p5",
+     "0.724 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p5",
+     "0.693 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p4"
+    ]
+   }
+  },
+  "q06": {
+   "query": "SF6气体分解物多久检测一次？",
+   "lang": "zh",
+   "gold": "DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf / 7 检测周期",
+   "heading": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.676 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf | 6 判断依据 | p5",
+     "0.671 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf | 7 检测周期 | p6",
+     "0.666 平高_ZF12B-126_GIS_安装使用说明书.pdf | 6 产品的运行和维护 > 6.2 检查项目和推荐周期 > 6.2.4 SF6气体 | p15"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.655 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p5",
+     "0.641 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p8",
+     "0.636 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p7"
+    ]
+   },
+   "recursive": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.700 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p5",
+     "0.647 DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf |  | p6",
+     "0.646 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p8"
+    ]
+   }
+  },
+  "q07": {
+   "query": "阀控蓄电池组多长时间做一次核对性放电试验？",
+   "lang": "zh",
+   "gold": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf / 7.4.1.2 阀控蓄电池核对性放电周期",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.817 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 7 维护 > 7.4 周期性测试 > 7.4.1 阀控蓄电池的核对性放电 > 7.4.1.2 阀控蓄 | p20",
+     "0.775 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 7 维护 > 7.4 周期性测试 > 7.4.1 阀控蓄电池的核对性放电 > 7.4.1.1 核对性 | p19",
+     "0.740 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 7 维护 > 7.4 周期性测试 > 7.4.2 镉镍蓄电池组的核对性放电 > 7.4.2.2 镉镍 | p21"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.814 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p20",
+     "0.770 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p20",
+     "0.767 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p19"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.793 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p20",
+     "0.749 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p19",
+     "0.743 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p20"
+    ]
+   }
+  },
+  "q08": {
+   "query": "直流系统蓄电池运行中多久进行一次均衡充电？",
+   "lang": "zh",
+   "gold": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf / 7.2.3 运行中的均衡充电",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.812 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 7 维护 > 7.2 蓄电池组的维护 > 7.2.3 运行中的均衡充电 | p18",
+     "0.760 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 6 运行 > 6.2 设备运行 > 6.2.2 阀控蓄电池组的运行 > 6.2.2.2 阀控蓄电池的 | p13",
+     "0.728 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 6 运行 > 6.3 监视与操作 > 6.3.3 运行中的操作要求 | p15"
+    ]
+   },
+   "fixed": {
+    "rank": 3,
+    "src_rank": 1,
+    "top3": [
+     "0.759 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p13",
+     "0.752 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p14",
+     "0.733 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p18"
+    ]
+   },
+   "recursive": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.828 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p13",
+     "0.764 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p18",
+     "0.734 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p15"
+    ]
+   }
+  },
+  "q09": {
+   "query": "蓄电池鼓胀变形是什么原因，怎么处理？",
+   "lang": "zh",
+   "gold": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf / 附录A A.2 蓄电池鼓胀变形",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.833 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 附录A > A.2 蓄电池鼓胀变形 | p23",
+     "0.703 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 附录A | p23",
+     "0.659 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf | 附录A > A.5 蓄电池核对性放电时容量低 | p23"
+    ]
+   },
+   "fixed": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.823 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p23",
+     "0.688 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p22",
+     "0.650 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p23"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.695 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p22",
+     "0.670 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p23",
+     "0.636 DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf |  | p19"
+    ]
+   }
+  },
+  "q10": {
+   "query": "GIS现场交接试验主回路电阻测量电流不小于多少？",
+   "lang": "zh",
+   "gold": "DL_T_618-2022_GIS现场交接试验规程.pdf / 6 主回路电阻测量",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.811 DL_T_618-2022_GIS现场交接试验规程.pdf | 6 主回路电阻测量 | p6",
+     "0.734 平高_ZF12B-126_GIS_安装使用说明书.pdf | 5 产品投入运行前的试验项目 > 5.5 主回路电阻的测量 | p12",
+     "0.729 DL_T_618-2022_GIS现场交接试验规程.pdf | 16 辅助回路和控制回路的绝缘试验 | p17"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.773 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p6",
+     "0.755 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p3",
+     "0.732 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p3"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.824 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p6",
+     "0.781 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p3",
+     "0.742 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p17"
+    ]
+   }
+  },
+  "q11": {
+   "query": "GIS气室的年漏气率要求是多少，怎样做密封性试验？",
+   "lang": "zh",
+   "gold": "DL_T_618-2022_GIS现场交接试验规程.pdf / 10 气体密封性试验",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.776 DL_T_618-2022_GIS现场交接试验规程.pdf | 10 气体密封性试验 | p9",
+     "0.722 DL_T_618-2022_GIS现场交接试验规程.pdf | 10 气体密封性试验 | p9",
+     "0.684 DL_T_618-2022_GIS现场交接试验规程.pdf | 9 充入GIS 内部气体的质量检测 | p8"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.767 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p9",
+     "0.689 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p9",
+     "0.681 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p8"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.783 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p9",
+     "0.695 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p3",
+     "0.685 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p9"
+    ]
+   }
+  },
+  "q12": {
+   "query": "GIS耐压前为什么要做老炼试验？",
+   "lang": "zh",
+   "gold": "DL_T_618-2022_GIS现场交接试验规程.pdf / 14.9 老炼试验",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.740 DL_T_618-2022_GIS现场交接试验规程.pdf | 14 主回路绝缘试验 > 14.9 老炼试验 | p15",
+     "0.673 DL_T_618-2022_GIS现场交接试验规程.pdf | 14 主回路绝缘试验 > 14.7 耐压试验程序 > 14.7.2 交流试验程序 | p13",
+     "0.659 DL_T_618-2022_GIS现场交接试验规程.pdf | 14 主回路绝缘试验 > 14.8 试验电压的施加 > 14.8.2 冲击耐压试验 | p15"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.768 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p15",
+     "0.675 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p13",
+     "0.674 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p15"
+    ]
+   },
+   "recursive": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.767 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p15",
+     "0.724 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p15",
+     "0.666 DL_T_618-2022_GIS现场交接试验规程.pdf |  | p14"
+    ]
+   }
+  },
+  "q13": {
+   "query": "高压断路器分、合闸同期性怎么测量？",
+   "lang": "zh",
+   "gold": "DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf / 7.3 分、合闸同期性测量",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.807 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 7 时间特性参量试验 > 7.3 分、合闸同期性测量 | p8",
+     "0.806 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 7 时间特性参量试验 > 7.3 分、合闸同期性测量 > 7.3.2 同相各断口分、合闸同期性 | p8",
+     "0.764 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 7 时间特性参量试验 > 7.2 分、合闸时间测量 | p7"
+    ]
+   },
+   "fixed": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.797 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p8",
+     "0.796 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p8",
+     "0.769 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p13"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.810 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p8",
+     "0.771 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p8",
+     "0.763 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p10"
+    ]
+   }
+  },
+  "q14": {
+   "query": "断路器分合闸脱扣器低电压动作试验怎么做？30%额定电压时应该怎样？",
+   "lang": "zh",
+   "gold": "DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf / 9 分、合闸脱扣器动作电压测试（含 9.1/9.2）",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.808 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 9 分、合闸脱扣器动作电压测试 > 9.2 试验步骤 | p12",
+     "0.797 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 9 分、合闸脱扣器动作电压测试 | p11",
+     "0.760 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf | 6 试验要求 > 6.2 试验项目 > 6.2.4 机械操作和机械特性试验 | p12"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.802 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p12",
+     "0.756 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p12",
+     "0.741 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p11"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.808 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p11",
+     "0.721 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p12",
+     "0.716 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p6"
+    ]
+   }
+  },
+  "q15": {
+   "query": "真空断路器弹跳时间如何测量？",
+   "lang": "zh",
+   "gold": "DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf / 7.5 弹跳时间测量",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.778 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 7 时间特性参量试验 > 7.5 弹跳时间测量 > 7.5.2 双端接地状态 | p9",
+     "0.750 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 7 时间特性参量试验 > 7.4 合-分时间测量 | p9",
+     "0.619 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf | 12 合闸电阻预接入时间测量 > 12.1 试验方法 > 12.1.1 合闸电阻与主断口并联 | p13"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.759 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p9",
+     "0.718 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p8",
+     "0.630 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p10"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.792 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p9",
+     "0.708 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p10",
+     "0.634 DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf |  | p11"
+    ]
+   }
+  },
+  "q16": {
+   "query": "哪些情况下应停用整套继电保护装置？",
+   "lang": "zh",
+   "gold": "DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf / 10.2.3 停用整套保护装置",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.822 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf | 10 运维管理 > 10.2 运维操作 > 10.2.3 在下列情况下应停用整套保护装置: | p14",
+     "0.710 DL_T_2544-2022_继电保护装置状态检修导则.pdf | 4 总体要求 | p8",
+     "0.685 DL_T_2544-2022_继电保护装置状态检修导则.pdf | 7 检修决策 > 7.4 检修等级的确定原则 > 7.4.4 严重状态设备的检修 | p11"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.763 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p14",
+     "0.712 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p8",
+     "0.699 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p14"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.775 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p14",
+     "0.711 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p8",
+     "0.704 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p15"
+    ]
+   }
+  },
+  "q17": {
+   "query": "保护定值单变更有什么管理要求？",
+   "lang": "zh",
+   "gold": "DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf / 12.2 定值单管理",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.764 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf | 12 定值管理 > 12.2 定值单管理 | p18",
+     "0.685 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf | 8 生产制造 > 8.6 微机保护装置定值操作应具备以下功能: | p12",
+     "0.666 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf | 12 定值管理 | p17"
+    ]
+   },
+   "fixed": {
+    "rank": 3,
+    "src_rank": 1,
+    "top3": [
+     "0.693 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p18",
+     "0.671 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p17",
+     "0.670 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p17"
+    ]
+   },
+   "recursive": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.708 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p18",
+     "0.706 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p18",
+     "0.673 DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf |  | p17"
+    ]
+   }
+  },
+  "q18": {
+   "query": "继电保护装置评价为严重状态后应该如何检修？",
+   "lang": "zh",
+   "gold": "DL_T_2544-2022_继电保护装置状态检修导则.pdf / 7.4.4 严重状态设备的检修",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.800 DL_T_2544-2022_继电保护装置状态检修导则.pdf | 7 检修决策 > 7.4 检修等级的确定原则 > 7.4.4 严重状态设备的检修 | p11",
+     "0.753 DL_T_2544-2022_继电保护装置状态检修导则.pdf | 6 状态评价 | p10",
+     "0.750 DL_T_2544-2022_继电保护装置状态检修导则.pdf | 7 检修决策 > 7.4 检修等级的确定原则 > 7.4.2 注意状态设备的检修 | p11"
+    ]
+   },
+   "fixed": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.779 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p11",
+     "0.776 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p11",
+     "0.760 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p10"
+    ]
+   },
+   "recursive": {
+    "rank": 4,
+    "src_rank": 1,
+    "top3": [
+     "0.777 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p8",
+     "0.763 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p11",
+     "0.748 DL_T_2544-2022_继电保护装置状态检修导则.pdf |  | p8"
+    ]
+   }
+  },
+  "q19": {
+   "query": "充气式开关柜母线验电要满足哪些条件？",
+   "lang": "zh",
+   "gold": "DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf / 4.4.2.4 母线验电",
+   "heading": {
+    "rank": 5,
+    "src_rank": 1,
+    "top3": [
+     "0.737 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf | 4 运维要求 > 4.4 操作 > 4.4.2 验电依据 | p6",
+     "0.731 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf | 1 范围 | p4",
+     "0.727 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf | 6 试验要求 > 6.2 试验项目 | p10"
+    ]
+   },
+   "fixed": {
+    "rank": null,
+    "src_rank": 1,
+    "top3": [
+     "0.749 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p7",
+     "0.719 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p10",
+     "0.715 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p8"
+    ]
+   },
+   "recursive": {
+    "rank": null,
+    "src_rank": 1,
+    "top3": [
+     "0.734 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p10",
+     "0.731 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p20",
+     "0.721 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p6"
+    ]
+   }
+  },
+  "q20": {
+   "query": "充气柜气箱内气体湿度运行中不应大于多少？",
+   "lang": "zh",
+   "gold": "DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf / 6.2.7 气体湿度测量",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.787 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf | 6 试验要求 > 6.2 试验项目 > 6.2.7 气体湿度测量 | p13",
+     "0.724 平高_ZF12B-126_GIS_安装使用说明书.pdf | 4 安装与调试 > 4.4 投运前的检查项目 > 4.4.5 三工位隔离-接地组合开关气室的SF6  | p32",
+     "0.704 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf | 5 检修要求 > 5.2 检修类别 > 5.2.2 临时性检修 | p8"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.766 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p13",
+     "0.714 平高_ZF12B-126_GIS_安装使用说明书.pdf |  | p11",
+     "0.692 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p4"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.777 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p13",
+     "0.682 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p9",
+     "0.680 平高_ZF12B-126_GIS_安装使用说明书.pdf |  | p11"
+    ]
+   }
+  },
+  "q21": {
+   "query": "RM6环网柜负荷开关熔断器组合（F功能）怎么手动合闸？",
+   "lang": "zh",
+   "gold": "施耐德_RM6_SeT_安装使用说明书_中文.pdf / 操作说明 > F 功能合闸",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.735 施耐德_RM6_SeT_安装使用说明书_中文.pdf | 操作说明 > F 功能合闸 | p18",
+     "0.721 施耐德_RM6_SeT_安装使用说明书_中文.pdf | 操作说明 > F 功能分闸 | p19",
+     "0.715 施耐德_RM6_SeT_安装使用说明书_中文.pdf | 操作说明 > F 功能单元的联锁 | p23"
+    ]
+   },
+   "fixed": {
+    "rank": 3,
+    "src_rank": 1,
+    "top3": [
+     "0.720 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p18",
+     "0.720 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p21",
+     "0.694 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p17"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.719 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p17",
+     "0.711 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p19",
+     "0.705 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p22"
+    ]
+   }
+  },
+  "q22": {
+   "query": "RM6熔断器熔断后撞击器会导致什么动作？",
+   "lang": "zh",
+   "gold": "施耐德_RM6_SeT_安装使用说明书_中文.pdf / 维护 > 带撞击器的熔断器",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.654 施耐德_RM6_SeT_安装使用说明书_中文.pdf | 维护 > 带撞击器的熔断器 | p27",
+     "0.589 施耐德_RM6_SeT_安装使用说明书_中文.pdf | 方案与配置 > 推荐的熔断器 | p6",
+     "0.588 施耐德_RM6_SeT_安装使用说明书_中文.pdf | 维护 > 观察熔断器指示器 | p25"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.629 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p26",
+     "0.595 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p6",
+     "0.586 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p25"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.639 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p25",
+     "0.597 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p27",
+     "0.588 施耐德_RM6_SeT_安装使用说明书_中文.pdf |  | p6"
+    ]
+   }
+  },
+  "q23": {
+   "query": "NM1塑壳断路器多久维护一次？维护内容有哪些？",
+   "lang": "zh",
+   "gold": "正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf / 6 维护",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.760 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf | 6 维护 | p17",
+     "0.704 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf | 7 质保期 | p18",
+     "0.680 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf | 2 检查 测试 | p4"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.742 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p16",
+     "0.697 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p3",
+     "0.690 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p17"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.739 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p16",
+     "0.736 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p3",
+     "0.692 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p17"
+    ]
+   }
+  },
+  "q24": {
+   "query": "NM1断路器正常使用的环境温度和海拔条件是什么？",
+   "lang": "zh",
+   "gold": "正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf / 1 使用信息",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.767 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf | 1 使用信息 | p3",
+     "0.654 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf | 4 安装、接线 | p10",
+     "0.645 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf | 4 安装、接线 | p10"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.730 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p2",
+     "0.696 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p3",
+     "0.654 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p14"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.732 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p2",
+     "0.671 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p13",
+     "0.662 正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf |  | p3"
+    ]
+   }
+  },
+  "q25": {
+   "query": "How is the closing operation of the VD4 vacuum circuit-breaker initiated?",
+   "lang": "en",
+   "gold": "ABB_VD4_36-40.5kV_VCB_Installation_Service_1VCD601314.pdf / 3.3.2 Closing procedure",
+   "heading": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.727 ABB_VD4_36-40.5kV_VCB_Installation_Servi | 5 Installation > 5.2 Assembly/installation of the  | p20",
+     "0.717 ABB_VD4_36-40.5kV_VCB_Installation_Servi | 3 Structure and function > 3.3 Function > 3.3.2 Cl | p14",
+     "0.693 ABB_VD4_36-40.5kV_VCB_Installation_Servi | 3 Structure and function > 3.3 Function > 3.3.5 Qu | p14"
+    ]
+   },
+   "fixed": {
+    "rank": 4,
+    "src_rank": 1,
+    "top3": [
+     "0.676 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p21",
+     "0.668 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p22",
+     "0.659 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p14"
+    ]
+   },
+   "recursive": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.733 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p21",
+     "0.711 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p14",
+     "0.692 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p6"
+    ]
+   }
+  },
+  "q26": {
+   "query": "What determines the servicing intervals of ABB VD4 vacuum circuit breakers?",
+   "lang": "en",
+   "gold": "ABB_VD4_36-40.5kV_VCB_Installation_Service_1VCD601314.pdf / 7.1 General",
+   "heading": {
+    "rank": 3,
+    "src_rank": 1,
+    "top3": [
+     "0.707 ABB_VD4_36-40.5kV_VCB_Installation_Servi | 1 Summary | p6",
+     "0.694 ABB_VD4_36-40.5kV_VCB_Installation_Servi | 3 Structure and function > 3.3 Function > 3.3.5 Qu | p14",
+     "0.688 ABB_VD4_36-40.5kV_VCB_Installation_Servi | 7 Maintenance > 7.1 General | p25"
+    ]
+   },
+   "fixed": {
+    "rank": 6,
+    "src_rank": 1,
+    "top3": [
+     "0.693 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p6",
+     "0.692 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p25",
+     "0.689 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p31"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.728 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p25",
+     "0.708 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p6",
+     "0.698 ABB_VD4_36-40.5kV_VCB_Installation_Servi |  | p6"
+    ]
+   }
+  },
+  "q27": {
+   "query": "What are the recommended maintenance intervals and tools for SafeRing ring main units?",
+   "lang": "en",
+   "gold": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf / 18.2 Maintenance intervals",
+   "heading": {
+    "rank": 3,
+    "src_rank": 1,
+    "top3": [
+     "0.716 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y | 18 Service and maintenance > 18.1 General warnings | p44",
+     "0.715 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y | 2 General description | p6",
+     "0.698 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y | 18 Service and maintenance > 18.2 Maintenance inte | p44"
+    ]
+   },
+   "fixed": {
+    "rank": 4,
+    "src_rank": 1,
+    "top3": [
+     "0.714 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p6",
+     "0.674 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p5",
+     "0.659 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p6"
+    ]
+   },
+   "recursive": {
+    "rank": 2,
+    "src_rank": 1,
+    "top3": [
+     "0.705 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p6",
+     "0.695 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p44",
+     "0.689 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p44"
+    ]
+   }
+  },
+  "q28": {
+   "query": "Does the SM6 switchgear need periodic maintenance in normal operating conditions?",
+   "lang": "en",
+   "gold": "Schneider_SM6-24_Operating_Maintenance_S1B7039801.pdf / Maintenance > Periodical Maintenance",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.632 Schneider_SM6-24_Operating_Maintenance_S | Operating Safety | p41",
+     "0.614 Schneider_SM6-24_Operating_Maintenance_S | Foreword | p5",
+     "0.594 Schneider_SM6-24_Operating_Maintenance_S | （前置内容/封面/目录） | p1"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.619 Schneider_SM6-24_Operating_Maintenance_S |  | p41",
+     "0.600 Schneider_SM6-24_Operating_Maintenance_S |  | p12",
+     "0.594 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p48"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.629 Schneider_SM6-24_Operating_Maintenance_S |  | p42",
+     "0.628 Schneider_SM6-24_Operating_Maintenance_S |  | p12",
+     "0.610 Schneider_SM6-24_Operating_Maintenance_S |  | p9"
+    ]
+   }
+  },
+  "q29": {
+   "query": "How do I replace the air filters of the Galaxy VS UPS?",
+   "lang": "en",
+   "gold": "Schneider_GalaxyVS_UPS_Operation_990-5910G.pdf / Replace the Air Filter(s)（GVSOPT001/015 与 GVSOPT014 两种）",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.728 Schneider_GalaxyVS_UPS_Operation_990-591 | Galaxy VS > Tests > Recommended Personal Protectiv | p55",
+     "0.698 Schneider_GalaxyVS_UPS_Operation_990-591 | Galaxy VS > Tests > Replace the Air Filters (GVSOP | p57",
+     "0.685 Schneider_GalaxyVS_UPS_Operation_990-591 | Galaxy VS > Tests > Replace the Air Filters (GVSOP | p57"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.704 Schneider_GalaxyVS_UPS_Operation_990-591 |  | p56",
+     "0.693 Schneider_GalaxyVS_UPS_Operation_990-591 |  | p55",
+     "0.646 Schneider_GalaxyVS_UPS_Operation_990-591 |  | p36"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.713 Schneider_GalaxyVS_UPS_Operation_990-591 |  | p56",
+     "0.704 Schneider_GalaxyVS_UPS_Operation_990-591 |  | p56",
+     "0.661 Schneider_GalaxyVS_UPS_Operation_990-591 |  | p57"
+    ]
+   }
+  },
+  "q30": {
+   "query": "How does sampling-frequency tracking work in SIPROTEC 5 devices?",
+   "lang": "en",
+   "gold": "SIPROTEC5_7SJ82-85_V8.60_Manual.pdf / 3.3.2 Sampling-Frequency Tracking",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.746 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf | 3 System Functions > 3.3 Sampling-Frequency Tracki | p94",
+     "0.741 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf | 3 System Functions > 3.2 Measured-Value Acquisitio | p92",
+     "0.728 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf | 3 System Functions > 3.3 Sampling-Frequency Tracki | p94"
+    ]
+   },
+   "fixed": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.751 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf |  | p94",
+     "0.717 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf |  | p92",
+     "0.716 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf |  | p92"
+    ]
+   },
+   "recursive": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.759 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf |  | p94",
+     "0.756 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf |  | p92",
+     "0.737 SIPROTEC5_7SJ82-85_V8.60_Manual.pdf |  | p97"
+    ]
+   }
+  },
+  "q31": {
+   "query": "Infrared diagnosis: how to calculate the relative temperature difference between the hot spot and the normal phase?",
+   "lang": "en",
+   "gold": "DL_T_664-2025_带电设备红外诊断应用规范.pdf / 8.2 相对温差法（跨语言）",
+   "heading": {
+    "rank": 1,
+    "src_rank": 1,
+    "top3": [
+     "0.645 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 8 诊断方法 > 8.2 相对温差法 | p12",
+     "0.603 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 8 诊断方法 > 8.3 同类温差法 | p12",
+     "0.597 DL_T_664-2025_带电设备红外诊断应用规范.pdf | 3 术语和定义 | p4"
+    ]
+   },
+   "fixed": {
+    "rank": null,
+    "src_rank": 1,
+    "top3": [
+     "0.651 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p12",
+     "0.624 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p9",
+     "0.595 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p23"
+    ]
+   },
+   "recursive": {
+    "rank": 10,
+    "src_rank": 1,
+    "top3": [
+     "0.642 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p12",
+     "0.635 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p9",
+     "0.613 DL_T_664-2025_带电设备红外诊断应用规范.pdf |  | p9"
+    ]
+   }
+  },
+  "q32": {
+   "query": "SM6开关柜正常条件下需要定期维护吗？",
+   "lang": "zh",
+   "gold": "Schneider_SM6-24_Operating_Maintenance_S1B7039801.pdf / Maintenance > Periodical Maintenance（跨语言）",
+   "heading": {
+    "rank": 3,
+    "src_rank": 3,
+    "top3": [
+     "0.623 平高_ZF12B-126_GIS_安装使用说明书.pdf | 6 产品的运行和维护 | p13",
+     "0.614 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf | 5 检修要求 > 5.2 检修类别 > 5.2.1 例行检修 | p8",
+     "0.612 Schneider_SM6-24_Operating_Maintenance_S | Operating Safety | p41"
+    ]
+   },
+   "fixed": {
+    "rank": 9,
+    "src_rank": 8,
+    "top3": [
+     "0.625 平高_ZF12B-126_GIS_安装使用说明书.pdf |  | p23",
+     "0.612 DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf |  | p5",
+     "0.609 ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1Y |  | p44"
+    ]
+   },
+   "recursive": {
+    "rank": 7,
+    "src_rank": 1,
+    "top3": [
+     "0.625 Schneider_SM6-24_Operating_Maintenance_S |  | p7",
+     "0.624 Schneider_SM6-24_Operating_Maintenance_S |  | p42",
+     "0.620 平高_ZF12B-126_GIS_安装使用说明书.pdf |  | p13"
+    ]
+   }
+  }
+ }
+}

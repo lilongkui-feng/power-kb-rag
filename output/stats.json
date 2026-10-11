@@ -1,0 +1,992 @@
+{
+ "params": {
+  "fixed": {
+   "size": 500,
+   "overlap": 50
+  },
+  "heading": {
+   "max_size": 800,
+   "min_size": 120
+  },
+  "recursive": {
+   "size": 500,
+   "overlap": 50
+  }
+ },
+ "summary": {
+  "fixed": {
+   "chunks": 2226,
+   "avg_len": 498.2,
+   "median_len": 500.0,
+   "max_len": 500,
+   "min_len": 66,
+   "lt_100": 2,
+   "end_mid_sentence_pct": 77.7,
+   "multi_clause_chunks_pct": 13.0,
+   "by_category:标准": {
+    "chunks": 424,
+    "avg_len": 496.9,
+    "median_len": 500.0,
+    "max_len": 500,
+    "min_len": 165,
+    "lt_100": 0,
+    "end_mid_sentence_pct": 82.5,
+    "multi_clause_chunks_pct": 37.5
+   },
+   "by_category:厂商手册": {
+    "chunks": 1779,
+    "avg_len": 498.5,
+    "median_len": 500,
+    "max_len": 500,
+    "min_len": 66,
+    "lt_100": 2,
+    "end_mid_sentence_pct": 76.5,
+    "multi_clause_chunks_pct": 6.5
+   },
+   "by_category:电网企业文件": {
+    "chunks": 23,
+    "avg_len": 494.3,
+    "median_len": 500,
+    "max_len": 500,
+    "min_len": 411,
+    "lt_100": 0,
+    "end_mid_sentence_pct": 78.3,
+    "multi_clause_chunks_pct": 65.2
+   }
+  },
+  "heading": {
+   "chunks": 1657,
+   "avg_len": 470.1,
+   "median_len": 489,
+   "max_len": 797,
+   "min_len": 5,
+   "lt_100": 44,
+   "end_mid_sentence_pct": 36.1,
+   "multi_clause_chunks_pct": 13.6,
+   "by_category:标准": {
+    "chunks": 483,
+    "avg_len": 364.5,
+    "median_len": 307,
+    "max_len": 797,
+    "min_len": 20,
+    "lt_100": 5,
+    "end_mid_sentence_pct": 29.2,
+    "multi_clause_chunks_pct": 24.4
+   },
+   "by_category:厂商手册": {
+    "chunks": 1142,
+    "avg_len": 518.8,
+    "median_len": 583.0,
+    "max_len": 796,
+    "min_len": 5,
+    "lt_100": 39,
+    "end_mid_sentence_pct": 39.7,
+    "multi_clause_chunks_pct": 8.4
+   },
+   "by_category:电网企业文件": {
+    "chunks": 32,
+    "avg_len": 323.9,
+    "median_len": 290.5,
+    "max_len": 781,
+    "min_len": 139,
+    "lt_100": 0,
+    "end_mid_sentence_pct": 12.5,
+    "multi_clause_chunks_pct": 37.5
+   }
+  },
+  "recursive": {
+   "chunks": 2619,
+   "avg_len": 419.1,
+   "median_len": 443,
+   "max_len": 644,
+   "min_len": 102,
+   "lt_100": 0,
+   "end_mid_sentence_pct": 57.5,
+   "multi_clause_chunks_pct": 12.1,
+   "by_category:标准": {
+    "chunks": 437,
+    "avg_len": 467.8,
+    "median_len": 499,
+    "max_len": 634,
+    "min_len": 134,
+    "lt_100": 0,
+    "end_mid_sentence_pct": 53.3,
+    "multi_clause_chunks_pct": 38.2
+   },
+   "by_category:厂商手册": {
+    "chunks": 2158,
+    "avg_len": 408.7,
+    "median_len": 436.0,
+    "max_len": 644,
+    "min_len": 102,
+    "lt_100": 0,
+    "end_mid_sentence_pct": 58.3,
+    "multi_clause_chunks_pct": 6.3
+   },
+   "by_category:电网企业文件": {
+    "chunks": 24,
+    "avg_len": 465.0,
+    "median_len": 494.5,
+    "max_len": 602,
+    "min_len": 187,
+    "lt_100": 0,
+    "end_mid_sentence_pct": 62.5,
+    "multi_clause_chunks_pct": 54.2
+   }
+  },
+  "heading_recognition": {
+   "chunks_with_heading_path_pct": 96.9,
+   "toc_recall_docs": 11,
+   "toc_recall_macro_avg_pct": 95.0,
+   "toc_recall_micro_pct": 93.4
+  }
+ },
+ "per_doc": [
+  {
+   "source": "DL_T_664-2025_带电设备红外诊断应用规范.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 65,
+   "pages_parsed": 65,
+   "chars": 36175,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 2,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 90,
+   "heading_chunks": 97,
+   "recursive_chunks": 95,
+   "heading_mode": "numbered",
+   "headings_detected": 96,
+   "heading_candidates_rejected": 38,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 45,
+   "heading_chunk_with_path_pct": 99.0,
+   "toc_recall": {
+    "toc_entries": 22,
+    "found": 22,
+    "recall_pct": 100.0
+   },
+   "secs": 0.67
+  },
+  {
+   "source": "DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 19,
+   "pages_parsed": 19,
+   "chars": 17416,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 5,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 41,
+   "heading_chunks": 37,
+   "recursive_chunks": 41,
+   "heading_mode": "numbered",
+   "headings_detected": 43,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 32,
+   "heading_chunk_with_path_pct": 94.6,
+   "toc_recall": {
+    "toc_entries": 15,
+    "found": 13,
+    "recall_pct": 86.7
+   },
+   "secs": 0.09
+  },
+  {
+   "source": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 31,
+   "pages_parsed": 31,
+   "chars": 23915,
+   "scanned_pages": 2,
+   "is_scanned": false,
+   "header_footer_templates": 2,
+   "ocr_pages": 1,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 57,
+   "heading_chunks": 82,
+   "recursive_chunks": 60,
+   "heading_mode": "numbered",
+   "headings_detected": 128,
+   "heading_candidates_rejected": 1,
+   "legend_lines_skipped": 13,
+   "toc_lines_dropped": 29,
+   "heading_chunk_with_path_pct": 98.8,
+   "toc_recall": {
+    "toc_entries": 14,
+    "found": 13,
+    "recall_pct": 92.9
+   },
+   "secs": 0.31
+  },
+  {
+   "source": "DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 23,
+   "pages_parsed": 23,
+   "chars": 15029,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 1,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 36,
+   "heading_chunks": 50,
+   "recursive_chunks": 38,
+   "heading_mode": "numbered",
+   "headings_detected": 84,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 20,
+   "heading_chunk_with_path_pct": 98.0,
+   "toc_recall": {
+    "toc_entries": 12,
+    "found": 12,
+    "recall_pct": 100.0
+   },
+   "secs": 0.13
+  },
+  {
+   "source": "DL_T_2544-2022_继电保护装置状态检修导则.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 33,
+   "pages_parsed": 33,
+   "chars": 24453,
+   "scanned_pages": 3,
+   "is_scanned": false,
+   "header_footer_templates": 2,
+   "ocr_pages": 3,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 60,
+   "heading_chunks": 57,
+   "recursive_chunks": 60,
+   "heading_mode": "numbered",
+   "headings_detected": 60,
+   "heading_candidates_rejected": 35,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 37,
+   "heading_chunk_with_path_pct": 98.2,
+   "toc_recall": {
+    "toc_entries": 18,
+    "found": 18,
+    "recall_pct": 100.0
+   },
+   "secs": 0.33
+  },
+  {
+   "source": "DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 9,
+   "pages_parsed": 9,
+   "chars": 6430,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 1,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 16,
+   "heading_chunks": 19,
+   "recursive_chunks": 17,
+   "heading_mode": "numbered",
+   "headings_detected": 17,
+   "heading_candidates_rejected": 10,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 12,
+   "heading_chunk_with_path_pct": 94.7,
+   "toc_recall": {
+    "toc_entries": 10,
+    "found": 9,
+    "recall_pct": 90.0
+   },
+   "secs": 0.09
+  },
+  {
+   "source": "DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 8,
+   "pages_parsed": 8,
+   "chars": 5928,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 2,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 15,
+   "heading_chunks": 17,
+   "recursive_chunks": 16,
+   "heading_mode": "numbered",
+   "headings_detected": 15,
+   "heading_candidates_rejected": 3,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 23,
+   "heading_chunk_with_path_pct": 94.1,
+   "toc_recall": {
+    "toc_entries": 10,
+    "found": 10,
+    "recall_pct": 100.0
+   },
+   "secs": 0.1
+  },
+  {
+   "source": "DL_T_618-2022_GIS现场交接试验规程.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 19,
+   "pages_parsed": 19,
+   "chars": 17371,
+   "scanned_pages": 1,
+   "is_scanned": false,
+   "header_footer_templates": 2,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 42,
+   "heading_chunks": 46,
+   "recursive_chunks": 43,
+   "heading_mode": "numbered",
+   "headings_detected": 56,
+   "heading_candidates_rejected": 1,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 22,
+   "heading_chunk_with_path_pct": 97.8,
+   "toc_recall": {
+    "toc_entries": 18,
+    "found": 18,
+    "recall_pct": 100.0
+   },
+   "secs": 0.22
+  },
+  {
+   "source": "DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf",
+   "file_type": "pdf",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 35,
+   "pages_parsed": 35,
+   "chars": 20009,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 2,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 51,
+   "heading_chunks": 56,
+   "recursive_chunks": 49,
+   "heading_mode": "numbered",
+   "headings_detected": 72,
+   "heading_candidates_rejected": 6,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 45,
+   "heading_chunk_with_path_pct": 98.2,
+   "toc_recall": {
+    "toc_entries": 22,
+    "found": 21,
+    "recall_pct": 95.5
+   },
+   "secs": 0.51
+  },
+  {
+   "source": "南方电网_设备运行质量评价规则_变电在线监测装置部分_2025.pdf",
+   "file_type": "pdf",
+   "category": "电网企业文件",
+   "lang": "zh",
+   "pages_total": 10,
+   "pages_parsed": 10,
+   "chars": 4263,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 2,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 11,
+   "heading_chunks": 15,
+   "recursive_chunks": 10,
+   "heading_mode": "numbered",
+   "headings_detected": 27,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 0,
+   "heading_chunk_with_path_pct": 93.3,
+   "toc_recall": null,
+   "secs": 0.05
+  },
+  {
+   "source": "平高_ZF12B-126_GIS_安装使用说明书.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "zh",
+   "pages_total": 52,
+   "pages_parsed": 52,
+   "chars": 25741,
+   "scanned_pages": 7,
+   "is_scanned": false,
+   "header_footer_templates": 7,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 64,
+   "heading_chunks": 87,
+   "recursive_chunks": 73,
+   "heading_mode": "numbered",
+   "headings_detected": 115,
+   "heading_candidates_rejected": 62,
+   "legend_lines_skipped": 18,
+   "toc_lines_dropped": 0,
+   "heading_chunk_with_path_pct": 98.9,
+   "toc_recall": null,
+   "secs": 0.35
+  },
+  {
+   "source": "施耐德_RM6_SeT_安装使用说明书_中文.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "zh",
+   "pages_total": 36,
+   "pages_parsed": 36,
+   "chars": 10767,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 1,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 31,
+   "heading_chunks": 36,
+   "recursive_chunks": 28,
+   "heading_mode": "font",
+   "headings_detected": 57,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 19,
+   "heading_chunk_with_path_pct": 97.2,
+   "toc_recall": null,
+   "secs": 2.51
+  },
+  {
+   "source": "正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "zh",
+   "pages_total": 20,
+   "pages_parsed": 20,
+   "chars": 7600,
+   "scanned_pages": 20,
+   "is_scanned": true,
+   "header_footer_templates": 0,
+   "ocr_pages": 20,
+   "ocr_avg_conf": 0.9886,
+   "fixed_chunks": 23,
+   "heading_chunks": 16,
+   "recursive_chunks": 21,
+   "heading_mode": "numbered",
+   "headings_detected": 6,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 0,
+   "heading_chunk_with_path_pct": 93.8,
+   "toc_recall": null,
+   "secs": 29.31
+  },
+  {
+   "source": "ABB_VD4_36-40.5kV_VCB_Installation_Service_1VCD601314.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "en",
+   "pages_total": 40,
+   "pages_parsed": 40,
+   "chars": 57619,
+   "scanned_pages": 3,
+   "is_scanned": false,
+   "header_footer_templates": 4,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 154,
+   "heading_chunks": 142,
+   "recursive_chunks": 196,
+   "heading_mode": "numbered",
+   "headings_detected": 57,
+   "heading_candidates_rejected": 15,
+   "legend_lines_skipped": 8,
+   "toc_lines_dropped": 145,
+   "heading_chunk_with_path_pct": 97.2,
+   "toc_recall": {
+    "toc_entries": 62,
+    "found": 54,
+    "recall_pct": 87.1
+   },
+   "secs": 0.94
+  },
+  {
+   "source": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "en",
+   "pages_total": 52,
+   "pages_parsed": 52,
+   "chars": 68281,
+   "scanned_pages": 2,
+   "is_scanned": false,
+   "header_footer_templates": 5,
+   "ocr_pages": 2,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 178,
+   "heading_chunks": 143,
+   "recursive_chunks": 225,
+   "heading_mode": "numbered",
+   "headings_detected": 64,
+   "heading_candidates_rejected": 17,
+   "legend_lines_skipped": 20,
+   "toc_lines_dropped": 110,
+   "heading_chunk_with_path_pct": 99.3,
+   "toc_recall": {
+    "toc_entries": 56,
+    "found": 52,
+    "recall_pct": 92.9
+   },
+   "secs": 2.82
+  },
+  {
+   "source": "Schneider_SM6-24_Operating_Maintenance_S1B7039801.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "en",
+   "pages_total": 58,
+   "pages_parsed": 58,
+   "chars": 45399,
+   "scanned_pages": 1,
+   "is_scanned": false,
+   "header_footer_templates": 9,
+   "ocr_pages": 1,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 120,
+   "heading_chunks": 88,
+   "recursive_chunks": 147,
+   "heading_mode": "font",
+   "headings_detected": 12,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 72,
+   "heading_chunk_with_path_pct": 95.5,
+   "toc_recall": null,
+   "secs": 1.37
+  },
+  {
+   "source": "Schneider_GalaxyVS_UPS_Operation_990-5910G.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "en",
+   "pages_total": 80,
+   "pages_parsed": 80,
+   "chars": 98096,
+   "scanned_pages": 3,
+   "is_scanned": false,
+   "header_footer_templates": 16,
+   "ocr_pages": 3,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 258,
+   "heading_chunks": 199,
+   "recursive_chunks": 305,
+   "heading_mode": "font",
+   "headings_detected": 11,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 114,
+   "heading_chunk_with_path_pct": 100.0,
+   "toc_recall": null,
+   "secs": 1.24
+  },
+  {
+   "source": "SIPROTEC5_7SJ82-85_V8.60_Manual.pdf",
+   "file_type": "pdf",
+   "category": "厂商手册",
+   "lang": "en",
+   "pages_total": 2040,
+   "pages_parsed": 150,
+   "chars": 366281,
+   "scanned_pages": 2,
+   "is_scanned": false,
+   "header_footer_templates": 15,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 905,
+   "heading_chunks": 391,
+   "recursive_chunks": 1108,
+   "heading_mode": "numbered",
+   "headings_detected": 75,
+   "heading_candidates_rejected": 10,
+   "legend_lines_skipped": 8,
+   "toc_lines_dropped": 4159,
+   "heading_chunk_with_path_pct": 95.7,
+   "toc_recall": null,
+   "secs": 3.12
+  },
+  {
+   "source": "DL_T_595-2025_六氟化硫电气设备气体监督导则.docx",
+   "file_type": "docx",
+   "category": "标准",
+   "lang": "zh",
+   "pages_total": 9,
+   "pages_parsed": 9,
+   "chars": 6542,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 1,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 16,
+   "heading_chunks": 22,
+   "recursive_chunks": 18,
+   "heading_mode": "numbered",
+   "headings_detected": 23,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 1,
+   "heading_chunk_with_path_pct": 95.5,
+   "toc_recall": null,
+   "secs": 0.13
+  },
+  {
+   "source": "南方电网_设备运行质量评价规则_变电在线监测装置部分_2025.docx",
+   "file_type": "docx",
+   "category": "电网企业文件",
+   "lang": "zh",
+   "pages_total": 10,
+   "pages_parsed": 10,
+   "chars": 4581,
+   "scanned_pages": 0,
+   "is_scanned": false,
+   "header_footer_templates": 1,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 12,
+   "heading_chunks": 17,
+   "recursive_chunks": 14,
+   "heading_mode": "numbered",
+   "headings_detected": 23,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 0,
+   "toc_lines_dropped": 0,
+   "heading_chunk_with_path_pct": 94.1,
+   "toc_recall": null,
+   "secs": 0.15
+  },
+  {
+   "source": "ABB_VD4_36-40.5kV_p1-12.docx",
+   "file_type": "docx",
+   "category": "厂商手册",
+   "lang": "en",
+   "pages_total": 12,
+   "pages_parsed": 12,
+   "chars": 16757,
+   "scanned_pages": 1,
+   "is_scanned": false,
+   "header_footer_templates": 1,
+   "ocr_pages": 0,
+   "ocr_avg_conf": null,
+   "fixed_chunks": 46,
+   "heading_chunks": 40,
+   "recursive_chunks": 55,
+   "heading_mode": "numbered",
+   "headings_detected": 15,
+   "heading_candidates_rejected": 0,
+   "legend_lines_skipped": 8,
+   "toc_lines_dropped": 0,
+   "heading_chunk_with_path_pct": 77.5,
+   "toc_recall": null,
+   "secs": 0.24
+  }
+ ],
+ "docx_vs_pdf": [
+  {
+   "docx": "DL_T_595-2025_六氟化硫电气设备气体监督导则.docx",
+   "pdf": "DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf",
+   "pages_compared": 9,
+   "pdf_chars": 6430,
+   "docx_chars": 6542,
+   "text_similarity_first6000": 0.926,
+   "docx_heading_style_paragraphs": 0,
+   "pdf_heading_chunks(same pages)": 19,
+   "docx_heading_chunks": 22
+  },
+  {
+   "docx": "南方电网_设备运行质量评价规则_变电在线监测装置部分_2025.docx",
+   "pdf": "南方电网_设备运行质量评价规则_变电在线监测装置部分_2025.pdf",
+   "pages_compared": 10,
+   "pdf_chars": 4263,
+   "docx_chars": 4581,
+   "text_similarity_first6000": 0.927,
+   "docx_heading_style_paragraphs": 0,
+   "pdf_heading_chunks(same pages)": 15,
+   "docx_heading_chunks": 17
+  },
+  {
+   "docx": "ABB_VD4_36-40.5kV_p1-12.docx",
+   "pdf": "ABB_VD4_36-40.5kV_VCB_Installation_Service_1VCD601314.pdf",
+   "pages_compared": 12,
+   "pdf_chars": 12644,
+   "docx_chars": 16757,
+   "text_similarity_first6000": 0.571,
+   "docx_heading_style_paragraphs": 0,
+   "pdf_heading_chunks(same pages)": 27,
+   "docx_heading_chunks": 40
+  }
+ ],
+ "ocr": [
+  {
+   "source": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf",
+   "pages": [
+    {
+     "page": 2,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    }
+   ]
+  },
+  {
+   "source": "DL_T_2544-2022_继电保护装置状态检修导则.pdf",
+   "pages": [
+    {
+     "page": 2,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 4,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 18,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    }
+   ]
+  },
+  {
+   "source": "正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf",
+   "pages": [
+    {
+     "page": 1,
+     "avg_conf": 0.9935,
+     "rows": 10,
+     "boxes": 12,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 2,
+     "avg_conf": 0.9943,
+     "rows": 20,
+     "boxes": 21,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 3,
+     "avg_conf": 0.9922,
+     "rows": 30,
+     "boxes": 70,
+     "low_conf_boxes": 1
+    },
+    {
+     "page": 4,
+     "avg_conf": 0.991,
+     "rows": 48,
+     "boxes": 92,
+     "low_conf_boxes": 3
+    },
+    {
+     "page": 5,
+     "avg_conf": 0.984,
+     "rows": 20,
+     "boxes": 144,
+     "low_conf_boxes": 6
+    },
+    {
+     "page": 6,
+     "avg_conf": 0.9863,
+     "rows": 15,
+     "boxes": 122,
+     "low_conf_boxes": 5
+    },
+    {
+     "page": 7,
+     "avg_conf": 0.9944,
+     "rows": 29,
+     "boxes": 159,
+     "low_conf_boxes": 1
+    },
+    {
+     "page": 8,
+     "avg_conf": 0.9592,
+     "rows": 16,
+     "boxes": 72,
+     "low_conf_boxes": 19
+    },
+    {
+     "page": 9,
+     "avg_conf": 0.9921,
+     "rows": 22,
+     "boxes": 201,
+     "low_conf_boxes": 6
+    },
+    {
+     "page": 10,
+     "avg_conf": 0.9911,
+     "rows": 19,
+     "boxes": 149,
+     "low_conf_boxes": 3
+    },
+    {
+     "page": 11,
+     "avg_conf": 0.9787,
+     "rows": 15,
+     "boxes": 72,
+     "low_conf_boxes": 5
+    },
+    {
+     "page": 12,
+     "avg_conf": 0.977,
+     "rows": 19,
+     "boxes": 70,
+     "low_conf_boxes": 6
+    },
+    {
+     "page": 13,
+     "avg_conf": 0.9866,
+     "rows": 15,
+     "boxes": 34,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 14,
+     "avg_conf": 0.9878,
+     "rows": 25,
+     "boxes": 74,
+     "low_conf_boxes": 7
+    },
+    {
+     "page": 15,
+     "avg_conf": 0.9925,
+     "rows": 19,
+     "boxes": 171,
+     "low_conf_boxes": 4
+    },
+    {
+     "page": 16,
+     "avg_conf": 0.9911,
+     "rows": 27,
+     "boxes": 74,
+     "low_conf_boxes": 1
+    },
+    {
+     "page": 17,
+     "avg_conf": 0.9963,
+     "rows": 27,
+     "boxes": 45,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 18,
+     "avg_conf": 0.9984,
+     "rows": 13,
+     "boxes": 14,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 19,
+     "avg_conf": 0.9895,
+     "rows": 12,
+     "boxes": 13,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 20,
+     "avg_conf": 0.996,
+     "rows": 13,
+     "boxes": 15,
+     "low_conf_boxes": 0
+    }
+   ]
+  },
+  {
+   "source": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf",
+   "pages": [
+    {
+     "page": 2,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 51,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    }
+   ]
+  },
+  {
+   "source": "Schneider_SM6-24_Operating_Maintenance_S1B7039801.pdf",
+   "pages": [
+    {
+     "page": 57,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    }
+   ]
+  },
+  {
+   "source": "Schneider_GalaxyVS_UPS_Operation_990-5910G.pdf",
+   "pages": [
+    {
+     "page": 4,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 78,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    },
+    {
+     "page": 79,
+     "avg_conf": 0.0,
+     "rows": 0,
+     "boxes": 0,
+     "low_conf_boxes": 0
+    }
+   ]
+  }
+ ]
+}

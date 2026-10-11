@@ -1,0 +1,248 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "siliconflow",
+  "model": "deepseek-ai/DeepSeek-V3",
+  "base_url": "https://api.siliconflow.cn/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "e3575d63",
+  "prompt": "p1",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 2,
+ "n_inkb": 50,
+ "n_ood": 5,
+ "groups": {
+  "全部": {
+   "n": 50,
+   "chunk": {
+    "hit@1": 0.78,
+    "hit@3": 0.96,
+    "hit@5": 1.0,
+    "mrr": 0.873
+   },
+   "doc": {
+    "hit@1": 0.98,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.987
+   },
+   "gen": {
+    "n": 50,
+    "correct": 0.78,
+    "partial": 0.22,
+    "wrong": 0.0,
+    "score": 0.89,
+    "coverage": 0.862,
+    "false_refusal": 0.0,
+    "cite_doc": 0.96,
+    "cite_chunk": 0.96,
+    "no_citation": 0.02,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "查参数": {
+   "n": 18,
+   "chunk": {
+    "hit@1": 0.667,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.824
+   },
+   "doc": {
+    "hit@1": 0.944,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.963
+   },
+   "gen": {
+    "n": 18,
+    "correct": 0.611,
+    "partial": 0.389,
+    "wrong": 0.0,
+    "score": 0.806,
+    "coverage": 0.818,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 1.0,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "故障排查": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.938,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.969
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 16,
+    "correct": 0.875,
+    "partial": 0.125,
+    "wrong": 0.0,
+    "score": 0.938,
+    "coverage": 0.874,
+    "false_refusal": 0.0,
+    "cite_doc": 0.938,
+    "cite_chunk": 0.938,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "操作步骤": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 0.875,
+    "hit@5": 1.0,
+    "mrr": 0.833
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 16,
+    "correct": 0.875,
+    "partial": 0.125,
+    "wrong": 0.0,
+    "score": 0.938,
+    "coverage": 0.901,
+    "false_refusal": 0.0,
+    "cite_doc": 0.938,
+    "cite_chunk": 0.938,
+    "no_citation": 0.062,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "中文": {
+   "n": 42,
+   "chunk": {
+    "hit@1": 0.81,
+    "hit@3": 0.952,
+    "hit@5": 1.0,
+    "mrr": 0.885
+   },
+   "doc": {
+    "hit@1": 0.976,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.984
+   },
+   "gen": {
+    "n": 42,
+    "correct": 0.786,
+    "partial": 0.214,
+    "wrong": 0.0,
+    "score": 0.893,
+    "coverage": 0.866,
+    "false_refusal": 0.0,
+    "cite_doc": 0.952,
+    "cite_chunk": 0.952,
+    "no_citation": 0.024,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "英文": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.625,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.812
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 8,
+    "correct": 0.75,
+    "partial": 0.25,
+    "wrong": 0.0,
+    "score": 0.875,
+    "coverage": 0.844,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 1.0,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  }
+ },
+ "ood_refusal": 1.0,
+ "timing": {
+  "retrieval": 9.29,
+  "rerank": 7.65,
+  "generation": 6.53,
+  "first_token": null,
+  "total": 15.82
+ },
+ "calibration_sets": {
+  "calib": {
+   "n": 18,
+   "agree": 0.556,
+   "agree_binary": 0.556,
+   "confusion": {
+    "部分→正确": 4,
+    "错误→正确": 4,
+    "部分→部分": 3,
+    "正确→正确": 7
+   }
+  },
+  "holdout": {
+   "n": 12,
+   "agree": 0.417,
+   "agree_binary": 0.5,
+   "confusion": {
+    "正确→正确": 4,
+    "正确→部分": 2,
+    "错误→部分": 1,
+    "部分→部分": 1,
+    "错误→正确": 2,
+    "部分→正确": 2
+   }
+  }
+ },
+ "calibration": {
+  "n": 30,
+  "agree": 0.5,
+  "agree_binary": 0.533,
+  "confusion": {
+   "正确→正确": 11,
+   "部分→正确": 6,
+   "错误→正确": 6,
+   "正确→部分": 2,
+   "部分→部分": 4,
+   "错误→部分": 1
+  }
+ },
+ "run_dir": "output/eval_runs/sf_v3_p1_k5_20261011-005425"
+}

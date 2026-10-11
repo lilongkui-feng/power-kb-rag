@@ -1,0 +1,128 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc"
+ },
+ "rules_version": 2,
+ "n_inkb": 50,
+ "n_ood": 5,
+ "groups": {
+  "全部": {
+   "n": 50,
+   "chunk": {
+    "hit@1": 0.78,
+    "hit@3": 0.96,
+    "hit@5": 1.0,
+    "mrr": 0.87
+   },
+   "doc": {
+    "hit@1": 0.98,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.987
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 18,
+   "chunk": {
+    "hit@1": 0.667,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.815
+   },
+   "doc": {
+    "hit@1": 0.944,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.963
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.938,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.969
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 0.875,
+    "hit@5": 1.0,
+    "mrr": 0.833
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 42,
+   "chunk": {
+    "hit@1": 0.81,
+    "hit@3": 0.952,
+    "hit@5": 1.0,
+    "mrr": 0.885
+   },
+   "doc": {
+    "hit@1": 0.976,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.984
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.625,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.792
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 3.89,
+  "rerank": 3.69,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/v2_heading_retr_20261010-211618"
+}

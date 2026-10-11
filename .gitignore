@@ -1,0 +1,49 @@
+# ---- 环境 / 密钥 ----
+.venv/
+venv/
+.env
+*.env.local
+__pycache__/
+*.pyc
+
+# ---- 索引、模型、缓存（可重建）----
+chroma_db/
+bm25_index/
+emb_cache/
+hf_cache/
+.cache/
+*_cache/
+.ocr_cache/
+.rerank_cache/
+output/eval_cache/
+*.pkl
+
+# ---- 原始文档（版权：标准原文 / 厂商手册，按 docs/sources.md 自行下载）----
+*.pdf
+*.docx
+*.doc
+docx_test/
+uploads/files/
+ocr_out/
+
+# ---- 由原文生成的全文内容（版权风险，运行 build_v2.py / run.py 可重新生成）----
+output/chunks*.jsonl
+uploads/chunks_uploaded*.jsonl
+uploads/registry.json
+output/parsed/
+output/tables_v2.json
+output/rag_raw.json
+output/ocr_eval*.json
+output/table_audit/
+output/table_before_after_page.png
+output/eval_runs/**/per_item.jsonl
+
+# ---- 日志 / 临时 ----
+*.log
+logs_*
+.paddle_worker*
+nohup.out
+.DS_Store
+
+# 逐题记录含检索原文
+output/eval_runs/*/records.jsonl

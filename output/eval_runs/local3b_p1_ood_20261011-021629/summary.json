@@ -1,0 +1,34 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "qwen2.5:3b-instruct",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "e3575d63",
+  "prompt": "p1",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 2,
+ "n_inkb": 0,
+ "n_ood": 22,
+ "groups": {},
+ "ood_refusal": 0.955,
+ "timing": {
+  "retrieval": 4.18,
+  "rerank": 3.74,
+  "generation": 7.94,
+  "first_token": null,
+  "total": 12.12
+ },
+ "run_dir": "output/eval_runs/local3b_p1_ood_20261011-021629"
+}

@@ -1,0 +1,32 @@
+pymupdf==1.28.2
+python-docx==1.2.0
+pdf2docx==0.5.13
+rapidocr==3.10.0
+onnxruntime==1.31.0
+# --- Day 4：向量检索 ---
+# CPU 机器建议先装 CPU 版 torch，避免下载 ~3GB CUDA 依赖：
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch>=2.6
+sentence-transformers==6.1.0
+transformers==5.19.0
+chromadb==1.5.9
+# --- Day 5：BM25 混合检索 ---
+rank_bm25==0.2.2
+jieba==0.42.1
+# --- Day 6：重排 ---
+# 复用 sentence-transformers 的 CrossEncoder 加载 BAAI/bge-reranker-v2-m3（~2.2GB，首次运行自动下载，不在 zip 内）
+# --- Day 7：RAG 生成 ---
+httpx>=0.27            # 调用 OpenAI 兼容接口（chromadb 已间接依赖）
+# 本地 LLM：ollama 0.40.2 + qwen2.5:3b-instruct（Q4_K_M GGUF），安装见 README 7.8；不是 pip 包
+# --- Day 8：Web 界面 ---
+streamlit==1.65.0
+playwright==1.63.0      # 仅自测截图用；需再执行 python -m playwright install chromium
+openpyxl>=3.1          # eval_set_50.xlsx
+# --- Day 10：表格与扫描件 ---
+pdfplumber>=0.11       # 仅用于与 PyMuPDF find_tables 对比，管线不依赖
+# PaddleOCR 独立环境（主环境 Python 3.13 无 paddle 轮子）：
+#   uv venv -p 3.11 /workspace/paddle_env
+#   VIRTUAL_ENV=/workspace/paddle_env uv pip install paddlepaddle==3.2.2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
+#   VIRTUAL_ENV=/workspace/paddle_env uv pip install "paddleocr[doc-parser]==3.7.0"
+#   （ocr.py 通过 paddle/paddle_worker.py 子进程调用；PADDLE_PY 环境变量可改解释器路径）
+matplotlib>=3.8        # 阈值曲线图

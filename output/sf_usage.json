@@ -1,0 +1,51 @@
+{
+ "sf_v3_p1_k5": {
+  "model": "deepseek-ai/DeepSeek-V3",
+  "n": 55,
+  "prompt_tokens": 94178,
+  "completion_tokens": 6455,
+  "cost_cny": 0.24
+ },
+ "sf_q72_p1_k5": {
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "n": 55,
+  "prompt_tokens": 106158,
+  "completion_tokens": 6194,
+  "cost_cny": 0.464
+ },
+ "sf_v3_p2_k5": {
+  "model": "deepseek-ai/DeepSeek-V3",
+  "n": 55,
+  "prompt_tokens": 99809,
+  "completion_tokens": 7192,
+  "cost_cny": 0.257
+ },
+ "sf_v3_p2_ex_neighbor": {
+  "model": "deepseek-ai/DeepSeek-V3",
+  "n": 55,
+  "prompt_tokens": 142158,
+  "completion_tokens": 7440,
+  "cost_cny": 0.344
+ },
+ "sf_v3_p2_ex_parent": {
+  "model": "deepseek-ai/DeepSeek-V3",
+  "n": 55,
+  "prompt_tokens": 157056,
+  "completion_tokens": 7210,
+  "cost_cny": 0.372
+ },
+ "sf_v3_p2_ood": {
+  "model": "deepseek-ai/DeepSeek-V3",
+  "n": 25,
+  "prompt_tokens": 49475,
+  "completion_tokens": 589,
+  "cost_cny": 0.104
+ },
+ "v3set_sf_v3_p2": {
+  "model": "deepseek-ai/DeepSeek-V3",
+  "n": 144,
+  "prompt_tokens": 269690,
+  "completion_tokens": 17395,
+  "cost_cny": 0.679
+ }
+}

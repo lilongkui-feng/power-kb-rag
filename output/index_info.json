@@ -1,0 +1,15 @@
+{
+ "model": "BAAI/bge-m3",
+ "max_seq_length": 1024,
+ "collections": [
+  {
+   "collection": "power_v2s800o150",
+   "chunks": 3569,
+   "written": 3569,
+   "deleted": 0,
+   "count": 3569,
+   "secs": 402.1
+  }
+ ],
+ "total_secs": 402.8
+}

@@ -1,0 +1,637 @@
+{
+ "summary": {
+  "全部 50": {
+   "chunk": {
+    "n": 50,
+    "hit1": 0.8,
+    "hit3": 0.98,
+    "hit5": 1.0,
+    "mrr": 0.8916666666666667
+   },
+   "doc": {
+    "n": 50,
+    "hit1": 0.98,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 0.99
+   }
+  },
+  "查参数": {
+   "chunk": {
+    "n": 18,
+    "hit1": 0.7222222222222222,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 0.8611111111111112
+   },
+   "doc": {
+    "n": 18,
+    "hit1": 0.9444444444444444,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 0.9722222222222222
+   }
+  },
+  "故障排查": {
+   "chunk": {
+    "n": 16,
+    "hit1": 0.9375,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 0.96875
+   },
+   "doc": {
+    "n": 16,
+    "hit1": 1.0,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 1.0
+   }
+  },
+  "操作步骤": {
+   "chunk": {
+    "n": 16,
+    "hit1": 0.75,
+    "hit3": 0.9375,
+    "hit5": 1.0,
+    "mrr": 0.8489583333333334
+   },
+   "doc": {
+    "n": 16,
+    "hit1": 1.0,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 1.0
+   }
+  },
+  "中文": {
+   "chunk": {
+    "n": 42,
+    "hit1": 0.8571428571428571,
+    "hit3": 0.9761904761904762,
+    "hit5": 1.0,
+    "mrr": 0.9186507936507937
+   },
+   "doc": {
+    "n": 42,
+    "hit1": 0.9761904761904762,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 0.9880952380952381
+   }
+  },
+  "英文": {
+   "chunk": {
+    "n": 8,
+    "hit1": 0.5,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 0.75
+   },
+   "doc": {
+    "n": 8,
+    "hit1": 1.0,
+    "hit3": 1.0,
+    "hit5": 1.0,
+    "mrr": 1.0
+   }
+  }
+ },
+ "per_question": [
+  {
+   "id": "P01",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_664-2025_带电设备红外诊断应用规范.pdf｜4 现场检测 > 4.2 安全要求",
+   "top1_rerank": 0.99626,
+   "secs": 5.24
+  },
+  {
+   "id": "P02",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_664-2025_带电设备红外诊断应用规范.pdf｜7 红外检测周期 > 7.2 变、配电设备",
+   "top1_rerank": 0.99675,
+   "secs": 5.23
+  },
+  {
+   "id": "P03",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_1555-2025_SF6气体泄漏在线监测报警装置运行维护导则.pdf｜7 安装和验收 > 7.3 现场测试方法 > 7.3.4 报警误差测试",
+   "top1_rerank": 0.99978,
+   "secs": 5.01
+  },
+  {
+   "id": "P04",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf｜4 要求 > 4.2 技术参数 > 4.2.7 直流电源装置的保护及声光报警功能",
+   "top1_rerank": 0.99675,
+   "secs": 4.77
+  },
+  {
+   "id": "P05",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf｜5 试验 > 5.3 交接试验要求 > 5.3.1 蓄电池组容量测量 > 5.3.1.2 阀控蓄电池组",
+   "top1_rerank": 0.99085,
+   "secs": 4.97
+  },
+  {
+   "id": "P06",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 2,
+   "doc_rank": 2,
+   "top1": "DL_T_618-2022_GIS现场交接试验规程.pdf｜9 充入GIS 内部气体的质量检测",
+   "top1_rerank": 0.94499,
+   "secs": 4.89
+  },
+  {
+   "id": "P07",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_618-2022_GIS现场交接试验规程.pdf｜6 主回路电阻测量",
+   "top1_rerank": 0.99335,
+   "secs": 5.18
+  },
+  {
+   "id": "P08",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_618-2022_GIS现场交接试验规程.pdf｜10 气体密封性试验",
+   "top1_rerank": 0.9988,
+   "secs": 4.97
+  },
+  {
+   "id": "P09",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 2,
+   "doc_rank": 1,
+   "top1": "DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf｜9 分、合闸脱扣器动作电压测试 > 9.2 试验步骤",
+   "top1_rerank": 0.98624,
+   "secs": 5.88
+  },
+  {
+   "id": "P10",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf｜6 试验要求 > 6.2 试验项目 > 6.2.7 气体湿度测量",
+   "top1_rerank": 0.99879,
+   "secs": 4.34
+  },
+  {
+   "id": "P11",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf｜7 检测周期",
+   "top1_rerank": 0.99518,
+   "secs": 5.57
+  },
+  {
+   "id": "P12",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "平高_ZF12B-126_GIS_安装使用说明书.pdf｜6 产品的运行和维护 > 6.1 维护及检修周期推荐如下:",
+   "top1_rerank": 0.99971,
+   "secs": 4.85
+  },
+  {
+   "id": "P13",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf｜6 维护",
+   "top1_rerank": 0.99789,
+   "secs": 6.51
+  },
+  {
+   "id": "P14",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "施耐德_RM6_SeT_安装使用说明书_中文.pdf｜维护 > 带撞击器的熔断器",
+   "top1_rerank": 0.99904,
+   "secs": 4.76
+  },
+  {
+   "id": "P15",
+   "category": "查参数",
+   "lang": "en",
+   "rank": 2,
+   "doc_rank": 1,
+   "top1": "ABB_VD4_36-40.5kV_VCB_Installation_Service_1VCD601314.pdf｜7 Maintenance > 7.1 General",
+   "top1_rerank": 0.9468,
+   "secs": 3.26
+  },
+  {
+   "id": "P16",
+   "category": "查参数",
+   "lang": "en",
+   "rank": 2,
+   "doc_rank": 1,
+   "top1": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf｜18 Service and maintenance > 18.1 General warnings and cautions",
+   "top1_rerank": 0.99927,
+   "secs": 2.63
+  },
+  {
+   "id": "P17",
+   "category": "查参数",
+   "lang": "en",
+   "rank": 2,
+   "doc_rank": 1,
+   "top1": "Schneider_SM6-24_Operating_Maintenance_S1B7039801.pdf｜SM Cubicles",
+   "top1_rerank": 0.94463,
+   "secs": 3.07
+  },
+  {
+   "id": "P18",
+   "category": "查参数",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "南方电网_设备运行质量评价规则_变电在线监测装置部分_2025.pdf｜5 评价规则 > 5.2 各指标计算方法 > 5.2.3 设备可靠性指标COE",
+   "top1_rerank": 0.99975,
+   "secs": 4.88
+  },
+  {
+   "id": "F01",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_664-2025_带电设备红外诊断应用规范.pdf｜8 诊断方法 > 8.2 相对温差法",
+   "top1_rerank": 0.96078,
+   "secs": 5.43
+  },
+  {
+   "id": "F02",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_664-2025_带电设备红外诊断应用规范.pdf｜10 异常分级和处理",
+   "top1_rerank": 0.9904,
+   "secs": 5.88
+  },
+  {
+   "id": "F03",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_1555-2025_SF6气体泄漏在线监测报警装置运行维护导则.pdf｜8 运行监督维护 > 8.4 装置异常原因及处理措施",
+   "top1_rerank": 0.9964,
+   "secs": 5.1
+  },
+  {
+   "id": "F04",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_1359-2025_六氟化硫电气设备故障气体分析和判断方法.pdf｜6 判断依据",
+   "top1_rerank": 0.99636,
+   "secs": 5.85
+  },
+  {
+   "id": "F05",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_595-2025_六氟化硫电气设备气体监督导则.pdf｜8 有关杂质组分(CO2、CO、",
+   "top1_rerank": 0.94283,
+   "secs": 5.32
+  },
+  {
+   "id": "F06",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf｜6 运行 > 6.3 监视与操作 > 6.3.4 异常情况的操作规定",
+   "top1_rerank": 0.99147,
+   "secs": 4.54
+  },
+  {
+   "id": "F07",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf｜6 运行 > 6.3 监视与操作 > 6.3.4 异常情况的操作规定",
+   "top1_rerank": 0.99775,
+   "secs": 4.96
+  },
+  {
+   "id": "F08",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf｜5 试验 > 5.3 交接试验要求 > 5.3.3 蓄电池内阻值测量",
+   "top1_rerank": 0.99918,
+   "secs": 4.82
+  },
+  {
+   "id": "F09",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf｜附录D > D.2 异常情况推荐分析方法",
+   "top1_rerank": 0.99957,
+   "secs": 5.41
+  },
+  {
+   "id": "F10",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_2544-2022_继电保护装置状态检修导则.pdf｜附录F > F.5 继电保护装置红外测温判断依据",
+   "top1_rerank": 0.99047,
+   "secs": 5.99
+  },
+  {
+   "id": "F11",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf｜4 运维要求 > 4.4 操作 > 4.4.4 操作流程",
+   "top1_rerank": 0.99461,
+   "secs": 4.93
+  },
+  {
+   "id": "F12",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "平高_ZF12B-126_GIS_安装使用说明书.pdf｜3 注意 > 3.4 运输、维修的注意事项:",
+   "top1_rerank": 0.98922,
+   "secs": 3.99
+  },
+  {
+   "id": "F13",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "施耐德_RM6_SeT_安装使用说明书_中文.pdf｜操作说明",
+   "top1_rerank": 0.98217,
+   "secs": 4.14
+  },
+  {
+   "id": "F14",
+   "category": "故障排查",
+   "lang": "en",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "Schneider_GalaxyVS_UPS_Operation_990-5910G.pdf｜Galaxy VS > Tests > Alarm Messages",
+   "top1_rerank": 0.9012,
+   "secs": 2.97
+  },
+  {
+   "id": "F15",
+   "category": "故障排查",
+   "lang": "en",
+   "rank": 2,
+   "doc_rank": 1,
+   "top1": "SIPROTEC5_7SJ82-85_V8.60_Manual.pdf｜2 Basic Structure of the Function > 2.3 Function Control",
+   "top1_rerank": 0.92221,
+   "secs": 2.69
+  },
+  {
+   "id": "F16",
+   "category": "故障排查",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf｜15 Capacitive voltage indicators > 15.1 Voltage indicator VPIS",
+   "top1_rerank": 0.99292,
+   "secs": 5.53
+  },
+  {
+   "id": "O01",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_664-2025_带电设备红外诊断应用规范.pdf｜5 现场操作 > 5.2 巡视性检测",
+   "top1_rerank": 0.99824,
+   "secs": 4.95
+  },
+  {
+   "id": "O02",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 3,
+   "doc_rank": 1,
+   "top1": "DL_T_1555-2025_SF6气体泄漏在线监测报警装置运行维护导则.pdf｜8 运行监督维护 > 8.2 报警监督",
+   "top1_rerank": 0.97134,
+   "secs": 4.86
+  },
+  {
+   "id": "O03",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 2,
+   "doc_rank": 1,
+   "top1": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf｜7 维护 > 7.4 周期性测试 > 7.4.1 阀控蓄电池的核对性放电 > 7.4.1.2 阀控蓄电池核对性放电周期",
+   "top1_rerank": 0.96121,
+   "secs": 4.49
+  },
+  {
+   "id": "O04",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_618-2022_GIS现场交接试验规程.pdf｜10 气体密封性试验",
+   "top1_rerank": 0.8586,
+   "secs": 4.73
+  },
+  {
+   "id": "O05",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 2,
+   "doc_rank": 1,
+   "top1": "DL_T_618-2022_GIS现场交接试验规程.pdf｜15 局部放电测量",
+   "top1_rerank": 0.97734,
+   "secs": 5.22
+  },
+  {
+   "id": "O06",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_2890-2025_高压交流断路器机械特性现场试验导则.pdf｜9 分、合闸脱扣器动作电压测试 > 9.2 试验步骤",
+   "top1_rerank": 0.99819,
+   "secs": 5.59
+  },
+  {
+   "id": "O07",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf｜10 运维管理 > 10.2 运维操作 > 10.2.3 在下列情况下应停用整套保护装置:",
+   "top1_rerank": 0.98533,
+   "secs": 4.86
+  },
+  {
+   "id": "O08",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf｜10 运维管理 > 10.2 运维操作 > 10.2.3 在下列情况下应停用整套保护装置:",
+   "top1_rerank": 0.99448,
+   "secs": 4.79
+  },
+  {
+   "id": "O09",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_2544-2022_继电保护装置状态检修导则.pdf｜附录D > D.1 常规站保护 > D.1.2 更换继电保护装置CPU 板",
+   "top1_rerank": 0.99788,
+   "secs": 4.71
+  },
+  {
+   "id": "O10",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf｜6 试验要求 > 6.2 试验项目 > 6.2.1 主回路电阻测量",
+   "top1_rerank": 0.99712,
+   "secs": 4.36
+  },
+  {
+   "id": "O11",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 4,
+   "doc_rank": 1,
+   "top1": "平高_ZF12B-126_GIS_安装使用说明书.pdf｜5 安装与调试",
+   "top1_rerank": 0.98515,
+   "secs": 4.0
+  },
+  {
+   "id": "O12",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "正泰_NM1系列塑料外壳式断路器说明书_2025-12.pdf｜（前置内容/封面/目录）",
+   "top1_rerank": 0.99869,
+   "secs": 6.37
+  },
+  {
+   "id": "O13",
+   "category": "操作步骤",
+   "lang": "zh",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "施耐德_RM6_SeT_安装使用说明书_中文.pdf｜维护 > 观察熔断器指示器",
+   "top1_rerank": 0.9984,
+   "secs": 5.04
+  },
+  {
+   "id": "O14",
+   "category": "操作步骤",
+   "lang": "en",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "Schneider_GalaxyVS_UPS_Operation_990-5910G.pdf｜Galaxy VS > Tests > Recommended Personal Protective Equipment (PPE)",
+   "top1_rerank": 0.99975,
+   "secs": 2.92
+  },
+  {
+   "id": "O15",
+   "category": "操作步骤",
+   "lang": "en",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "Schneider_SM6-24_Operating_Maintenance_S1B7039801.pdf｜Operating Safety",
+   "top1_rerank": 0.96773,
+   "secs": 3.31
+  },
+  {
+   "id": "O16",
+   "category": "操作步骤",
+   "lang": "en",
+   "rank": 1,
+   "doc_rank": 1,
+   "top1": "SIPROTEC5_7SJ82-85_V8.60_Manual.pdf｜3 System Functions > 3.1 Indications > 3.1.8 Spontaneous Fault Display on the On-Site Operation Panel",
+   "top1_rerank": 0.99823,
+   "secs": 3.32
+  },
+  {
+   "id": "R01",
+   "category": "拒答",
+   "top1": "南方电网_设备运行质量评价规则_变电在线监测装置部分_2025.pdf",
+   "top1_rerank": 0.0654,
+   "secs": 5.42
+  },
+  {
+   "id": "R02",
+   "category": "拒答",
+   "top1": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf",
+   "top1_rerank": 0.00142,
+   "secs": 5.35
+  },
+  {
+   "id": "R03",
+   "category": "拒答",
+   "top1": "DL_T_587-2025_继电保护和安全自动装置运行管理规程.pdf",
+   "top1_rerank": 0.02533,
+   "secs": 4.26
+  },
+  {
+   "id": "R04",
+   "category": "拒答",
+   "top1": "DL_T_664-2025_带电设备红外诊断应用规范.pdf",
+   "top1_rerank": 0.00712,
+   "secs": 5.26
+  },
+  {
+   "id": "R05",
+   "category": "拒答",
+   "top1": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf",
+   "top1_rerank": 0.00147,
+   "secs": 5.18
+  }
+ ]
+}

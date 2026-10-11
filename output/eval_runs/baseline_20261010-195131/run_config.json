@@ -1,0 +1,23 @@
+{
+ "config": {
+  "collection": "heading",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "qwen2.5:3b-instruct",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc"
+ },
+ "input": "eval_set_50.jsonl",
+ "retrieval_only": false,
+ "tag": "baseline",
+ "judge": null
+}

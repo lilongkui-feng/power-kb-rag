@@ -1,0 +1,12 @@
+{"id": "k01", "lang": "zh", "type": "数值", "query": "GIS 回路电阻测试电流 300A 的要求", "source": "DL_T_618-2022_GIS现场交接试验规程.pdf", "section": "6 主回路电阻测量", "anchors": ["GIS设备的测量电流不应小于300A"]}
+{"id": "k02", "lang": "zh", "type": "条款号", "query": "DL/T 664 第 8.2 条", "source": "DL_T_664-2025_带电设备红外诊断应用规范.pdf", "section": "8.2 相对温差法", "anchors": ["δt=(τ1-τ2)/τ1"]}
+{"id": "k03", "lang": "zh", "type": "型号", "query": "SafeRing 可以配 REF615 保护继电器吗", "source": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf", "section": "10 Relay and current transformers", "anchors": ["REF615 (high LV-compartment"]}
+{"id": "k04", "lang": "en", "type": "型号/部件号", "query": "VD4 push-button 54.2", "source": "ABB_VD4_36-40.5kV_VCB_Installation_Service_1VCD601314.pdf", "section": "3.3.2 Closing procedure", "anchors": ["mechanical ON push-button 54.2"]}
+{"id": "k05", "lang": "en", "type": "型号", "query": "DC200/100CS silicone liquid", "source": "ABB_SafeRing-SafePlus_12-24kV_RMU_IOM_1YVA000024_RevF.pdf", "section": "18.2 Maintenance intervals", "anchors": ["DC200/100CS"]}
+{"id": "k06", "lang": "en", "type": "型号", "query": "GVSOPT014 air filter", "source": "Schneider_GalaxyVS_UPS_Operation_990-5910G.pdf", "section": "Replace the Air Filters (GVSOPT014)", "anchors": ["Replace the Air Filters (GVSOPT014)"]}
+{"id": "k07", "lang": "zh", "type": "数值", "query": "气箱气体湿度 500μL/L", "source": "DL_T_2228-2021_变电站用充气式开关柜运维检修规程.pdf", "section": "6.2.7 气体湿度测量", "anchors": ["不大于500μL/L"]}
+{"id": "k08", "lang": "zh", "type": "数值", "query": "相对年漏气率 0.5%", "source": "DL_T_618-2022_GIS现场交接试验规程.pdf", "section": "10 气体密封性试验", "anchors": ["相对年漏气率不应大于0.5%"]}
+{"id": "k09", "lang": "zh", "type": "条款号", "query": "DL/T 724 的 7.4.1.2 条", "source": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf", "section": "7.4.1.2 阀控蓄电池核对性放电周期", "anchors": ["7.4.1.2 阀控蓄电池核对性放电周期"]}
+{"id": "k10", "lang": "zh", "type": "型号", "query": "Fusarc CF 熔断器尺寸", "source": "施耐德_RM6_SeT_安装使用说明书_中文.pdf", "section": "Fusarc CF 型熔断器的尺寸", "anchors": ["Fusarc CF 型熔断器的尺寸"]}
+{"id": "k11", "lang": "zh", "type": "缩写", "query": "NETD 检验方法", "source": "DL_T_664-2025_带电设备红外诊断应用规范.pdf", "section": "6.2.2.3 噪声等效温差(NETD)", "anchors": ["6.2.2.3 噪声等效温差(NETD)"]}
+{"id": "k12", "lang": "zh", "type": "数值", "query": "3I10 电流下电缆电压降", "source": "DL_T_724-2021_蓄电池直流电源装置运行与维护技术规程.pdf", "section": "5.3.4 蓄电池组的电缆、连接条电压降测量", "anchors": ["在3I10 电流下测得的电压降"]}

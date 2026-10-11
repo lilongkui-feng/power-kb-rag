@@ -1,0 +1,219 @@
+{
+ "config": {
+  "collection": "heading",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "qwen2.5:3b-instruct",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc"
+ },
+ "n_inkb": 50,
+ "n_ood": 5,
+ "groups": {
+  "全部": {
+   "n": 50,
+   "chunk": {
+    "hit@1": 0.8,
+    "hit@3": 0.98,
+    "hit@5": 1.0,
+    "mrr": 0.892
+   },
+   "doc": {
+    "hit@1": 0.98,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.99
+   },
+   "gen": {
+    "n": 50,
+    "correct": 0.44,
+    "partial": 0.32,
+    "wrong": 0.24,
+    "score": 0.6,
+    "coverage": 0.606,
+    "false_refusal": 0.02,
+    "cite_doc": 0.92,
+    "cite_chunk": 0.56,
+    "no_citation": 0.0,
+    "cite_valid": 0.986,
+    "gold_in_topk": 1.0
+   }
+  },
+  "查参数": {
+   "n": 18,
+   "chunk": {
+    "hit@1": 0.722,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.861
+   },
+   "doc": {
+    "hit@1": 0.944,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.972
+   },
+   "gen": {
+    "n": 18,
+    "correct": 0.389,
+    "partial": 0.333,
+    "wrong": 0.278,
+    "score": 0.556,
+    "coverage": 0.513,
+    "false_refusal": 0.056,
+    "cite_doc": 0.889,
+    "cite_chunk": 0.556,
+    "no_citation": 0.0,
+    "cite_valid": 0.966,
+    "gold_in_topk": 1.0
+   }
+  },
+  "故障排查": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.938,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.969
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 16,
+    "correct": 0.438,
+    "partial": 0.375,
+    "wrong": 0.188,
+    "score": 0.625,
+    "coverage": 0.64,
+    "false_refusal": 0.0,
+    "cite_doc": 0.875,
+    "cite_chunk": 0.5,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "操作步骤": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 0.938,
+    "hit@5": 1.0,
+    "mrr": 0.849
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 16,
+    "correct": 0.5,
+    "partial": 0.25,
+    "wrong": 0.25,
+    "score": 0.625,
+    "coverage": 0.678,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 0.625,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "中文": {
+   "n": 42,
+   "chunk": {
+    "hit@1": 0.857,
+    "hit@3": 0.976,
+    "hit@5": 1.0,
+    "mrr": 0.919
+   },
+   "doc": {
+    "hit@1": 0.976,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.988
+   },
+   "gen": {
+    "n": 42,
+    "correct": 0.524,
+    "partial": 0.333,
+    "wrong": 0.143,
+    "score": 0.69,
+    "coverage": 0.68,
+    "false_refusal": 0.0,
+    "cite_doc": 0.929,
+    "cite_chunk": 0.571,
+    "no_citation": 0.0,
+    "cite_valid": 0.984,
+    "gold_in_topk": 1.0
+   }
+  },
+  "英文": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.5,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.75
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 8,
+    "correct": 0.0,
+    "partial": 0.25,
+    "wrong": 0.75,
+    "score": 0.125,
+    "coverage": 0.219,
+    "false_refusal": 0.125,
+    "cite_doc": 0.875,
+    "cite_chunk": 0.5,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  }
+ },
+ "ood_refusal": 1.0,
+ "timing": {
+  "retrieval": 5.28,
+  "rerank": 4.67,
+  "generation": 20.78,
+  "first_token": null,
+  "total": 26.07
+ },
+ "calibration": {
+  "n": 18,
+  "agree": 0.667,
+  "agree_binary": 0.889,
+  "confusion": {
+   "部分→错误": 4,
+   "错误→错误": 4,
+   "部分→部分": 3,
+   "正确→错误": 1,
+   "正确→正确": 5,
+   "正确→部分": 1
+  }
+ },
+ "run_dir": "output/eval_runs/baseline_20261010-195131"
+}

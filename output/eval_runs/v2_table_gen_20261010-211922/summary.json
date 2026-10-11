@@ -1,0 +1,232 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "qwen2.5:3b-instruct",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc"
+ },
+ "rules_version": 2,
+ "n_inkb": 9,
+ "n_ood": 0,
+ "groups": {
+  "全部": {
+   "n": 9,
+   "chunk": {
+    "hit@1": 0.778,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.87
+   },
+   "doc": {
+    "hit@1": 0.889,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.926
+   },
+   "gen": {
+    "n": 9,
+    "correct": 0.556,
+    "partial": 0.111,
+    "wrong": 0.333,
+    "score": 0.611,
+    "coverage": 0.619,
+    "false_refusal": 0.0,
+    "cite_doc": 0.778,
+    "cite_chunk": 0.556,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "查参数": {
+   "n": 4,
+   "chunk": {
+    "hit@1": 0.5,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.708
+   },
+   "doc": {
+    "hit@1": 0.75,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.833
+   },
+   "gen": {
+    "n": 4,
+    "correct": 0.5,
+    "partial": 0.0,
+    "wrong": 0.5,
+    "score": 0.5,
+    "coverage": 0.55,
+    "false_refusal": 0.0,
+    "cite_doc": 0.75,
+    "cite_chunk": 0.75,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "故障排查": {
+   "n": 4,
+   "chunk": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 4,
+    "correct": 0.75,
+    "partial": 0.25,
+    "wrong": 0.0,
+    "score": 0.875,
+    "coverage": 0.844,
+    "false_refusal": 0.0,
+    "cite_doc": 0.75,
+    "cite_chunk": 0.25,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "操作步骤": {
+   "n": 1,
+   "chunk": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 1,
+    "correct": 0.0,
+    "partial": 0.0,
+    "wrong": 1.0,
+    "score": 0.0,
+    "coverage": 0.0,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 1.0,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "中文": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.854
+   },
+   "doc": {
+    "hit@1": 0.875,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.917
+   },
+   "gen": {
+    "n": 8,
+    "correct": 0.5,
+    "partial": 0.125,
+    "wrong": 0.375,
+    "score": 0.562,
+    "coverage": 0.603,
+    "false_refusal": 0.0,
+    "cite_doc": 0.75,
+    "cite_chunk": 0.625,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "英文": {
+   "n": 1,
+   "chunk": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 1,
+    "correct": 1.0,
+    "partial": 0.0,
+    "wrong": 0.0,
+    "score": 1.0,
+    "coverage": 0.75,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 0.0,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  }
+ },
+ "timing": {
+  "retrieval": 6.17,
+  "rerank": 4.59,
+  "generation": 10.56,
+  "first_token": null,
+  "total": 16.73
+ },
+ "calibration_sets": {
+  "calib": {
+   "n": 6,
+   "agree": 0.5,
+   "agree_binary": 0.833,
+   "confusion": {
+    "部分→错误": 1,
+    "错误→错误": 2,
+    "错误→部分": 1,
+    "正确→正确": 1,
+    "部分→正确": 1
+   }
+  }
+ },
+ "calibration": {
+  "n": 6,
+  "agree": 0.5,
+  "agree_binary": 0.833,
+  "confusion": {
+   "部分→错误": 1,
+   "错误→错误": 2,
+   "错误→部分": 1,
+   "正确→正确": 1,
+   "部分→正确": 1
+  }
+ },
+ "run_dir": "output/eval_runs/v2_table_gen_20261010-211922"
+}

@@ -1,0 +1,139 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "siliconflow",
+  "model": "deepseek-ai/DeepSeek-V3",
+  "base_url": "https://api.siliconflow.cn/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "e3575d63",
+  "prompt": "p1",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 2,
+ "n_inkb": 3,
+ "n_ood": 0,
+ "groups": {
+  "全部": {
+   "n": 3,
+   "chunk": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 3,
+    "correct": 1.0,
+    "partial": 0.0,
+    "wrong": 0.0,
+    "score": 1.0,
+    "coverage": 0.917,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 1.0,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "查参数": {
+   "n": 3,
+   "chunk": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 3,
+    "correct": 1.0,
+    "partial": 0.0,
+    "wrong": 0.0,
+    "score": 1.0,
+    "coverage": 0.917,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 1.0,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  },
+  "中文": {
+   "n": 3,
+   "chunk": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 3,
+    "correct": 1.0,
+    "partial": 0.0,
+    "wrong": 0.0,
+    "score": 1.0,
+    "coverage": 0.917,
+    "false_refusal": 0.0,
+    "cite_doc": 1.0,
+    "cite_chunk": 1.0,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 1.0
+   }
+  }
+ },
+ "timing": {
+  "retrieval": 15.94,
+  "rerank": 9.34,
+  "generation": 6.14,
+  "first_token": null,
+  "total": 22.08
+ },
+ "calibration_sets": {
+  "holdout": {
+   "n": 1,
+   "agree": 1.0,
+   "agree_binary": 1.0,
+   "confusion": {
+    "正确→正确": 1
+   }
+  }
+ },
+ "calibration": {
+  "n": 1,
+  "agree": 1.0,
+  "agree_binary": 1.0,
+  "confusion": {
+   "正确→正确": 1
+  }
+ },
+ "run_dir": "output/eval_runs/sf_smoke_20261011-004500"
+}

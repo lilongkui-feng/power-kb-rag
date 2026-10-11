@@ -1,0 +1,30 @@
+{"id": "P04", "human": "部分", "note": "110V/220V 过压、欠压全对，漏了直流接地 15/25kΩ", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "P06", "human": "错误", "note": "把投运前指标 150/250 当成运行中，周期也错", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "P09", "human": "部分", "note": "合/分闸动作范围基本对但未区分合闸85%，漏30%不动作", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "P15", "human": "部分", "note": "答出至少每4年，但又追加拒答句，自相矛盾", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "P16", "human": "正确", "note": "检查每五年、保养/维修按需，漏“严苛工况缩短”属次要", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "F01", "human": "部分", "note": "答出相对温差法及灵敏性，缺公式和低负荷/低温条件", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "F04", "human": "错误", "note": "把 >20 的阈值与 1 周复测/可能存在缺陷错配", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "F09", "human": "正确", "note": "五种波形异常全部正确", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "F10", "human": "正确", "note": "5/10/20°C 分级及原因正确", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "F14", "human": "部分", "note": "poor 正确，weak 称资料不足（实际在资料中）", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "F15", "human": "部分", "note": "Warning/Alarm 区分含混且自相矛盾", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "O01", "human": "正确", "note": "步骤完整", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "O04", "human": "正确", "note": "步骤与判据完整", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "O06", "human": "部分", "note": "只答出 a–c，漏 85%/110%、65%/85% 两步", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "O09", "human": "错误", "note": "只有编号无内容", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "O14", "human": "正确", "note": "6 步完整（用“空气过滤器”表述）", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "O15", "human": "错误", "note": "称更换时断开接地开关，与原文“接地开关必须合闸”相反", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "R03", "human": "正确", "note": "正确拒答", "labeled_on": "baseline_20261010-195131", "set": "calib"}
+{"id": "P02", "human": "正确", "note": "周期与新投运要求正确", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "P10", "human": "正确", "note": "500/1000 μL/L 核心正确，漏次要注意事项", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "P13", "human": "正确", "note": "每年/每半年正确", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "P18", "human": "错误", "note": "分项编造（含“运行单位投诉OC”），漏正确告警", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "F05", "human": "部分", "note": "漏补气及气体质量要求", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "F07", "human": "错误", "note": "未答启动备用充电装置、切除故障模块，堆砌其他条款", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "F12", "human": "正确", "note": "补气/防泄漏并联系厂家", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "F16", "human": "部分", "note": "不能据此判无电、温度范围对；带电指示描述错误，漏验电器", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "O02", "human": "部分", "note": "漏连接气路、设定报警值两步", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "O08", "human": "错误", "note": "顺序与内容和原文不符，漏打印报告/不得复归", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "O12", "human": "正确", "note": "步骤完整", "labeled_on": "baseline_20261010-195131", "set": "holdout"}
+{"id": "R01", "human": "正确", "note": "正确拒答", "labeled_on": "baseline_20261010-195131", "set": "holdout"}

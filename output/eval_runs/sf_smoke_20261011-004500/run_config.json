@@ -1,0 +1,25 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "siliconflow",
+  "model": "deepseek-ai/DeepSeek-V3",
+  "base_url": "https://api.siliconflow.cn/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "e3575d63",
+  "prompt": "p1",
+  "kb_sig": "254bde1394"
+ },
+ "input": "eval_set_50.jsonl",
+ "retrieval_only": false,
+ "tag": "sf_smoke",
+ "judge": null
+}

@@ -1,0 +1,27 @@
+{"id": "F21", "human": "正确", "auto": "错误", "note": "≤150 不合规+处理，均对；要点里的条件数值 20℃/101.3kPa 回答未复述→规则判 0", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F22", "human": "正确", "auto": "部分", "note": "禁火烤/移暖处或≤40℃温水/缓慢开阀全对；括注词（严禁措施）拉低关键词率", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F26", "human": "错误", "auto": "错误", "note": "答成了 DL/T 2890 通用原因，未答出 ZF12B 机构未连本体/未充气", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F28", "human": "正确", "auto": "错误", "note": "判为严重异常正确；要点含 100/140℃ 判据数值，回答未复述", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F32", "human": "部分", "auto": "部分", "note": "有高内阻电压表和 >10℃严重缺陷，缺核对标签/接地", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F34", "human": "部分", "auto": "部分", "note": "临时措施、整改计划对；联调/跳闸矩阵验收缺", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F39", "human": "错误", "auto": "部分", "note": "说进入双变换/强制旁路，没答 Allow boost charge；规则给了部分", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F40", "human": "错误", "auto": "错误", "note": "误拒（库内有答案）", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O17", "human": "正确", "auto": "部分", "note": "716 冷清洗剂、清水擦、干燥全对", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O29", "human": "正确", "auto": "部分", "note": "与投运前项目相同、解体联系制造厂均答到", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O31", "human": "部分", "auto": "部分", "note": "答成用操作手柄转动，未提旋钮/钥匙", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O40", "human": "部分", "auto": "部分", "note": "答了温度范围和放电方法，未指向 5.3.1 方法/放电深度", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P19", "human": "正确", "auto": "部分", "note": "清洁剂、禁用溶剂对；把硅油列为推荐属小瑕疵", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P35", "human": "错误", "auto": "部分", "note": "答成 LED/触点路由，未答 spontaneous/GI/DIGSI/上级系统 4 种输出方式；规则给了部分", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P36", "human": "部分", "auto": "部分", "note": "不操作+联系服务中心对；未答不得补气，且混入 SafeRing 补气说法", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P37", "human": "部分", "auto": "部分", "note": "最低分 0 分答成“未明确”", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P38", "human": "部分", "auto": "部分", "note": "公式系数写成 9.0（原文 0.9）", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P44", "human": "正确", "auto": "部分", "note": "4 个 M4×45，全对；M4×45 数值解析问题", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P54", "human": "正确", "auto": "部分", "note": "8.2～8.8 m/s 对；“单位：米每秒”类要点拉低", "set": "v3_holdout_noncorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "F31", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O28", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O32", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O33", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O38", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "O43", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P48", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
+{"id": "P49", "human": "正确", "auto": "正确", "note": "抽查确认", "set": "v3_holdout_autocorrect", "labeled_on": "v3set_sf_v3_p2_20261011-020946"}
