@@ -1145,7 +1145,7 @@ cap 在 139 题上逐题：变好 1（F40 未命中→1）、变差 2（P17 2→
 ### 异常（errors.py）与降级
 - `PowerKBError(status, code, message, detail)` 派生：ConfigError、BadRequest、AuthError、Forbidden、NotFound、Busy、UnsupportedFile、FileTooLarge、DocumentParseError、RetrievalError、IndexNotReady、ProviderNotReady、LLMError → LLMTimeout(504) / LLMRateLimited(429) / LLMAuthError(502) / LLMUnavailable(503)。旧的 `ApiError` 保留为别名。
 - api 全局处理器：PowerKBError → 对应状态码 + 统一错误体；HTTPException、RequestValidationError 同格式；其它异常 → 500 `internal_error` + 固定文案（以前会把 `类型: 消息前 200 字` 返回给客户端，可能带出路径/key），堆栈只进日志。流式接口的 `error` 事件同样只发 code/message/status/request_id。
-- `call_llm`：按异常类型映射（见 README 错误码表），401/403 和其它 4xx 不重试，429/5xx/网络错误按 `llm_max_retries` 退避、遵守 Retry-After，超时单独计数（默认只重试 1 次，避免 180 s × 6）；流式已经吐出 token 后不重试。
+- `call_llm`：按异常类型映射（见附录 A.3 错误码表），401/403 和其它 4xx 不重试，429/5xx/网络错误按 `llm_max_retries` 退避、遵守 Retry-After，超时单独计数（默认只重试 1 次，避免 180 s × 6）；流式已经吐出 token 后不重试。
 - `answer()`：检索异常包成 RetrievalError/IndexNotReady；生成失败按 `LLM_FALLBACK`：`retrieval`（默认，返回 Top-3 资料 + `degraded: true`）/ `local` / `local_then_retrieval` / `none`。结果新增 `provider`、`fallback`、`degraded`、`error`、`top_rerank`；每次问答一条 `rag.answer` 结构化日志。
 - 入库：`kb_store.ingest` 解析异常 → 删除副本并抛 DocumentParseError；任务状态 `error` 改为 `failed` 并带 `error: {code, message}`；上传按文件头校验（`%PDF` / `PK\x03\x04`），改扩展名的文件直接 415。
 - 前端：错误码 → 中文处理建议（`HINT` 表），显示 request_id；降级时显示黄色提示，回退本地时显示蓝色提示；连不上 API 单独提示。
@@ -1161,3 +1161,140 @@ cap 在 139 题上逐题：变好 1（F40 未命中→1）、变差 2（P17 2→
 - 在干净 `ubuntu:24.04` 容器里以 `SKIP_DOCKER=1` 连跑两次：第 1 次装 curl、clone、生成 .env（600，HF_ENDPOINT 已写）和 config.yaml；第 2 次识别已有代码、.env 保持不变（插入的标记行仍在）。Docker 安装和 up 部分没有在干净机器上跑过。
 - compose：新增 `KB_BIND`（端口绑定地址，Nginx 场景设 127.0.0.1；Docker 发布的端口会绕过 ufw）；`build.args` 传 `PIP_MIRROR`、`TORCH_INDEX_URL`；entrypoint 把 `logs` 也链接到 /data。
 - 踩坑：hostnet 验证时 ollama-pull 拉模型被沙箱网络拦截（redirect 到非公网地址）→ 容器内 ollama 没有模型，`/ask` 返回 404 → **正好触发了 retrieval 降级**，接口仍返回 200 + 检索资料；改为挂载宿主机的 `/workspace/ollama_models` 后 `/ask` 15.8 s 返回带引用的正确答案（≤300 μL/L）。期间磁盘被 Docker 构建缓存写满（126 GB 100%），`docker builder prune -af` + `image prune -f` 释放后，下一次构建报 `failed to register layer … file exists`：磁盘写满时留下一个孤立的 layerdb 条目（计算所有镜像的 chainID 确认无人引用），停 Docker 后把它移到 `/var/lib/docker/orphan_backup/` 再构建。
+
+## 附录 A：从 README 移出的详细章节（Day 21 README 精简时迁入）
+
+> 下列内容原在 README，README 精简后保留在此供查阅（命令与参数仍然有效）。
+
+### A.1 3. 配置 LLM（任选其一）
+
+```bash
+cp .env.example .env              # 密钥写这里（.env 已被 .gitignore 忽略）；程序启动时自动读取项目根目录的 .env
+cp config.example.yaml config.yaml   # 可选：非敏感参数（检索/重排/切分/端口/模型名/日志）
+python config.py                  # 校验并打印生效配置（密钥只显示“已设置/未设置”）
+```
+
+| 提供方 | 需要的环境变量 | 说明 |
+|---|---|---|
+| 硅基流动（推荐） | `SILICONFLOW_API_KEY`，可选 `SILICONFLOW_MODEL` | 默认 `deepseek-ai/DeepSeek-V3`，备选 `Qwen/Qwen2.5-72B-Instruct` |
+| DeepSeek 官方 | `DEEPSEEK_API_KEY` | `--provider deepseek` |
+| 本地 Ollama | 无 | 先 `sh deploy/start_ollama.sh`（端口 11434），再 `ollama pull qwen2.5:3b-instruct`（或用 `deploy/Modelfile.qwen2.5-3b` 从 GGUF 创建同名模型） |
+| 任意兼容接口 | `LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY` | 不传 `--provider` 时生效 |
+
+其它常用项：`RAG_PROMPT`（p0–p3，默认本地 p1、云端 p2）、`RAG_EXPAND`（默认 none）、`RAG_REFUSE_BELOW`（默认 0.3，off 关闭）、`LLM_TIMEOUT`（默认 180 秒）、`LLM_FALLBACK`（默认 retrieval）。全部配置项及注释见 [`config.example.yaml`](config.example.yaml)。
+
+#### 配置优先级与密钥规则
+
+**环境变量 > `.env` > `config.yaml` > 代码默认值**（`config.py`，pydantic-settings）。
+
+- 字段名与环境变量同名（不区分大小写），以前的环境变量写法全部继续有效；值为空字符串视为未设置。`config.yaml` 可以按小节写（`retrieval:`、`llm:` …），加载时拍平；用 `CONFIG_FILE` 指定其他路径。
+- **API Key / Token（`SILICONFLOW_API_KEY`、`DEEPSEEK_API_KEY`、`OPENAI_API_KEY`、`XAI_API_KEY`、`LLM_API_KEY`、`KB_API_TOKEN`、`MILVUS_TOKEN`）只能来自环境变量或 `.env`**，类型是 `SecretStr`；`config.yaml` 里出现 `*api_key / *token / secret / password` 这类键会直接报 `ConfigError` 拒绝启动。拼错的配置项和非法取值（如 `log_format: xml`）同样会在启动时报错，错误信息不回显输入值。
+- API 启动时在日志里打一条脱敏的 `config.summary`；`python config.py get kb_api_port` 可在脚本里读取单项（`deploy/start_api.sh` 就是这样取 host/port 的）。
+
+#### LLM 失败时的处理（`LLM_FALLBACK`）
+
+| 取值 | 云端调用失败（重试用尽后） |
+|---|---|
+| `retrieval`（默认） | 不报错，返回检索到的 Top-3 资料（`degraded: true`），前端提示“大模型暂时不可用” |
+| `local` | 改用本地 Ollama 重新生成（`fallback: {from, to: "local", reason}`），本地也失败则报错 |
+| `local_then_retrieval` | 先本地，再仅检索结果 |
+| `none` | 直接返回错误（504/429/502/503，见下方错误码表） |
+
+重试：429、5xx、网络错误最多 `LLM_MAX_RETRIES`（默认 5）次，退避 `min(LLM_BACKOFF_CAP, LLM_BACKOFF_BASE·2^n)` 秒并遵守 `Retry-After`；超时单独计 `LLM_TIMEOUT_RETRIES`（默认 1）次；401/403 不重试；流式已输出部分内容后不再重试（避免重复）。
+
+
+### A.2 向量库选择
+
+向量库通过 `vector_store.py` 抽象（`upsert / delete / query / get / count / list_sources / all_metadata`，过滤条件统一用 Chroma 风格的 `where`，Milvus 侧自动转成布尔表达式）。`embed_index.py`、`retrieve.py`、`kb_store.py`、`api.py` 全部通过这个接口访问，代码里不再直接调用 chromadb。
+
+| | Chroma（默认） | Milvus Lite | Milvus Standalone |
+|---|---|---|---|
+| 形态 | 嵌入式，本地目录 | 嵌入式，单个 `.db` 文件 | 服务（etcd + minio + milvus） |
+| 适用规模 | ≤ 百万级，单机 | 原型、单机 | 百万到十亿级，可水平扩展 |
+| 索引 / 度量 | HNSW / cosine | HNSW / COSINE | HNSW（可换 IVF、DiskANN 等）/ COSINE |
+| 运维 | 无 | 无 | 3 个容器，需要监控与备份 |
+| 本项目实测：检索指标（eval_set_v3 139 题） | MRR 0.893，Hit@5 97.1% | **与 Chroma 逐题名次完全相同** | `/search`、`/ask` 已验证可用 |
+| Top-50 稠密检索 p50 | 4.5 ms | 9.3 ms | — |
+| 内存增量 | ≈ 190 MB | ≈ 470 MB | 另外 3 个容器 |
+
+结论：3.5k 块规模下，向量检索只占端到端耗时的不到 1%（重排约 2.5 s/题才是大头），所以**默认保留 Chroma**；需要扩展或多服务共享时再切 Milvus。详见 [`output/vs_compare.md`](output/vs_compare.md)。
+
+```bash
+pip install "pymilvus[milvus_lite]"
+python migrate_chroma_to_milvus.py --methods heading_v2 --drop                                  # 迁移到 Milvus Lite（milvus_db/power_kb.db），复用向量，约 3 s
+python migrate_chroma_to_milvus.py --methods heading_v2 --uri http://localhost:19530 --drop     # 或迁移到 Standalone
+export VECTOR_STORE=milvus MILVUS_URI=$PWD/milvus_db/power_kb.db                                 # 切换（Standalone 用 http://host:19530）
+sh deploy/start_api.sh                                                                            # /health 会显示 "vector_store": "milvus"
+VECTOR_STORE=milvus python evaluate.py --input eval_set_v3.jsonl --collection heading_v2 --retrieval-only --tag vs_milvus
+```
+
+注意：Milvus Lite 的 `.db` 文件同一时间只能被一个进程打开（API 运行时，不要再用另一个进程打开同一个文件跑评测）。
+
+
+### A.3 错误码
+
+所有错误统一为 `{"error": {"code", "message", "detail", "request_id"}}`，响应头带 `X-Request-ID`（客户端传入的会沿用）。message 面向用户，不包含堆栈和 key；未预期的异常一律返回 `internal_error`，堆栈只写进（已打码的）服务端日志。异常类定义在 [`errors.py`](errors.py)。
+
+| HTTP | code | 异常类 | 场景 |
+|---|---|---|---|
+| 400 | `provider_not_ready` | ProviderNotReady | 选了云端 provider 但服务端没配置对应 key；未知 provider |
+| 400 / 422 | `bad_request` / `empty_file` | BadRequest | 请求不合法、空文件 |
+| 401 | `unauthorized` | AuthError | 开启鉴权后缺少或错误的 token |
+| 403 | `forbidden` | Forbidden | 删除基础库文档 |
+| 404 | `not_found` | NotFound | 任务 / 文档不存在 |
+| 409 | `busy` | Busy | 入库任务正在写索引时删除文档 |
+| 413 | `payload_too_large` | FileTooLarge | 超过 `KB_MAX_UPLOAD_MB` |
+| 415 | `unsupported_type` | UnsupportedFile | 不是 .pdf/.docx，或文件头与扩展名不符 |
+| 422 | `validation_error` | — | 请求参数校验失败（detail 列出字段） |
+| 422 | `document_parse_error` | DocumentParseError | 文档损坏/加密（入库任务里以 `failed` 状态体现） |
+| 429 | `llm_rate_limited` | LLMRateLimited | 上游限流，重试用尽 |
+| 500 | `retrieval_error` | RetrievalError | 检索内部错误 |
+| 500 | `config_error` | ConfigError | 配置非法 |
+| 500 | `internal_error` | — | 未预期异常 |
+| 502 | `llm_auth_failed` | LLMAuthError | 上游 401/403（服务端 key 无效） |
+| 502 | `llm_error` | LLMError | 上游其他 4xx、返回格式异常 |
+| 503 | `llm_unavailable` | LLMUnavailable | 连不上 LLM 或上游 5xx，重试用尽 |
+| 503 | `index_not_ready` | IndexNotReady | 模型未加载完 / 索引不存在 |
+| 504 | `llm_timeout` | LLMTimeout | 上游超时 |
+
+流式接口在已经开始输出后出错时，以 SSE `error` 事件给出同样的 `code / message / status / request_id`。前端（`app.py`）按错误码显示中文处理建议。
+
+### A.4 日志
+
+`kblog.py` 统一配置：`LOG_LEVEL`（默认 INFO）、`LOG_FORMAT=text|json`、`LOG_DIR`（默认 `logs/`，容器内为 `data/logs/`）、`LOG_FILE`（off 关闭文件日志）、按大小轮转（`LOG_MAX_BYTES` 10 MB × `LOG_BACKUP_COUNT` 5）。
+
+- **request_id** 用 contextvar 贯穿：中间件生成（或沿用客户端的 `X-Request-ID`），带进线程池（检索、生成、流式、入库任务），每行日志都有 `[rid=…]`。
+- **结构化事件**：`request`（方法、路径、状态码、耗时）、`rag.answer`（provider、model、检索/重排/生成/首 token/总耗时、prompt/completion tokens、Top-1 重排分、是否拒答/阈值拒答、引用数、降级）、`llm.retry` / `llm.failed` / `llm.fallback`、`ingest.job`、`request.error`、启动时的 `config.summary`。
+- **打码**：输出前统一过滤——已配置的密钥原值、`Authorization: Bearer …`、`X-API-Key`、`sk-…`/`xai-…`、`api_key=…`/`token: …`，包括异常堆栈；问句默认只记长度和哈希，`LOG_QUESTIONS=true` 才记原文（截断 200 字）。uvicorn 的日志也走同一套格式。
+
+```text
+2026-10-11 19:47:38,561 INFO powerkb.rag [rid=demo-ask-1] rag.answer provider=local model=qwen2.5:3b-instruct q=<len=16 sha1=41aec0a4a6> retrieval_secs=0.08 rerank_secs=4.31 generation_secs=5.37 total_secs=9.76 prompt_tokens=2137 completion_tokens=42 total_tokens=2179 top_rerank=0.997 refused=False threshold_refused=False n_citations=2 ...
+2026-10-11 19:47:38,561 INFO powerkb.api [rid=demo-ask-1] request method=POST path=/ask status=200 ms=9764
+```
+
+```bash
+curl -s localhost:8000/health
+curl -s localhost:8000/search -H 'Content-Type: application/json' \
+     -d '{"query": "运行中SF6设备灭弧气室湿度限值", "top_k": 3}'
+curl -s localhost:8000/ask -H 'Content-Type: application/json' \
+     -d '{"question": "阀控蓄电池多久做一次核对性放电？", "provider": "local", "top_k": 4}'
+curl -N localhost:8000/ask/stream -H 'Content-Type: application/json' \
+     -d '{"question": "SafeRing压力表指针在红区时怎么办？", "provider": "siliconflow"}'
+curl -s -F file=@某手册.pdf localhost:8000/documents          # → {"job_id": "...", "status": "queued"}
+curl -s localhost:8000/jobs/<job_id>
+curl -s -X DELETE localhost:8000/documents/<sha12>
+# 开启鉴权后每个请求加：-H "Authorization: Bearer $KB_API_TOKEN"
+```
+
+测试：`python -m pytest tests -q`。`test_api.py` 需要先启动 API 和本地 Ollama（否则自动跳过），`KB_TEST_CLOUD=1` 额外跑 1 次硅基流动端到端；`test_errors.py` 用 `httpx.MockTransport` 模拟超时 / 429 / 401 / 5xx 和降级，不调用任何真实云端接口。
+
+![前端经 API 问答](output/app_api_screenshot.png)
+
+
+## Day 21：README 重写、截图与部署文档补充
+
+- README 精简为面向 GitHub / 求职展示的版本（约 380 行）：核心成果、3 张新截图（`docs/images/ui_qa_cloud.png` 云端 V3 问答 + 出处，`ui_ingest_progress.png` / `ui_ingest.png` 上传入库，`api_docs.png` Swagger）、三张 mermaid 图（在线链路 / 离线入库 / Docker 拓扑，已用 mermaid-cli 11 渲染校验）、实体服务器部署步骤、配置表、API 表 + curl、评测（演进总表、最新基线分类别、归因、Chroma vs Milvus、未采用尝试）。原 README 的错误码、日志、LLM 配置、向量库选择等细节迁入本文附录 A。
+- 截图脚本 `deploy/readme_screenshots.py`：只调用 1 次硅基流动（21.2 s）；上传的演示 PDF 由脚本生成，截图后通过 API 删除。
+- `deploy/make_charts.py`：检索图增加“新评测集 139 题 / 跨语言 36 题 + xlang cap”面板；回答图加入 V3 + p3；新增 `attribution.png` 归因图。数据均来自 `output/version_scores.md` 与 `v3set_sf_v3_p2_attr` 的 summary.json。
+- 核对时发现 `RERANK_TOP_N / RERANK_BETA / HYBRID_ALPHA / RETRIEVAL_MODE / TOP_K / RERANK` 虽在 config.py 中声明，但检索调用使用的是硬编码默认值 → 新增 `rag.retrieval_defaults()`，`rag.answer`、`/search`、`/config`、API 请求默认值改为读取配置（默认值不变，行为不变），并新增测试 `test_retrieval_params_wired`。pytest 91 passed / 1 skipped。
+- DEPLOY.md 新增 §11「实体服务器 / 内网部署」：netplan 固定 IP、ufw（Docker 端口绕过 ufw 的处理）、`docker save/load` 离线镜像、HF 缓存与 Ollama 模型拷贝（`HF_CACHE_DIR` / `OLLAMA_MODELS_DIR` / `HF_HUB_OFFLINE`）、开机自启、GPU 思路（未验证）。

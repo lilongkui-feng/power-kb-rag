@@ -191,8 +191,8 @@ class ConfigResp(BaseModel):
 
 class SearchReq(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000, examples=["运行中SF6设备灭弧气室湿度限值"])
-    top_k: int = Field(5, ge=1, le=20)
-    rerank: bool = True
+    top_k: int = Field(settings().top_k, ge=1, le=20)
+    rerank: bool = settings().rerank
     sources: Optional[list[str]] = Field(None, description="只在这些文档中检索")
     filters: Optional[dict] = Field(None, description="Chroma 风格元数据过滤，如 {\"category\": \"标准\"}；与 sources 同时给时取交集")
     xlang: XLang = "none"
@@ -221,8 +221,8 @@ class AskReq(BaseModel):
     provider: Optional[Provider] = Field(None, description="空 = 服务端默认（LLM_BASE_URL 或本地 ollama）")
     model: Optional[str] = Field(None, description="覆盖提供方默认模型，如 Qwen/Qwen2.5-72B-Instruct")
     prompt: Optional[Literal["p0", "p1", "p2", "p3"]] = Field(None, description="空 = 本地 p1 / 云端 p2")
-    top_k: int = Field(5, ge=1, le=10)
-    rerank: bool = True
+    top_k: int = Field(min(settings().top_k, 10), ge=1, le=10)
+    rerank: bool = settings().rerank
     expand: Optional[Literal["none", "neighbor", "parent"]] = None
     refuse_below: Optional[float] = Field(-1.0, ge=-1.0, le=1.0, description="-1 = 服务端默认（0.3）；null = 关闭阈值拒答")
     sources: Optional[list[str]] = None
@@ -303,10 +303,10 @@ def config():
         ps.append(ProviderInfo(name=name, ready=ok, info=info, default_prompt=CFG.rag_prompt or ("p2" if cloud else rag.DEFAULT_PROMPT),
                                default_xlang=CFG.rag_xlang or ("cap" if cloud else "none")))
     return ConfigResp(providers=ps, default_provider="local",
-                      defaults={"top_k": 5, "rerank": True, "expand": rag.DEFAULT_EXPAND, "refuse_below": rag.DEFAULT_REFUSE_BELOW,
+                      defaults={"top_k": CFG.top_k, "rerank": CFG.rerank, "expand": rag.DEFAULT_EXPAND, "refuse_below": rag.DEFAULT_REFUSE_BELOW,
                                 "recommended_refuse_below": rag.RECOMMENDED_REFUSE_BELOW, "numcheck": rag.NUMCHECK},
-                      retrieval={"collection": kb_store.METHOD, "mode": "hybrid", "alpha": 0.5, "rerank_model": "BAAI/bge-reranker-v2-m3",
-                                 "rerank_top_n": 20, "rerank_beta": 0.8, "embed_model": "BAAI/bge-m3", "vector_store": _vs_backend()},
+                      retrieval={"collection": kb_store.METHOD, "mode": CFG.retrieval_mode, "alpha": CFG.hybrid_alpha, "rerank_model": CFG.rerank_model,
+                                 "rerank_top_n": CFG.rerank_top_n, "rerank_beta": CFG.rerank_beta, "embed_model": CFG.bge_model, "vector_store": _vs_backend()},
                       limits={"max_upload_mb": MAX_UPLOAD // 1024 // 1024, "max_concurrency": SEM._value if hasattr(SEM, "_value") else None,
                               "upload_types": [".pdf", ".docx"]},
                       auth_enabled=bool(secret("kb_api_token")))
@@ -332,7 +332,8 @@ async def search(req: SearchReq):
     t0 = time.time()
     async with SEM:
         hits = await run_in_threadpool(lambda: _search(req.query, k=req.top_k, filters=_filters(req.sources, req.filters), rerank=req.rerank,
-                                                       collection=kb_store.METHOD, rerank_use_cache=False, xlang=req.xlang))
+                                                       collection=kb_store.METHOD, rerank_use_cache=False, xlang=req.xlang,
+                                                       **rag.retrieval_defaults()))
     rr = hits[0].pop("_rerank_secs", None) if hits else None
     return SearchResp(query=req.query, hits=[_hit(h, req.include_text) for h in hits],
                       timing={"total_secs": round(time.time() - t0, 2), "rerank_secs": rr})

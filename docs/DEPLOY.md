@@ -337,3 +337,89 @@ local$ scp ubuntu@<服务器IP>:~/powerkb-backup-*.tgz .   # 拉回本地保存�
 - 长时间不用：在云控制台**关机**。按量付费实例关机后，部分厂商对计算资源停止计费（如“停机不收费”模式），但**云盘和公网 IP 通常仍收费**，具体以厂商计费规则为准。
 - 不再使用：先做好备份，再在控制台**释放实例**（并检查云盘、快照、弹性公网 IP 是否一起释放）。
 - 云端大模型按 token 计费：日志里每次问答都有 `prompt_tokens / completion_tokens`（`grep rag.answer data/logs/powerkb.log`），可据此估算用量；只想零 API 成本时全用 `local`。
+
+## 11. 实体服务器 / 内网部署
+
+适用于机房或办公室里的实体服务器、内网虚拟机：没有云安全组，可能没有公网。前面第 4–7 节的步骤同样适用，这里只补充差异。
+
+### 11.1 固定 IP
+
+服务器 IP 变了，用户就找不到服务，所以内网部署要先固定 IP（或在路由器上做 DHCP 保留）。Ubuntu 用 netplan，网卡名用 `ip -br a` 查看：
+
+```bash
+sudo tee /etc/netplan/60-static.yaml >/dev/null <<'YAML'
+network:
+  version: 2
+  ethernets:
+    enp3s0:                       # 改成实际网卡名
+      dhcp4: false
+      addresses: [192.168.1.50/24]
+      routes: [{to: default, via: 192.168.1.1}]
+      nameservers: {addresses: [192.168.1.1, 223.5.5.5]}
+YAML
+sudo chmod 600 /etc/netplan/60-static.yaml && sudo netplan try    # 120 秒内不确认会自动回滚，远程操作更安全
+```
+
+### 11.2 防火墙（ufw）
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow from 192.168.1.0/24 to any port 8501 proto tcp     # 只允许内网网段访问前端
+sudo ufw allow from 192.168.1.0/24 to any port 80,443 proto tcp   # 若使用第 8 节的 Nginx
+sudo ufw enable && sudo ufw status numbered
+```
+
+**注意：Docker 发布的端口会绕过 ufw**，因为它直接写 iptables 的 DOCKER 链。只靠 ufw 无法挡住 8000/8501。可选两种做法：
+
+- 推荐：在 `.env` 设 `KB_BIND=127.0.0.1`，api/web 只监听本机，由宿主机 Nginx（第 8 节）对外提供服务，ufw 只放行 80/443。
+- 或者保持 `KB_BIND=0.0.0.0`，只在可信内网使用，并设置 `KB_API_TOKEN`。API 的 8000 端口本来就不需要给最终用户访问。
+
+### 11.3 无公网 / 离线部署
+
+先在一台能上网的机器上把镜像和模型都准备好，再拷贝到目标服务器（U 盘、内网 scp 均可）。
+
+**① 镜像**：在联网机器上执行 `docker compose build api` 并拉取依赖镜像，然后打包：
+
+```bash
+docker pull ollama/ollama:latest
+docker save powerkb:latest ollama/ollama:latest | gzip > powerkb-images.tar.gz        # 约 3–4 GB（压缩后）
+# 需要 Milvus 时一并打包：quay.io/coreos/etcd:v3.5.18 cgr.dev/chainguard/minio:latest milvusdb/milvus:v2.5.10
+# 目标服务器（已安装 Docker）：
+gunzip -c powerkb-images.tar.gz | docker load
+```
+
+目标服务器上**不要加 `--build`**，否则会尝试联网构建。用 `docker compose up -d` 启动（`deploy/up.sh` 带 `--build`，离线时不要用它）。
+
+**② HuggingFace 模型**（bge-m3、bge-reranker-v2-m3，约 5–8 GB）：联网机器跑过一次 API 后，模型位于 `~/.cache/huggingface/hub`（宿主机）或 `hf_models` 卷（Docker）。离线环境建议把 HF 缓存改成绑定目录，拷贝起来更方便：
+
+```bash
+# 联网机器（宿主机缓存 → 打包）
+tar -C ~/.cache/huggingface -czf hf_hub.tgz hub
+# 目标服务器
+sudo mkdir -p /srv/powerkb/hf && sudo tar -C /srv/powerkb/hf -xzf hf_hub.tgz && sudo chown -R 1000:1000 /srv/powerkb/hf
+echo 'HF_CACHE_DIR=/srv/powerkb/hf' >> .env        # compose 把它挂到容器的 /models/hf（HF_HOME）
+echo 'HF_HUB_OFFLINE=1' >> .env                    # 不再尝试联网检查更新
+```
+
+**③ Ollama 模型**：同理，设置 `OLLAMA_MODELS_DIR=/srv/powerkb/ollama`，把联网机器上的 `~/.ollama/models`（或 `ollama_models` 卷中的内容）整个目录拷贝过去。`ollama-pull` 发现模型已存在就不会拉取。
+
+**④ 代码与数据**：在联网机器上执行 `git clone` 后打包整个目录（或用 `python deploy/make_zip.py` 生成的 zip）；PDF 原件放进 `power_docs/`。首次启动时会自动建索引，全程不需要联网。也可以把联网机器上已经建好的 `data/`（索引、切块）直接拷贝过去，跳过建索引。
+
+离线时只能使用本地 Ollama 模型；云端 provider 在 `/config` 中会显示为不可用，问答失败时按 `LLM_FALLBACK` 降级处理。
+
+### 11.4 开机自启
+
+compose 中 api / web / ollama（以及 milvus profile）均为 `restart: unless-stopped`，只要 Docker 开机自启，服务就会自动恢复（手动执行 `docker compose stop` 停掉的服务除外）：
+
+```bash
+sudo systemctl enable --now docker
+sudo reboot     # 验证：重启后 docker compose ps 均为 healthy（api 加载模型约需 1–2 分钟）
+```
+
+### 11.5 GPU（可选，未在本项目中验证）
+
+默认镜像是 CPU 版，CPU 已经够用（重排约 4 s/问）。有 NVIDIA GPU 时的思路如下：
+
+- 安装 NVIDIA 驱动和 `nvidia-container-toolkit`，执行 `nvidia-ctk runtime configure --runtime=docker && systemctl restart docker`。
+- **Ollama**：在 override 文件中为 ollama 服务加上 `deploy.resources.reservations.devices: [{driver: nvidia, count: all, capabilities: [gpu]}]`，即可用 GPU 跑更大的本地模型（如 qwen2.5:7b/14b）。
+- **bge-m3 / 重排**：构建时把 `TORCH_INDEX_URL` 换成 CUDA wheel 源（如 `https://download.pytorch.org/whl/cu124`，镜像会增大数 GB），api 服务同样声明 GPU 设备，并设置 `BGE_DEVICE=cuda`。未设置时，代码在检测到 CUDA 后会自动使用 GPU。

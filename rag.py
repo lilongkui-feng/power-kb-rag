@@ -40,6 +40,11 @@ def providers() -> dict:
 
 PROVIDERS = providers()
 
+def retrieval_defaults() -> dict:
+    """检索参数默认值（config：RETRIEVAL_MODE / HYBRID_ALPHA / RERANK_TOP_N / RERANK_BETA）；调用方显式传入的优先"""
+    st = settings()
+    return {"mode": st.retrieval_mode, "alpha": st.hybrid_alpha, "rerank_top_n": st.rerank_top_n, "rerank_beta": st.rerank_beta}
+
 def provider_ready(provider: str) -> tuple[bool, str]:
     """界面用：检查提供方是否可用（只检查 key 是否存在，不发请求）"""
     p = providers()[provider]
@@ -306,7 +311,7 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
         cfg["model"] = model            # 先校验 LLM 配置（如缺 DEEPSEEK_API_KEY 直接报 ProviderNotReady），再检索
     t0 = time.time()
     if hits is None:                       # 评测脚本可传入已检索好的 hits，避免重复检索
-        skw = dict(search_kw or {}); skw.setdefault("collection", settings().kb_collection)   # 默认走 v2 集合（表格父子块）
+        skw = {**retrieval_defaults(), **(search_kw or {})}; skw.setdefault("collection", settings().kb_collection)   # 默认走 v2 集合（表格父子块）
         xl = settings().rag_xlang or ("cap" if provider in CLOUD_PROVIDERS else "none")   # 云端默认跨语言 cap（Day 18 验证）
         if xl != "none" and "xlang" not in skw:
             import qx
@@ -341,7 +346,7 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
     if (DEFAULT_REFLECT if reflect_round is None else reflect_round):     # 自检 → 缺失点补检 1 轮（每个缺失点取 Top-2，去重后追加，最多 +3 条）
         rf = reflect(question, hits, cfg, max_chars)
         if not rf["enough"] and rf["missing"]:
-            skw = dict(search_kw or {}); skw.setdefault("collection", settings().kb_collection)
+            skw = {**retrieval_defaults(), **(search_kw or {})}; skw.setdefault("collection", settings().kb_collection)
             have = {h["chunk_id"] for h in hits}; added = []
             for mq in rf["missing"]:
                 for h in search(mq, k=2, filters=filters, rerank=rerank, **skw):

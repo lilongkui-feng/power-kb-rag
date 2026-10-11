@@ -83,3 +83,14 @@ def test_example_yaml_valid_and_secret_free(env):
     mp.setenv("CONFIG_FILE", p)
     s = config.Settings(_env_file=str(t / "none.env"))
     assert s.kb_api_port == 8000 and s.log_format == "text"
+
+def test_retrieval_params_wired(monkeypatch):
+    """RERANK_TOP_N / RERANK_BETA / HYBRID_ALPHA / RETRIEVAL_MODE 实际进入检索调用参数"""
+    import rag
+    monkeypatch.setenv("RERANK_TOP_N", "12"); monkeypatch.setenv("HYBRID_ALPHA", "0.3")
+    config.reload_settings()
+    try:
+        d = rag.retrieval_defaults()
+        assert d == {"mode": "hybrid", "alpha": 0.3, "rerank_top_n": 12, "rerank_beta": 0.8}
+    finally:
+        monkeypatch.delenv("RERANK_TOP_N"); monkeypatch.delenv("HYBRID_ALPHA"); config.reload_settings()
