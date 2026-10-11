@@ -1,0 +1,345 @@
+# 中英电力术语词典：中文<TAB>英文（多个用 | 分隔，第一个为首选）。来源：英文手册标题/表头高频词 + 中文标准术语，人工整理
+合闸	closing|close|switch on
+分闸	opening|open|tripping|trip|switch off
+合闸线圈	closing coil|closing release
+分闸线圈	opening coil|shunt release|trip coil
+脱扣器	release|trip unit
+分励脱扣器	shunt release|shunt trip
+欠压脱扣器	undervoltage release
+闭锁电磁铁	blocking magnet|interlocking magnet
+储能	charging|charge|stored energy
+储能弹簧	stored-energy spring|charging spring|closing spring
+弹簧操动机构	spring operating mechanism|spring mechanism
+操动机构	operating mechanism|mechanism
+手动储能	manual charging|hand charging
+储能手柄	charging handle|charging lever
+三角钥匙	triple bit key|double bit key
+操作手柄	operating handle|operating lever
+断路器	circuit breaker|circuit-breaker|breaker|cb
+真空断路器	vacuum circuit breaker|vcb|vacuum circuit-breaker
+隔离开关	disconnector|isolator|disconnecting switch
+接地开关	earthing switch|grounding switch|earth switch
+负荷开关	load break switch|switch-disconnector|load switch
+熔断器	fuse|fuses
+中压熔断器	mv fuse|hv fuse|medium voltage fuse
+熔断器组合电器	switch-fuse combination|fuse-switch
+撞针	striker|striker pin
+开关柜	switchgear|cubicle|panel|cabinet
+环网柜	ring main unit|rmu|ring main
+手车	withdrawable part|truck|withdrawable unit
+抽出式	withdrawable|draw-out
+试验位置	test position|disconnected position
+工作位置	service position|connected position
+柜门	door|panel door|front panel
+前面板	front panel|front cover
+面板	panel|front panel|faceplate
+电缆	cable|cables
+电缆终端	cable termination|cable end
+电缆室	cable compartment
+电缆头	cable head|cable termination
+硅胶帽	silicone cap|rubber cap
+母线	busbar|bus bar
+母线室	busbar compartment
+套管	bushing
+绝缘子	insulator
+绝缘件	insulating parts|insulating material|insulation
+绝缘	insulation|insulating
+绝缘电阻	insulation resistance
+辅助开关	auxiliary switch|auxiliary contacts
+辅助触点	auxiliary contact|auxiliary contacts
+触头	contact|contacts
+主回路	main circuit|primary circuit
+二次回路	secondary circuit|auxiliary circuit|control circuit
+控制回路	control circuit
+联锁	interlock|interlocking
+机械联锁	mechanical interlock
+电气联锁	electrical interlock
+压力表	manometer|pressure gauge|gauge
+密度继电器	density monitor|density relay|gas density monitor
+气压	gas pressure|pressure
+压力	pressure
+红区	red zone|red area
+绿区	green zone|green area
+六氟化硫	sf6|sulphur hexafluoride|sulfur hexafluoride
+SF6气体	sf6 gas
+气室	gas compartment|gas tank|compartment
+充气	gas filling|filling|refilling
+泄漏	leakage|leak
+漏气	gas leakage|leak
+湿度	humidity|moisture
+水分	moisture|water content
+内部燃弧	internal arc
+内部电弧	internal arc
+燃弧等级	internal arc classification|iac
+雷电冲击耐受电压	lightning impulse withstand voltage|bil
+工频耐受电压	power frequency withstand voltage
+额定电压	rated voltage
+额定电流	rated current|rated normal current
+额定短路开断电流	rated short-circuit breaking current
+短时耐受电流	short-time withstand current
+额定频率	rated frequency
+技术数据	technical data|specifications|technical specifications
+技术参数	technical data|technical parameters|specifications
+型号	type|model|type designation
+铭牌	rating plate|nameplate
+标准	standard|standards
+试验	test|testing|tests
+型式试验	type test
+出厂试验	routine test
+交接试验	commissioning test|acceptance test
+耐压试验	withstand voltage test|dielectric test
+交流耐压	ac withstand voltage|power frequency withstand
+击穿	breakdown|flashover
+放电	discharge|discharging
+局部放电	partial discharge|pd
+特高频	uhf|ultra high frequency
+超声波	ultrasonic
+回路电阻	contact resistance|circuit resistance|main circuit resistance
+机械特性	mechanical characteristics|mechanical properties
+分合闸时间	opening and closing time|operating time
+动作电压	operating voltage|pick-up voltage
+维护	maintenance|servicing|service
+保养	maintenance|servicing|care
+检修	maintenance|overhaul|repair|servicing
+维修	repair|maintenance
+检查	inspection|check|checking|inspect
+巡视	inspection|patrol|routine inspection
+周期	interval|period|cycle|frequency
+维护周期	maintenance interval|service interval
+检查周期	inspection interval
+多久	how often|interval
+每年	annually|every year|per year|yearly
+清洁	cleaning|clean
+清洁剂	cleaning agent|detergent|cleaner
+污垢	contamination|dirt|soiling
+附着	adhering|adhesive
+润滑	lubrication|lubricate|greasing
+润滑脂	grease|lubricant
+更换	replace|replacement|replacing
+备件	spare parts|spares
+辅助材料	auxiliary materials
+安装	installation|install|mounting|assembly
+拆卸	removal|dismantling|disassembly
+运输	transport|transportation
+储存	storage|store
+存放	storage
+包装	packaging|packing
+开箱	unpacking
+回收	recycling|recovery
+报废	end of life|disposal|end-of-life
+安全	safety|safe
+安全注意事项	safety precautions|safety instructions|warnings and cautions
+警告	warning|warnings
+注意	caution|note|notice
+危险	danger|hazard
+告警	alarm|warning|alert
+报警	alarm|alarm message
+报警信息	alarm messages|alarm message
+故障	fault|failure|malfunction|error
+故障排除	troubleshooting|fault finding
+故障处理	troubleshooting|fault handling
+故障录波	fault recording|fault record
+异常	abnormal|abnormality|anomaly
+运行	operation|operating|running|service
+运行条件	operating conditions|service conditions
+正常运行	normal operation|normal operating conditions
+运行模式	operation mode|operating mode|system mode
+操作	operation|operate|operating|procedure
+操作步骤	procedure|operating procedure|steps
+步骤	steps|procedure
+初始条件	initial conditions|preconditions
+条件	conditions|condition
+指示	indication|indications|indicator
+指示灯	indicator lamp|led|indicator light|pilot lamp
+信号	signal|indication
+指示信号	indications|signals
+输出	output|outputs
+输入	input|inputs
+复归	reset|acknowledge
+复位	reset
+确认	acknowledge|acknowledgement|confirm
+自发	spontaneous
+故障显示	fault display|fault indication
+显示	display|displaying|show
+显示屏	display|screen|lcd
+菜单	menu|menu tree
+日志	log|logs|record
+用户日志	user-defined log|user log
+读取	read|reading|readout
+定值	setting|settings|setting value
+整定	setting|settings
+定值切换	setting group switching|setting group change|switching setting groups
+定值组	setting group|parameter set
+参数	parameter|parameters|settings
+保护	protection|protective
+继电保护	relay protection|protection relay|protection
+保护装置	protection device|protection relay|relay|ied
+微机保护	microprocessor protection|numerical protection|digital relay
+功能	function|functions|functionality
+健康状态	health state|health status
+功能状态	function state|functional state
+退出	logged off|disabled|out of service|switch off
+登录	logged on|log on
+测试状态	test state|test mode
+测试模式	test mode
+数据对象	data objects
+质量属性	quality attributes
+通信	communication|communications
+频率跟踪	frequency tracking
+采样	sampling
+采样频率	sampling frequency
+采样周期	sampling period|sampling interval
+采样管	sampling pipe|sampling tube
+不间断电源	ups|uninterruptible power supply
+旁路	bypass
+静态旁路	static bypass|static bypass operation
+维修旁路	maintenance bypass
+旁路电压	bypass voltage
+电压超限	voltage out of tolerance|out of tolerance
+逆变器	inverter
+整流器	rectifier
+蓄电池	battery|batteries|storage battery
+电池	battery|batteries
+电池状况	battery condition
+电池放电	battery discharge|battery discharging
+充电	charging|charge
+放电试验	discharge test|capacity test
+核对性放电	capacity discharge test|capacity test
+直流电源	dc power supply|dc system
+空气滤网	air filter|air filters
+滤网	filter|filters|air filter
+提醒	reminder
+风扇	fan|fans
+温度	temperature
+环境温度	ambient temperature
+工作温度	operating temperature
+温升	temperature rise
+过热	overheating|overheat
+红外	infrared|ir|thermography
+红外测温	infrared thermography|infrared temperature measurement
+热点	hot spot|hotspot
+电压	voltage
+电流	current
+电阻	resistance
+功率	power
+频率	frequency
+带电	live|energized|voltage present
+无电	dead|de-energized|no voltage
+验电	voltage detection|verify absence of voltage
+带电指示	voltage presence indication|vpis|voltage indicator
+电压指示器	voltage indicator|vpis|voltage presence indicating system
+接地	earthing|grounding|earth|ground
+挂接地线	apply earth|earthing
+停电	de-energize|power off|outage
+送电	energize|power on
+开关设备	switching devices|switchgear|switching device
+操作次数	number of operations|operating cycles
+机械寿命	mechanical endurance|mechanical life
+电寿命	electrical endurance
+分合闸指示	position indicator|on/off indicator
+位置指示	position indicator|position indication
+计数器	counter|operation counter
+电动操作	motor operation|motor operated
+电动机	motor
+马达	motor
+遥控	remote control
+就地	local|on-site
+就地操作	local operation|on-site operation
+操作面板	operation panel|operator panel|control panel
+压力释放	pressure relief
+防爆	explosion-proof|pressure relief
+外壳	enclosure|housing|cover
+柜体	cubicle|enclosure|housing
+密封	seal|sealing|gasket
+螺栓	bolt|bolts|screw
+力矩	torque|tightening torque
+拧紧	tighten|tightening
+扭矩	torque
+尺寸	dimensions|dimension
+重量	weight
+外形尺寸	dimensions|overall dimensions
+安装尺寸	mounting dimensions|installation dimensions
+标签	label|labels
+说明书	manual|instructions|instruction manual
+手册	manual|handbook
+用户	user
+厂家	manufacturer
+制造商	manufacturer
+现场	on-site|site|field
+现场试验	on-site test|field test
+调试	commissioning
+投运	commissioning|put into service
+退出运行	take out of service|decommission
+气体分析	gas analysis
+分解物	decomposition products|by-products
+注意值	attention value|alarm value|limit
+限值	limit|limit value|threshold
+阈值	threshold
+最大	maximum|max
+最小	minimum|min
+不小于	not less than|at least|minimum
+不大于	not more than|at most|maximum
+低于	below|lower than
+高于	above|higher than
+超过	exceed|exceeds|above
+额定	rated|nominal
+标称	nominal
+变压器	transformer
+互感器	instrument transformer|current transformer|voltage transformer
+电流互感器	current transformer|ct
+电压互感器	voltage transformer|vt|pt
+避雷器	surge arrester|arrester
+电容器	capacitor
+电抗器	reactor
+组合电器	gis|gas insulated switchgear
+气体绝缘	gas-insulated|gas insulated
+空气绝缘	air-insulated|air insulated
+变电站	substation
+配电	distribution|power distribution
+中压	medium voltage|mv
+高压	high voltage|hv
+低压	low voltage|lv
+负载	load
+过载	overload
+短路	short circuit|short-circuit
+过电压	overvoltage
+欠电压	undervoltage
+过流	overcurrent
+接线	wiring|connection
+接线端子	terminal|terminals|terminal block
+端子排	terminal block|terminal strip
+连接	connection|connect|connecting
+松动	loose|loosening
+损坏	damage|damaged
+腐蚀	corrosion
+磨损	wear|worn
+裂纹	crack|cracks
+变形	deformation
+噪声	noise
+振动	vibration
+异响	abnormal noise
+气味	smell|odour|odor
+冒烟	smoke
+处理	handling|treatment|action|measures
+措施	measures|actions|countermeasures
+原因	cause|causes|reason
+区别	difference|differ
+含义	meaning|mean
+应当	should|must|shall
+禁止	prohibited|do not|must not
+允许	allowed|permitted
+手动	manual|manually
+自动	automatic|automatically
+旋转	rotate|rotation|turn
+角度	angle
+方向	direction
+顺时针	clockwise
+逆时针	counterclockwise|anticlockwise
+移动	move|movement
+推入	insert|rack in|push in
+拉出	withdraw|rack out|pull out
+试验操作	test operation|test operations
+钥匙	key
+挂锁	padlock
+锁定	lock|locking|lockout
+解锁	unlock|release

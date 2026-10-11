@@ -1,0 +1,130 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "xlang": "dict",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 2,
+ "n_inkb": 139,
+ "n_ood": 5,
+ "groups": {
+  "全部": {
+   "n": 139,
+   "chunk": {
+    "hit@1": 0.77,
+    "hit@3": 0.906,
+    "hit@5": 0.935,
+    "mrr": 0.841
+   },
+   "doc": {
+    "hit@1": 0.971,
+    "hit@3": 0.986,
+    "hit@5": 0.986,
+    "mrr": 0.98
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 55,
+   "chunk": {
+    "hit@1": 0.764,
+    "hit@3": 0.909,
+    "hit@5": 0.945,
+    "mrr": 0.842
+   },
+   "doc": {
+    "hit@1": 0.982,
+    "hit@3": 0.982,
+    "hit@5": 0.982,
+    "mrr": 0.985
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 41,
+   "chunk": {
+    "hit@1": 0.756,
+    "hit@3": 0.927,
+    "hit@5": 0.951,
+    "mrr": 0.839
+   },
+   "doc": {
+    "hit@1": 0.927,
+    "hit@3": 0.976,
+    "hit@5": 0.976,
+    "mrr": 0.951
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 43,
+   "chunk": {
+    "hit@1": 0.791,
+    "hit@3": 0.884,
+    "hit@5": 0.907,
+    "mrr": 0.842
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 113,
+   "chunk": {
+    "hit@1": 0.761,
+    "hit@3": 0.912,
+    "hit@5": 0.947,
+    "mrr": 0.837
+   },
+   "doc": {
+    "hit@1": 0.965,
+    "hit@3": 0.982,
+    "hit@5": 0.982,
+    "mrr": 0.975
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 26,
+   "chunk": {
+    "hit@1": 0.808,
+    "hit@3": 0.885,
+    "hit@5": 0.885,
+    "mrr": 0.858
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 7.83,
+  "rerank": 7.55,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/v3_xl_dict_20261011-122759"
+}

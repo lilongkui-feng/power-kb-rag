@@ -75,7 +75,8 @@ def hybrid_retrieve(query: str, k: int = 5, collection: str = "heading", filters
 
 def search(query: str, k: int = 5, collection: str = "heading", filters: dict | None = None,
            mode: str = "hybrid", rerank: bool = True, rerank_top_n: int = 20, rerank_model: str | None = None,
-           rerank_beta: float = 0.8, query_vec=None, rerank_use_cache: bool = True, expand_parent: bool = True, **kw) -> list[dict]:
+           rerank_beta: float = 0.8, query_vec=None, rerank_use_cache: bool = True, expand_parent: bool = True,
+           xlang: str = "none", multiq: str = "none", **kw) -> list[dict]:
     """统一入口：一阶段（dense/bm25/hybrid）取候选 -> 可选 cross-encoder 重排 -> （v2 集合）表格父子块展开。
     rerank=True 时先取 max(k, rerank_top_n) 个候选，对前 rerank_top_n 重排后返回前 k；
     每条含 stage1_rank/stage1_score（重排前）与 rerank_score/rank/score（重排后）。
@@ -86,7 +87,11 @@ def search(query: str, k: int = 5, collection: str = "heading", filters: dict | 
     if expand_parent:
         n1 = max(n1, 3 * k) if not rerank else n1
         n_out = n1                                    # 先多取，去重后再截断到 k
-    hits = hybrid_retrieve(query, n1, collection, filters, mode=mode, query_vec=query_vec, **kw)
+    if (xlang and xlang != "none") or (multiq and multiq != "none"):   # 跨语言/多查询：多路召回 → RRF 合并 → 下面用原问题统一重排
+        import qx
+        hits = qx.stage1(query, n1, collection, filters, xlang=xlang, multiq=multiq, mode=mode, **kw)
+    else:
+        hits = hybrid_retrieve(query, n1, collection, filters, mode=mode, query_vec=query_vec, **kw)
     if rerank:
         import rerank as rr
         hits = rr.rerank(query, hits, rerank_top_n, rerank_model or rr.DEFAULT_MODEL, rerank_beta, n_out, use_cache=rerank_use_cache)

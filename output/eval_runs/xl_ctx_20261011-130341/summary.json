@@ -1,0 +1,129 @@
+{
+ "config": {
+  "collection": "heading_v2_ctx",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "kb_sig": "cce85157f1"
+ },
+ "rules_version": 2,
+ "n_inkb": 36,
+ "n_ood": 0,
+ "groups": {
+  "全部": {
+   "n": 36,
+   "chunk": {
+    "hit@1": 0.583,
+    "hit@3": 0.806,
+    "hit@5": 0.833,
+    "mrr": 0.688
+   },
+   "doc": {
+    "hit@1": 0.917,
+    "hit@3": 0.944,
+    "hit@5": 0.944,
+    "mrr": 0.926
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 15,
+   "chunk": {
+    "hit@1": 0.6,
+    "hit@3": 0.8,
+    "hit@5": 0.8,
+    "mrr": 0.678
+   },
+   "doc": {
+    "hit@1": 0.867,
+    "hit@3": 0.933,
+    "hit@5": 0.933,
+    "mrr": 0.889
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.5,
+    "hit@3": 0.875,
+    "hit@5": 0.875,
+    "mrr": 0.688
+   },
+   "doc": {
+    "hit@1": 0.875,
+    "hit@3": 0.875,
+    "hit@5": 0.875,
+    "mrr": 0.875
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 13,
+   "chunk": {
+    "hit@1": 0.615,
+    "hit@3": 0.769,
+    "hit@5": 0.846,
+    "mrr": 0.699
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 26,
+   "chunk": {
+    "hit@1": 0.615,
+    "hit@3": 0.923,
+    "hit@5": 0.962,
+    "mrr": 0.76
+   },
+   "doc": {
+    "hit@1": 0.962,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.974
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 10,
+   "chunk": {
+    "hit@1": 0.5,
+    "hit@3": 0.5,
+    "hit@5": 0.5,
+    "mrr": 0.5
+   },
+   "doc": {
+    "hit@1": 0.8,
+    "hit@3": 0.8,
+    "hit@5": 0.8,
+    "mrr": 0.8
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 5.41,
+  "rerank": 4.34,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/xl_ctx_20261011-130341"
+}

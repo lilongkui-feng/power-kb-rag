@@ -142,6 +142,9 @@ python evaluate.py --input eval_set_v3.jsonl --collection heading_v2 --retrieval
 python evaluate.py --input eval_set_v3.jsonl --collection heading_v2 --provider siliconflow \
        --prompt p2 --rules 3 --workers 4 --tag v3set              # 完整评测；有缓存，中断后可续跑
 python version_scores.py                                        # 汇总 → output/version_scores.md / .xlsx
+python evaluate.py --input eval_xling.jsonl --collection heading_v2 --retrieval-only --xlang llm --tag xl   # 可选：跨语言改写
+python evaluate.py --rescore output/eval_runs/<run> --rules 3   # 重算分数 + Context Recall/忠实度/归因，不调 LLM
+python -m pytest tests/test_numcheck.py -q                      # 数值校验回归测试
 ```
 
 每次运行输出到 `output/eval_runs/<tag>_<时间>/`（`per_item.jsonl`、`summary.json`、`report.md`），摘要追加到 `output/baseline_scores.md`。
@@ -208,6 +211,8 @@ power_kb/
 - **OCR 双引擎**：在正泰 NM1 扫描件上，RapidOCR 的正文字符错误率（CER）为 0.18%，PaddleOCR 为 0.53%，RapidOCR 也更快（0.92 vs 5.24 s/页）。但只有 PaddleOCR 能还原表格结构，所以默认用 PaddleOCR（检测到 Paddle 环境时），代价是子进程峰值内存约 4.5 GB（`output/ocr_compare.md`）。
 - **Prompt 按模型分档**：p2 在 3B 上得分最高（0.73），但慢 2.3 倍，库外拒答还从 100% 降到 80%，所以本地默认用 p1；在 V3 上 p2 没有这些副作用，云端默认用 p2。
 
+- **本地提准实验（Day 17，不调云端）**：归因拆分显示 V3 新基线未答对的 15% 中，检索失败 5%、生成漏写 10%（Context Recall 95%），瓶颈在生成。据此做的检索侧改进都没有在全集上胜出：跨语言改写在 36 道跨语言题上 MRR 0.657→0.716（3B 翻译 0.726），但在 139 题上让中文题 Hit@1 85.0%→76.1%；Contextual 前缀中性（MRR 0.893→0.890）；规则多查询退步（0.852）。因此检索默认不变，只把数值校验 v2 设为默认。详见 `docs/DEVLOG.md` Day 17。
+
 ![拒答阈值扫描](docs/images/threshold_curve.png)
 
 ## 评测方法
@@ -233,14 +238,16 @@ power_kb/
 
 **局限**
 - 自动评分偏严：数值带条件括注、“M4×45”这类写法、单位类要点容易误判为“部分”。正确率在 80% 以上时，最好结合人工抽查来看。
-- 引用校验里的数值检查有误报：原文是“≤ 300”（带空格）或被截断的表格片段时，可能提示“数值无出处”。
+- 数值引用校验 v2（`numcheck.py`）在 258 例人工标注回归集上误报率 3.3%（v1 为 100%），但漏报率 8.7%：表头声明单位时篡改值若以裸数值出现在同块别处会被放过。
 - 表格抽取：无框线的三线表（ABB VD4）和扫描件复杂表头（NM1 第 5 页）仍有严重错误；跨页续表和多行表头的归属偶尔不准。
 - 剩下的错误主要是**漏要点**（多条件、附加注意事项），不是数值写错；本地 3B 模型只适合联调。
 - 全部在 CPU 上运行：重排约 4 s/问，首次加载模型约 1 分钟；PaddleOCR 峰值内存约 4.5 GB。
 - 评测集规模小，没有做多次重复运行的方差估计。
 
+- 跨语言检索、Contextual 前缀、多查询、reflect 自检均已实现为可选开关，但本地验证未在 139 题全集上超过基线，默认关闭（见下方“本地提准实验”）。
+
 **后续计划**
-- 生成端：加“逐条核对要点”的自检步骤，或者用小模型抽取答案、大模型校对，主攻漏要点。
+- 生成端：p3（要点清单先行）在本地 3B 难题子集上得分 0.455→0.545，需用云端模型在全集上正式验证；reflect 需更强的模型判断缺失点。
 - 表格：加入无框线表算法，尝试多模态模型直接读表格截图。
 - 评测：扩展到 300 题以上并邀请领域人员复核；做多次运行取置信区间；评分改为规则和 LLM 评委相结合。
 - 工程：重排换成 GPU 或 ONNX 量化；Docker 化部署；加权限控制和文档版本管理（标准新旧版本并存的问题）。

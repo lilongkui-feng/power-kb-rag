@@ -1,0 +1,130 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "multiq": "rule",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 2,
+ "n_inkb": 139,
+ "n_ood": 5,
+ "groups": {
+  "全部": {
+   "n": 139,
+   "chunk": {
+    "hit@1": 0.777,
+    "hit@3": 0.921,
+    "hit@5": 0.957,
+    "mrr": 0.852
+   },
+   "doc": {
+    "hit@1": 0.986,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.993
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 55,
+   "chunk": {
+    "hit@1": 0.8,
+    "hit@3": 0.927,
+    "hit@5": 0.945,
+    "mrr": 0.867
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 41,
+   "chunk": {
+    "hit@1": 0.805,
+    "hit@3": 0.927,
+    "hit@5": 0.976,
+    "mrr": 0.87
+   },
+   "doc": {
+    "hit@1": 0.951,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.976
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 43,
+   "chunk": {
+    "hit@1": 0.721,
+    "hit@3": 0.907,
+    "hit@5": 0.953,
+    "mrr": 0.814
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 113,
+   "chunk": {
+    "hit@1": 0.796,
+    "hit@3": 0.929,
+    "hit@5": 0.965,
+    "mrr": 0.864
+   },
+   "doc": {
+    "hit@1": 0.982,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.991
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 26,
+   "chunk": {
+    "hit@1": 0.692,
+    "hit@3": 0.885,
+    "hit@5": 0.923,
+    "mrr": 0.796
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 3.71,
+  "rerank": 3.29,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/v3_mq_rule_20261011-130020"
+}

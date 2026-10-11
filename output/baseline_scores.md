@@ -27,3 +27,17 @@
 | 10-11 01:40 | sf_v3_p2_ex_parent | heading_v2+hybrid+rr@20β0.8,k=5,p2 | deepseek-ai/DeepSeek-V3 | 78% | 100% | 0.873 | 98% | 84% | 16% | 0.92 | 94% | 100% | 0% | 11.08 | output/eval_runs/sf_v3_p2_ex_parent_20261011-014052 |
 | 10-11 02:09 | v3set_sf_v3_p2 | heading_v2+hybrid+rr@20β0.8,k=5,p2 | deepseek-ai/DeepSeek-V3 | 84% | 97% | 0.893 | 99% | 77% | 9% | 0.813 | 94% | 100% | 1% | 13.95 | output/eval_runs/v3set_sf_v3_p2_20261011-020946 |
 | 10-11 02:12 | v3set_sf_v3_p2 (rescore) | heading_v2+hybrid+rr@20β0.8,k=5,p2 | deepseek-ai/DeepSeek-V3 | 84% | 97% | 0.893 | 99% | 85% | 12% | 0.91 | 94% | 100% | 1% | 13.95 | output/eval_runs/v3set_sf_v3_p2_20261011-020946 |
+| 10-11 11:58 | xl_none | heading_v2+hybrid+rr@20β0.8,k=5 | - | 58% | 75% | 0.657 | 86% | - | - | - | - | - | - | 4.58 | output/eval_runs/xl_none_20261011-115837 |
+| 10-11 12:01 | xl_dict | heading_v2+hybrid+rr@20β0.8,k=5 | - | 64% | 81% | 0.716 | 92% | - | - | - | - | - | - | 4.48 | output/eval_runs/xl_dict_20261011-120121 |
+| 10-11 12:04 | v3set_sf_v3_p2 (rescore+归因拆分) | heading_v2+hybrid+rr@20β0.8,k=5,p2 | deepseek-ai/DeepSeek-V3 | 84% | 97% | 0.893 | 99% | 85% | 12% | 0.91 | 94% | 100% | 1% | 13.95 | output/eval_runs/v3set_sf_v3_p2_attr_20261011-120349 |
+| 10-11 12:09 | xl_llm | heading_v2+hybrid+rr@20β0.8,k=5 | - | 64% | 83% | 0.726 | 92% | - | - | - | - | - | - | 12.94 | output/eval_runs/xl_llm_20261011-120908 |
+| 10-11 12:27 | v3_xl_dict | heading_v2+hybrid+rr@20β0.8,k=5 | - | 77% | 94% | 0.841 | 97% | - | - | - | - | - | - | 7.83 | output/eval_runs/v3_xl_dict_20261011-122759 |
+| 10-11 12:51 | v3_ctx | heading_v2_ctx+hybrid+rr@20β0.8,k=5 | - | 82% | 98% | 0.890 | 99% | - | - | - | - | - | - | 2.43 | output/eval_runs/v3_ctx_20261011-125125 |
+| 10-11 13:00 | v3_mq_rule | heading_v2+hybrid+rr@20β0.8,k=5 | - | 78% | 96% | 0.852 | 99% | - | - | - | - | - | - | 3.71 | output/eval_runs/v3_mq_rule_20261011-130020 |
+| 10-11 13:03 | xl_ctx | heading_v2_ctx+hybrid+rr@20β0.8,k=5 | - | 58% | 83% | 0.688 | 92% | - | - | - | - | - | - | 5.41 | output/eval_runs/xl_ctx_20261011-130341 |
+| 10-11 13:09 | xl_auto | heading_v2+hybrid+rr@20β0.8,k=5 | - | 61% | 75% | 0.666 | 89% | - | - | - | - | - | - | 9.18 | output/eval_runs/xl_auto_20261011-130931 |
+| 10-11 13:12 | xl_auto_llm | heading_v2+hybrid+rr@20β0.8,k=5 | - | 61% | 75% | 0.667 | 89% | - | - | - | - | - | - | 4.56 | output/eval_runs/xl_auto_llm_20261011-131221 |
+| 10-11 13:21 | v3_xl_auto | heading_v2+hybrid+rr@20β0.8,k=5 | - | 83% | 96% | 0.888 | 99% | - | - | - | - | - | - | 3.68 | output/eval_runs/v3_xl_auto_20261011-132112 |
+| 10-11 13:24 | rf3b_p1 | heading_v2+hybrid+rr@20β0.8,k=5,p1 | qwen2.5:3b-instruct | 68% | 86% | 0.779 | 96% | 23% | 46% | 0.455 | 41% | - | 4% | 16.33 | output/eval_runs/rf3b_p1_20261011-132414 |
+| 10-11 13:34 | rf3b_p3 | heading_v2+hybrid+rr@20β0.8,k=5,p3 | qwen2.5:3b-instruct | 68% | 86% | 0.779 | 96% | 27% | 55% | 0.545 | 50% | - | 0% | 31.17 | output/eval_runs/rf3b_p3_20261011-133403 |
+| 10-11 13:47 | rf3b_p3_reflect | heading_v2+hybrid+rr@20β0.8,k=5,p3 | qwen2.5:3b-instruct | 68% | 86% | 0.779 | 96% | 27% | 50% | 0.523 | 46% | - | 0% | 39.68 | output/eval_runs/rf3b_p3_reflect_20261011-134700 |

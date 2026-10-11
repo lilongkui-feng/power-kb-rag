@@ -120,6 +120,86 @@ def auto_judge(item: dict, gen: dict, th_ok=0.75, th_part=0.4) -> dict:
         v, note = ("部分", "答后又拒") if cov >= th_part else ("错误", "误拒")
     return {"coverage": round(cov, 3), "verdict": v, "kps": res, "note": note}
 
+# ---------------- 评测拆分：Context Recall / 忠实度 / 归因（规则版，不调 LLM） ----------------
+class _Ctx:
+    """上下文的预处理（数值量、单位、中文规范化文本、英文词集合），供要点/句子跨语言匹配"""
+    def __init__(self, ctx: str):
+        import numcheck
+        self.q = numcheck.quantities(ctx); self.d = {x.dim for x in self.q if x.dim} | numcheck.unit_mentions(ctx); self.e = numcheck.explicit_units(ctx)
+        self.cn = canon(ctx); self.low = unicodedata.normalize("NFKC", ctx).lower()
+        self.words = {_stem(w) for w in re.findall(r"[a-z][a-z0-9\-]+", self.low)}
+
+def _stem(w):
+    for suf in ("ing", "ed", "es", "s"):
+        if len(w) > len(suf) + 3 and w.endswith(suf):
+            return w[: -len(suf)]
+    return w
+
+def _terms(text: str):
+    """要点/句子的检索词：英文按词（≥3 字母、去停用词、词干化），中文按 jieba 关键词（canon 归一）"""
+    low = unicodedata.normalize("NFKC", text).lower()
+    en = [_stem(w) for w in re.findall(r"[a-z][a-z\-]{2,}", low) if w not in STOP]
+    zh = [canon(w) for w in keywords(re.sub(r"[a-z]+", " ", low))]
+    return list(dict.fromkeys(en)), list(dict.fromkeys(zh))
+
+def _zh_hit(w: str, c: "_Ctx") -> bool:
+    if w in c.cn:
+        return True
+    import qx
+    z2e = qx._dict()[0]
+    return any(t in c.low for t in z2e.get(w, []))                          # 中文词 → 词典英文译名（跨语言上下文）
+
+def text_supported(text: str, c: "_Ctx", need: float = 0.5) -> bool:
+    import numcheck
+    qs = [x for x in numcheck.quantities(text) if not numcheck._skip(x)]
+    if not all(numcheck.supported(x, c.q, c.d, c.e) for x in qs):
+        return False
+    en, zh = _terms(text)
+    hits = sum(w in c.words for w in en) + sum(_zh_hit(w, c) for w in zh)
+    n = len(en) + len(zh)
+    return hits / n >= need if n else bool(qs)
+
+def context_recall(item, ctx: str) -> float | None:
+    """core 要点（无 core 时用全部要点）在送入 LLM 的上下文中的覆盖率（数值 numcheck 归一化 + 关键词≥50%，中英要点任一满足即算）"""
+    if item["category"] == "拒答" or not item.get("key_points"):
+        return None
+    c = _Ctx(ctx)
+    zh, en = item.get("key_points_zh"), item["key_points"]
+    idx = item.get("core") or list(range(len(zh or en)))
+    cr = []
+    for i in idx:
+        cands = [k for k in ((zh[i] if zh and i < len(zh) else None), (en[i] if i < len(en) else None)) if k]
+        cr.append(1.0 if any(text_supported(k, c) for k in cands) else 0.0)
+    return round(sum(cr) / len(cr), 3) if cr else None
+
+def faithfulness(answer: str, ctx: str) -> float | None:
+    """回答中有实质内容的句子，其数值和关键词（≥50%，中文词可经术语词典对上英文上下文）都能在上下文中找到的比例"""
+    ans = re.sub(r"\[\d+(?:[,，、]\s*\d+)*\]", "", answer or "")
+    sents = [x for x in re.split(r"[。；;\n]|(?<=[a-z])\.\s", ans) if len(x.strip()) >= 6 and not REFUSE_RE.search(x) and not x.strip().startswith("总结")]
+    if not sents:
+        return None
+    c = _Ctx(ctx)
+    return round(sum(text_supported(x, c) for x in sents) / len(sents), 3)
+
+def attribution(verdict, cr, refused=False) -> str:
+    if verdict == "正确":
+        return "正确"
+    if cr is None:
+        return "-"
+    return "检索失败" if cr < 0.75 else "生成漏写"
+
+_TBL = {}
+def evidence_in_table(item) -> bool:
+    """标注证据是否只出现在 heading_v2 的表格块中（表格题/文本题分桶用）"""
+    if not _TBL:
+        for f in (os.path.join(OUT, "chunks_heading_v2.jsonl"), os.path.join(HERE, "uploads", "chunks_uploaded_v2.jsonl")):
+            if os.path.exists(f):
+                for c in map(json.loads, open(f, encoding="utf-8")):
+                    _TBL.setdefault(c["source"], []).append((c.get("chunk_type", "text"), sq(c["text"])))
+    ev = sq(item.get("evidence", ""))
+    types = {t for t, tx in _TBL.get(item.get("source"), []) if ev and ev in tx}
+    return bool(types) and types <= {"table", "table_row"}
+
 # ---------------- LLM-as-judge（默认关闭） ----------------
 JUDGE_PROMPT = """你是严格的评卷人。根据【标准答案】和【评分要点】判断【待评回答】：
 - 正确：覆盖全部关键要点且无错误数值/结论；部分：覆盖部分要点且无严重错误；错误：关键数值/结论错误、答非所问或无实质内容。
@@ -176,7 +256,8 @@ def config_from_args(a):
             "rerank_top_n": a.rerank_top_n, "rerank_beta": a.rerank_beta, "top_k": a.top_k, "retrieve_k": max(10, a.top_k),
             "provider": a.provider or "local", "model": a.model or cfg["model"], "base_url": cfg["base_url"],
             "max_tokens": a.max_tokens, "refuse_below": a.refuse_below, "prompt_sha": hashlib.sha1(rag.PROMPTS[a.prompt].encode()).hexdigest()[:8],
-            **({"prompt": a.prompt} if a.prompt != "p0" else {}), **({"expand": a.expand} if a.expand != "none" else {}), "kb_sig": kb_sig(a.collection)}
+            **({"prompt": a.prompt} if a.prompt != "p0" else {}), **({"expand": a.expand} if a.expand != "none" else {}),
+            **({"xlang": a.xlang} if a.xlang != "none" else {}), **({"multiq": a.multiq} if a.multiq != "none" else {}), **({"reflect": True} if a.reflect else {}), "kb_sig": kb_sig(a.collection)}
 
 def cache_path(cfg):
     keys = {k: cfg[k] for k in sorted(cfg)}
@@ -207,7 +288,7 @@ def run(a):
     if getattr(a, "hits_from", None) and not a.retrieval_only:
         d = sorted(glob.glob(os.path.join(RUNS, a.hits_from + "*")))[-1]
         rc = json.load(open(os.path.join(d, "run_config.json"), encoding="utf-8"))["config"]
-        same = all(rc.get(k) == cfg.get(k) for k in ("collection", "mode", "fusion", "alpha", "rerank", "rerank_top_n", "rerank_beta", "retrieve_k", "kb_sig"))
+        same = all(rc.get(k) == cfg.get(k) for k in ("collection", "mode", "fusion", "alpha", "rerank", "rerank_top_n", "rerank_beta", "retrieve_k", "kb_sig", "xlang", "multiq"))
         if not same:
             raise SystemExit(f"--hits-from {d} 的检索配置与当前不一致")
         reuse = {r["id"]: r for r in map(json.loads, open(os.path.join(d, "records.jsonl"), encoding="utf-8"))}
@@ -223,7 +304,7 @@ def run(a):
             recs.append(rec); todo.append((it, rec, [dict(h) for h in r0["hits"]])); continue
         hits = search(it["question"], k=cfg["retrieve_k"], collection=cfg["collection"], mode=cfg["mode"], fusion=cfg["fusion"],
                       alpha=cfg["alpha"], rerank=cfg["rerank"], rerank_top_n=cfg["rerank_top_n"], rerank_beta=cfg["rerank_beta"],
-                      rerank_use_cache=a.rerank_cache)
+                      rerank_use_cache=a.rerank_cache, xlang=a.xlang, multiq=a.multiq)
         t_ret = time.time() - t0
         rr_secs = hits[0].pop("_rerank_secs", 0.0) if hits else 0.0
         rec = {"key": key, "id": it["id"], "hits": [slim_hit(h) for h in hits], "t_retrieval": round(t_ret, 2), "t_rerank": round(rr_secs, 2)}
@@ -244,8 +325,8 @@ def run(a):
             import rag
             g = rag.answer(it["question"], k=cfg["top_k"], provider=a.provider, hits=hits[:cfg["top_k"]],
                            max_tokens=cfg["max_tokens"], model=a.model, prompt=a.prompt,
-                           expand=a.expand, refuse_below=None, search_kw={"collection": cfg["collection"]})
-            rec["gen"] = {k: g[k] for k in ("answer", "raw_answer", "refused", "retried", "sources", "invalid_citations", "support_warnings", "timing", "usage", "model")}
+                           expand=a.expand, refuse_below=None, search_kw={"collection": cfg["collection"]}, reflect_round=a.reflect)
+            rec["gen"] = {k: g[k] for k in ("answer", "raw_answer", "refused", "retried", "sources", "invalid_citations", "support_warnings", "timing", "usage", "model", "reflect", "extra_hits")}
             rec["gen"]["used"] = [s["id"] for s in g["sources"]]
         rec["t_total"] = round(rec["t_retrieval"] + time.time() - t0, 2)
         with lock:
@@ -283,7 +364,7 @@ def score_and_report(run_dir, items, recs, cfg, a, rescored=False):
             row.update(chunk_rank=rank_of(it, hits), doc_rank=rank_of(it, hits, True))
         g = r.get("gen")
         if g:
-            topk = hits[:cfg["top_k"]]
+            topk = hits[:cfg["top_k"]] + (g.get("extra_hits") or [])     # reflect 补检的资料也算上下文（引用编号顺延）
             j = auto_judge(it, g)
             cited = [topk[i - 1] for i in g.get("used", []) if 0 < i <= len(topk)]
             n_bad = len(g.get("invalid_citations", []))
@@ -291,6 +372,11 @@ def score_and_report(run_dir, items, recs, cfg, a, rescored=False):
                        auto=j["verdict"], coverage=j["coverage"], kp_detail=j["kps"], auto_note=j.get("note", ""), n_cited=len(cited), n_invalid=n_bad,
                        t_generation=g["timing"].get("generation_secs"), t_first_token=g["timing"].get("first_token_secs"), t_total=r.get("t_total"),
                        support_warnings=len(g.get("support_warnings", [])))
+            ctx = "\n".join(h["text"] for h in topk)
+            cr = context_recall(it, ctx)
+            row.update(ctx_recall=cr, faithfulness=faithfulness(g["answer"], ctx) if not g["refused"] else None)
+            if it["category"] != "拒答":
+                row.update(attribution=attribution(j["verdict"], cr, g["refused"]), is_table=evidence_in_table(it))
             if it["category"] != "拒答":
                 row.update(cite_doc=any(c["source"] == it["source"] for c in cited) if cited else False,
                            cite_chunk=any(gold_match(it, c) for c in cited) if cited else False,
@@ -347,6 +433,18 @@ def summarize(per, cfg):
     for g, rows in groups:
         if rows:
             s["groups"][g] = {"n": len(rows), "chunk": _ret(rows, "chunk_rank"), "doc": _ret(rows, "doc_rank"), "gen": _gen(rows)}
+    gen_rows = [r for r in inkb if "attribution" in r]
+    if gen_rows:
+        def bucket(rows):
+            c = collections.Counter(r["attribution"] for r in rows); n = len(rows)
+            crs = [r["ctx_recall"] for r in rows if r.get("ctx_recall") is not None]
+            fs = [r["faithfulness"] for r in rows if r.get("faithfulness") is not None]
+            return {"n": n, "正确": round(c["正确"] / n, 3), "检索失败": round(c["检索失败"] / n, 3), "生成漏写": round(c["生成漏写"] / n, 3),
+                    "ctx_recall": round(sum(crs) / len(crs), 3) if crs else None, "faithfulness": round(sum(fs) / len(fs), 3) if fs else None}
+        bk = [("全部", gen_rows)] + [(c, [r for r in gen_rows if r["category"] == c]) for c in CATS] + \
+             [("中文", [r for r in gen_rows if r["lang"] == "zh"]), ("英文", [r for r in gen_rows if r["lang"] == "en"]),
+              ("表格题", [r for r in gen_rows if r.get("is_table")]), ("文本题", [r for r in gen_rows if not r.get("is_table")])]
+        s["attribution"] = {g: bucket(rows) for g, rows in bk if rows}
     if ood and "refused" in ood[0]:
         s["ood_refusal"] = round(sum(r["refused"] for r in ood) / len(ood), 3)
     tim = [r for r in per if "t_total" in r]
@@ -394,6 +492,14 @@ def report(s, per, cfg, a, rescored):
                      f"{pct(q['cite_doc'])} | {pct(q['cite_chunk'])} | {pct(q['no_citation'])} | {pct(q['cite_valid'])} | {pct(q['gold_in_topk'])} |")
         L += ["", "¹ 得分 = (正确 + 0.5×部分)/题数。自动规则：要点得分（全对 1、多数值答对过半 0.5）平均 ≥0.75 正确、≥0.4 部分，否则错误；库内题拒答记错误，先答后拒最多记部分。首 token 为 None 表示评测走非流式调用。", "",
               f"**拒答**：库外题正确拒答率 {pct(s.get('ood_refusal'))}；库内题误拒率 {pct(s['groups']['全部']['gen']['false_refusal'])}。", ""]
+    if s.get("attribution"):
+        L += ["## 评测拆分：Context Recall / 忠实度 / 归因（规则版）", "",
+              "Context Recall = core 要点在送入 LLM 的 Top-k 上下文中的覆盖率；忠实度 = 回答实质句（数值+关键词）能在上下文中找到的比例；"
+              "归因：答对=正确；未答对且 Context Recall<0.75=检索失败；未答对但上下文已含要点=生成漏写。", "",
+              "| 分桶 | 题数 | 正确 | 检索失败 | 生成漏写 | Context Recall | 忠实度 |", "|---|---|---|---|---|---|---|"]
+        for g, v in s["attribution"].items():
+            L.append(f"| {g} | {v['n']} | {pct(v['正确'])} | {pct(v['检索失败'])} | {pct(v['生成漏写'])} | {pct(v['ctx_recall'])} | {pct(v['faithfulness'])} |")
+        L.append("")
     t = s["timing"]
     L += ["## 耗时（秒/题，均值）", "", f"检索 {t['retrieval']}（其中重排 {t['rerank']}）｜生成 {t['generation']}（首 token {t['first_token']}）｜端到端 {t['total']}", ""]
     if s.get("calibration"):
@@ -460,7 +566,10 @@ if __name__ == "__main__":
     ap.add_argument("--max-tokens", type=int, default=512)
     ap.add_argument("--refuse-below", type=float, default=None, help="Top-1 重排分低于该值直接拒答（默认关）")
     ap.add_argument("--retrieval-only", action="store_true")
-    ap.add_argument("--prompt", default="p0", choices=["p0", "p1", "p2"], help="rag.PROMPTS 版本")
+    ap.add_argument("--xlang", default="none", choices=["none", "dict", "llm", "auto", "auto_llm"], help="跨语言改写：词典 / 本地 3B 翻译；auto=按问句点名的设备门控")
+    ap.add_argument("--multiq", default="none", choices=["none", "rule", "llm"], help="多查询：规则拆分 / 本地 3B")
+    ap.add_argument("--prompt", default="p0", choices=["p0", "p1", "p2", "p3"], help="rag.PROMPTS 版本")
+    ap.add_argument("--reflect", action="store_true", help="生成前自检（LLM 判断资料是否足够）+ 缺失点补检 1 轮")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--ids", default=None, help="只评这些题，逗号分隔；'table' = 证据在表格中的题（TABLE_IDS）")
     ap.add_argument("--judge", default=None, help="LLM-as-judge 的 provider（默认关闭）")

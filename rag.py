@@ -52,7 +52,32 @@ P2_EXAMPLE = """
 1. 该装置每月巡视一次。[1]
 2. 发现异常时应立即上报并做好记录。[2]
 总结：每月巡视，异常立即上报。[1][2]"""
-PROMPTS = {"p0": SYSTEM_PROMPT, "p1": SYSTEM_PROMPT + P1_RULES, "p2": SYSTEM_PROMPT + P2_RULES + P2_EXAMPLE}   # 后者仅用于版本哈希
+P3_RULES = P1_RULES + """
+7. 先输出“【要点清单】”：从参考资料中逐条列出回答本问题必须覆盖的要点（数值+单位+条件、步骤、注意事项、例外），每条一行；
+   再输出“【回答】”：按要点清单逐条作答，每条单独成句并标注引用，清单中的每一条都必须在回答中出现，不得遗漏。"""
+PROMPTS = {"p0": SYSTEM_PROMPT, "p1": SYSTEM_PROMPT + P1_RULES, "p2": SYSTEM_PROMPT + P2_RULES + P2_EXAMPLE, "p3": SYSTEM_PROMPT + P3_RULES}   # 后者仅用于版本哈希
+
+def strip_checklist(text: str) -> str:
+    """p3：只保留【回答】之后的部分（要点清单是中间产物，不展示、不参与评分）"""
+    m = re.search(r"【回答】[:：]?\s*", text)
+    return text[m.end():].strip() if m else re.sub(r"【要点清单】.*?(?=\n\s*1[.、])", "", text, flags=re.S).strip()
+
+REFLECT_PROMPT = """你是检索质量检查员。阅读参考资料和问题，判断参考资料是否足以完整回答问题的每一个子问题/条件。
+只输出 JSON：{"enough": true 或 false, "missing": ["缺失的信息点，写成可直接用于检索的短查询", ...]}（missing 最多 2 条，足够时为空列表）"""
+
+def reflect(question: str, hits: list[dict], cfg: dict, max_chars: int = 700) -> dict:
+    """生成前自检：让 LLM 判断资料是否足够、列出缺失点（与 provider 无关，走同一 OpenAI 兼容接口）"""
+    msgs = [{"role": "system", "content": REFLECT_PROMPT},
+            {"role": "user", "content": f"参考资料：\n{build_context(hits, max_chars)}\n\n问题：{question}"}]
+    t0 = time.time()
+    try:
+        text, info = call_llm(msgs, cfg, max_tokens=160, temperature=0.0)
+        m = re.search(r"\{.*\}", text, re.S)
+        d = json.loads(m.group(0)) if m else {}
+    except Exception as e:
+        return {"enough": True, "missing": [], "error": str(e)[:80], "secs": round(time.time() - t0, 2), "usage": {}}
+    miss = [str(x)[:60] for x in (d.get("missing") or []) if str(x).strip()][:2]
+    return {"enough": bool(d.get("enough", not miss)) and not miss, "missing": miss, "secs": round(time.time() - t0, 2), "usage": info.get("usage", {})}
 DEFAULT_PROMPT = os.environ.get("RAG_PROMPT", "p1")   # 调参结论：p1（逐条作答+步骤编号），见 output/version_scores.md
 
 def llm_config(provider: str | None = None) -> dict:
@@ -69,6 +94,7 @@ TABLE_RULE = "\n5. 参考资料中的表格以 Markdown 给出（首行为表头
 TABLE_MAX_CHARS = 1500
 EXPAND_MAX_CHARS = 2000      # 父块/相邻块扩展后单条资料上限
 DEFAULT_EXPAND = os.environ.get("RAG_EXPAND", "none")
+DEFAULT_REFLECT = os.environ.get("RAG_REFLECT", "0") in ("1", "true", "on")   # 生成前自检+补检索（多一次 LLM 调用；默认关，待云端模型正式评测）
 RECOMMENDED_REFUSE_BELOW = 0.3   # 重排 Top-1 分阈值：库内 139 题误拒 0%、库外拦截 44%（output/threshold_scan.md）
 _rb = os.environ.get("RAG_REFUSE_BELOW", "").strip().lower()
 DEFAULT_REFUSE_BELOW = None if _rb in ("off", "none", "0") else (float(_rb) if _rb else RECOMMENDED_REFUSE_BELOW)   # 默认开启；RAG_REFUSE_BELOW=off 关闭
@@ -114,8 +140,8 @@ def build_context(hits: list[dict], max_chars: int = 700) -> str:
 def build_messages(question: str, hits: list[dict], max_chars: int = 700, prompt: str | None = None) -> list[dict]:
     user = f"参考资料：\n{build_context(hits, max_chars)}\n\n问题：{question}\n\n请依据参考资料回答，并用 [编号] 标注引用。"
     pv = prompt or DEFAULT_PROMPT
-    base = {"p0": SYSTEM_PROMPT, "p1": SYSTEM_PROMPT + P1_RULES, "p2": SYSTEM_PROMPT + P2_RULES}[pv]
-    tr = TABLE_RULE.replace("\n5.", "\n8." if (prompt or DEFAULT_PROMPT) == "p2" else "\n7." if (prompt or DEFAULT_PROMPT) == "p1" else "\n5.")
+    base = {"p0": SYSTEM_PROMPT, "p1": SYSTEM_PROMPT + P1_RULES, "p2": SYSTEM_PROMPT + P2_RULES, "p3": SYSTEM_PROMPT + P3_RULES}[pv]
+    tr = TABLE_RULE.replace("\n5.", "\n8." if pv in ("p2", "p3") else "\n7." if pv == "p1" else "\n5.")
     sp = base + (tr if any(_is_table(h) for h in hits) else "") + (P2_EXAMPLE if pv == "p2" else "")   # 有表格时才追加表格规则（无表格时 prompt 与旧版一致）
     return [{"role": "system", "content": sp}, {"role": "user", "content": user}]
 
@@ -186,8 +212,16 @@ def _nums(s: str) -> set[str]:
 
 SENT_RE = re.compile(r"[^。；;!?\n]+[。；;!?\n]?(?:\s*\[\d+(?:\s*[,，、]\s*\d+)*\])*")
 
+NUMCHECK = os.environ.get("RAG_NUMCHECK", "v2")   # v2 = numcheck.py（单位换算/范围/表头单位）；v1 = 旧版字符串包含
+
 def support_check(answer: str, hits: list[dict]) -> list[str]:
-    """粗检：每个带引用的句子里的数值，是否出现在它引用的资料中；不在则若在其他资料中出现，提示"引用可能错配"，都不在提示"数值无出处" """
+    if NUMCHECK == "v1":
+        return support_check_v1(answer, hits)
+    import numcheck
+    return numcheck.check(answer, hits)
+
+def support_check_v1(answer: str, hits: list[dict]) -> list[str]:
+    """旧版粗检：每个带引用的句子里的数值，是否出现在它引用的资料中；不在则若在其他资料中出现，提示"引用可能错配"，都不在提示"数值无出处" """
     warns = []
     for sent in SENT_RE.findall(answer):
         cites, _ = parse_citations(sent, len(hits))
@@ -211,7 +245,8 @@ def excerpt(text: str, answer: str, n: int = 160) -> str:
 
 def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None = None, stream: bool = False,
            on_token=None, filters: dict | None = None, max_chars: int = 700, max_tokens: int = 512, hits: list | None = None, search_kw: dict | None = None,
-           model: str | None = None, prompt: str | None = None, expand: str | None = None, refuse_below: float | None = -1.0) -> dict:
+           model: str | None = None, prompt: str | None = None, expand: str | None = None, refuse_below: float | None = -1.0,
+           reflect_round: bool | None = None) -> dict:
     """expand: none|neighbor|parent（默认 RAG_EXPAND）；refuse_below: 重排 Top-1 分低于该值直接拒答、不调用 LLM（-1=用默认 RAG_REFUSE_BELOW，None=关闭）"""
     from retrieve import search
     cfg = llm_config(provider)
@@ -245,6 +280,20 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
     if ex and ex != "none":
         from context_expand import expand_hits
         hits = expand_hits(hits, method=(search_kw or {}).get("collection") or os.environ.get("KB_COLLECTION", "heading_v2"), mode=ex)
+    rf = None
+    if (DEFAULT_REFLECT if reflect_round is None else reflect_round):     # 自检 → 缺失点补检 1 轮（每个缺失点取 Top-2，去重后追加，最多 +3 条）
+        rf = reflect(question, hits, cfg, max_chars)
+        if not rf["enough"] and rf["missing"]:
+            skw = dict(search_kw or {}); skw.setdefault("collection", os.environ.get("KB_COLLECTION", "heading_v2"))
+            have = {h["chunk_id"] for h in hits}; added = []
+            for mq in rf["missing"]:
+                for h in search(mq, k=2, filters=filters, rerank=rerank, **skw):
+                    if h["chunk_id"] not in have and len(added) < 3:
+                        h.pop("_rerank_secs", None); have.add(h["chunk_id"]); added.append(h)
+            hits = hits + added
+            for i, h in enumerate(hits):
+                h["rank"] = i + 1
+            rf["added"] = [f"{h['source']}｜{h.get('heading_path', '')}"[:80] for h in added]
     msgs = build_messages(question, hits, max_chars, prompt)
     text, info = call_llm(msgs, cfg, stream=stream, on_token=on_token, max_tokens=max_tokens)
     retried = False
@@ -256,6 +305,8 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
             on_token("\n（重新生成）\n")
         text, info2 = call_llm(msgs2, cfg, stream=stream, on_token=on_token, max_tokens=max_tokens)
         info = {"usage": info2["usage"], "secs": round(info["secs"] + info2["secs"], 2), "first_token_secs": info["first_token_secs"]}
+    if (prompt or DEFAULT_PROMPT) == "p3":
+        text = strip_checklist(text)
     used, bad = parse_citations(text, len(hits))
     text_clean = clean_invalid(text, bad).replace("[编号]", "")
     body = CITE_RE.sub("", text_clean).strip()
@@ -270,12 +321,16 @@ def answer(question: str, k: int = 5, rerank: bool = True, provider: str | None 
                         "pages": f"{m['page_start']}" + (f"-{m['page_end']}" if m.get("page_end") and m["page_end"] != m["page_start"] else ""),
                         "chunk_id": h["chunk_id"], "excerpt": excerpt(h["text"], text_clean),
                         "score": h.get("score"), "rerank_score": h.get("rerank_score"), "stage1_rank": h.get("stage1_rank")})
-    return {"question": question, "answer": text_clean, "raw_answer": text, "sources": sources,
+    return {"question": question, "answer": text_clean, "raw_answer": text, "sources": sources, "reflect": rf,
+            "extra_hits": [{"rank": h["rank"], "chunk_id": h["chunk_id"], "source": h["source"], "heading_path": h.get("heading_path", ""),
+                            "page_start": h.get("page_start"), "page_end": h.get("page_end"), "text": h["text"], "metadata": h.get("metadata", {})}
+                           for h in hits[k:]] if rf and rf.get("added") else [],
             "invalid_citations": bad, "refused": refused, "retried": retried, "support_warnings": warnings, "model": cfg["model"], "base_url": cfg["base_url"],
             "retrieved": [{"rank": h["rank"], "source": h["source"], "section": h.get("heading_path"), "score": h["score"],
                            "rerank_score": h.get("rerank_score"), "page_start": h.get("page_start"), "page_end": h.get("page_end")} for h in hits],
             "timing": {"retrieval_secs": round(t_search - t_rr, 2), "rerank_secs": round(t_rr, 2),
-                       "generation_secs": info["secs"], "first_token_secs": info["first_token_secs"],
+                       "generation_secs": round(info["secs"] + ((rf or {}).get("secs") or 0), 2), "first_token_secs": info["first_token_secs"],
+                       "reflect_secs": (rf or {}).get("secs"),
                        "total_secs": round(time.time() - t0, 2)},
             "usage": info["usage"], "prompt_chars": sum(len(m["content"]) for m in msgs)}
 
@@ -306,14 +361,15 @@ if __name__ == "__main__":
     ap.add_argument("--no-rerank", action="store_true")
     ap.add_argument("--provider", choices=list(PROVIDERS), default=None, help="不填=按环境变量/本地；deepseek=用 DEEPSEEK_API_KEY")
     ap.add_argument("--model", default=None, help="覆盖提供方的默认模型，如 Qwen/Qwen2.5-72B-Instruct")
-    ap.add_argument("--prompt", default=None, choices=["p0", "p1", "p2"], help="默认：本地 p1，云端 p2（或 RAG_PROMPT）")
+    ap.add_argument("--reflect", action="store_true", help="生成前自检 + 缺失点补检 1 轮")
+    ap.add_argument("--prompt", default=None, choices=["p0", "p1", "p2", "p3"], help="默认：本地 p1，云端 p2（或 RAG_PROMPT）")
     ap.add_argument("--expand", default=None, choices=["none", "neighbor", "parent"], help="上下文扩展，默认 RAG_EXPAND 或 none")
     ap.add_argument("--refuse-below", default=None, help="重排 Top-1 分拒答阈值，默认 0.3（RAG_REFUSE_BELOW）；off=关闭")
     ap.add_argument("--stream", action="store_true")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
     rb = -1.0 if a.refuse_below is None else (None if a.refuse_below.lower() in ("off", "none") else float(a.refuse_below))
-    kw = dict(model=a.model, prompt=a.prompt, expand=a.expand, refuse_below=rb)
+    kw = dict(model=a.model, prompt=a.prompt, expand=a.expand, refuse_below=rb, reflect_round=a.reflect or None)
     if a.stream and not a.json:
         r = answer(a.question, a.k, not a.no_rerank, a.provider, stream=True, on_token=lambda t: print(t, end="", flush=True), **kw)
         print("\n"); print(format_result(r, show_answer=False))

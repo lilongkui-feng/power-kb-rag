@@ -1,0 +1,303 @@
+{
+ "config": {
+  "collection": "heading_v2",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "qwen2.5:3b-instruct",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "e3575d63",
+  "prompt": "p1",
+  "kb_sig": "254bde1394"
+ },
+ "rules_version": 3,
+ "n_inkb": 22,
+ "n_ood": 0,
+ "groups": {
+  "全部": {
+   "n": 22,
+   "chunk": {
+    "hit@1": 0.682,
+    "hit@3": 0.864,
+    "hit@5": 0.864,
+    "mrr": 0.779
+   },
+   "doc": {
+    "hit@1": 0.955,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.977
+   },
+   "gen": {
+    "n": 22,
+    "correct": 0.227,
+    "partial": 0.455,
+    "wrong": 0.318,
+    "score": 0.455,
+    "coverage": 0.455,
+    "false_refusal": 0.045,
+    "cite_doc": 0.773,
+    "cite_chunk": 0.409,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 0.864
+   }
+  },
+  "查参数": {
+   "n": 8,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 0.875,
+    "hit@5": 0.875,
+    "mrr": 0.83
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 8,
+    "correct": 0.5,
+    "partial": 0.375,
+    "wrong": 0.125,
+    "score": 0.688,
+    "coverage": 0.66,
+    "false_refusal": 0.0,
+    "cite_doc": 0.875,
+    "cite_chunk": 0.625,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 0.875
+   }
+  },
+  "故障排查": {
+   "n": 7,
+   "chunk": {
+    "hit@1": 0.571,
+    "hit@3": 0.857,
+    "hit@5": 0.857,
+    "mrr": 0.714
+   },
+   "doc": {
+    "hit@1": 0.857,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.929
+   },
+   "gen": {
+    "n": 7,
+    "correct": 0.0,
+    "partial": 0.286,
+    "wrong": 0.714,
+    "score": 0.143,
+    "coverage": 0.174,
+    "false_refusal": 0.143,
+    "cite_doc": 0.571,
+    "cite_chunk": 0.429,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 0.857
+   }
+  },
+  "操作步骤": {
+   "n": 7,
+   "chunk": {
+    "hit@1": 0.714,
+    "hit@3": 0.857,
+    "hit@5": 0.857,
+    "mrr": 0.786
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 7,
+    "correct": 0.143,
+    "partial": 0.714,
+    "wrong": 0.143,
+    "score": 0.5,
+    "coverage": 0.5,
+    "false_refusal": 0.0,
+    "cite_doc": 0.857,
+    "cite_chunk": 0.143,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 0.857
+   }
+  },
+  "中文": {
+   "n": 16,
+   "chunk": {
+    "hit@1": 0.75,
+    "hit@3": 0.938,
+    "hit@5": 0.938,
+    "mrr": 0.844
+   },
+   "doc": {
+    "hit@1": 0.938,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.969
+   },
+   "gen": {
+    "n": 16,
+    "correct": 0.188,
+    "partial": 0.562,
+    "wrong": 0.25,
+    "score": 0.469,
+    "coverage": 0.466,
+    "false_refusal": 0.0,
+    "cite_doc": 0.812,
+    "cite_chunk": 0.438,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 0.938
+   }
+  },
+  "英文": {
+   "n": 6,
+   "chunk": {
+    "hit@1": 0.5,
+    "hit@3": 0.667,
+    "hit@5": 0.667,
+    "mrr": 0.607
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {
+    "n": 6,
+    "correct": 0.333,
+    "partial": 0.167,
+    "wrong": 0.5,
+    "score": 0.417,
+    "coverage": 0.425,
+    "false_refusal": 0.167,
+    "cite_doc": 0.667,
+    "cite_chunk": 0.333,
+    "no_citation": 0.0,
+    "cite_valid": 1.0,
+    "gold_in_topk": 0.667
+   }
+  }
+ },
+ "attribution": {
+  "全部": {
+   "n": 22,
+   "正确": 0.227,
+   "检索失败": 0.182,
+   "生成漏写": 0.591,
+   "ctx_recall": 0.875,
+   "faithfulness": 0.804
+  },
+  "查参数": {
+   "n": 8,
+   "正确": 0.5,
+   "检索失败": 0.125,
+   "生成漏写": 0.375,
+   "ctx_recall": 0.875,
+   "faithfulness": 0.625
+  },
+  "故障排查": {
+   "n": 7,
+   "正确": 0.0,
+   "检索失败": 0.286,
+   "生成漏写": 0.714,
+   "ctx_recall": 0.798,
+   "faithfulness": 0.833
+  },
+  "操作步骤": {
+   "n": 7,
+   "正确": 0.143,
+   "检索失败": 0.143,
+   "生成漏写": 0.714,
+   "ctx_recall": 0.952,
+   "faithfulness": 0.984
+  },
+  "中文": {
+   "n": 16,
+   "正确": 0.188,
+   "检索失败": 0.188,
+   "生成漏写": 0.625,
+   "ctx_recall": 0.906,
+   "faithfulness": 0.931
+  },
+  "英文": {
+   "n": 6,
+   "正确": 0.333,
+   "检索失败": 0.167,
+   "生成漏写": 0.5,
+   "ctx_recall": 0.792,
+   "faithfulness": 0.4
+  },
+  "表格题": {
+   "n": 2,
+   "正确": 0.0,
+   "检索失败": 0.5,
+   "生成漏写": 0.5,
+   "ctx_recall": 0.75,
+   "faithfulness": 0.5
+  },
+  "文本题": {
+   "n": 20,
+   "正确": 0.25,
+   "检索失败": 0.15,
+   "生成漏写": 0.6,
+   "ctx_recall": 0.887,
+   "faithfulness": 0.836
+  }
+ },
+ "timing": {
+  "retrieval": 4.83,
+  "rerank": 4.25,
+  "generation": 11.5,
+  "first_token": null,
+  "total": 16.33
+ },
+ "calibration_sets": {
+  "calib": {
+   "n": 2,
+   "agree": 0.5,
+   "agree_binary": 0.5,
+   "confusion": {
+    "部分→正确": 1,
+    "部分→部分": 1
+   }
+  },
+  "holdout": {
+   "n": 1,
+   "agree": 1.0,
+   "agree_binary": 1.0,
+   "confusion": {
+    "正确→正确": 1
+   }
+  }
+ },
+ "calibration": {
+  "n": 3,
+  "agree": 0.667,
+  "agree_binary": 0.667,
+  "confusion": {
+   "正确→正确": 1,
+   "部分→正确": 1,
+   "部分→部分": 1
+  }
+ },
+ "run_dir": "output/eval_runs/rf3b_p1_20261011-132414"
+}

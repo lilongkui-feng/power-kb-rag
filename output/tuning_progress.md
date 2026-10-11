@@ -64,3 +64,32 @@
 - [02:16] DONE local3b_p1_ood
 - [02:17] 阈值效果：V3 自身 22/22、3B 21/22；阈值 0.3 拦掉 7/22，都是本来就会拒的 → 价值在省调用；写入 threshold_scan.md
 - [02:18] 打包 303 个文件 / 12.0MB（无 key，含 eval_set_v3 和 paddle_worker）；streamlit 已重启
+
+## Day 17：本地提准 5 项（不调云端）
+
+- [11:55] 第1项 跨语言：开始 xling 36 题 none/dict/llm + v3 全集 dict
+- [11:58] DONE xl_none
+- [12:01] DONE xl_dict
+- [12:09] DONE xl_llm
+- [12:28] DONE v3_xl_dict
+- [12:28] 第1项批跑结束
+- [12:28] 第2项：建 heading_v2_ctx 向量+BM25
+- [12:40] 第4项 数值校验 v2 完成：numcheck.py + tests/（回归集 258 例，pytest 9 项通过）；误报 120/120→4/120，漏报 1/138→12/138（均为合成篡改）；见 output/numcheck_eval.md；rag 默认 RAG_NUMCHECK=v2
+- [12:40] 第5项 评测拆分完成：evaluate.py 增 ctx_recall/faithfulness/attribution；rescore v3set_sf_v3_p2 → 正确 85% / 检索失败 5% / 生成漏写 10%（output/eval_runs/v3set_sf_v3_p2_attr_*）
+- [12:40] 第3项 rag.py 增 p3（要点清单先行）与 --reflect（自检+补检 1 轮），排队本地 3B 22 题子集
+- [12:45] DONE 建索引 heading_v2_ctx
+- [12:51] DONE v3_ctx
+- [13:00] DONE v3_mq_rule
+- [13:03] DONE xl_ctx
+- [13:03] 第2项批跑结束
+- [13:04] 第1项追加：xlang=dict 让中文题退步（Hit@1 85.0%→76.1%），改为 auto 门控 + 改写权重 0.7
+- [13:09] DONE xl_auto
+- [13:12] DONE xl_auto_llm
+- [13:21] DONE v3_xl_auto
+- [13:21] 第3项：本地 3B 子集 22 题 p1 / p3 / p3+reflect
+- [13:24] DONE rf3b_p1
+- [13:34] DONE rf3b_p3
+- [13:43] 收尾：version_extra 已加 Day17 各运行；等 rf3b_p3_reflect
+- [13:47] DONE rf3b_p3_reflect
+- [13:47] 第3项批跑结束
+- [13:48] 收尾：DEVLOG/README 已更新

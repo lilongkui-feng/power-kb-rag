@@ -1,0 +1,129 @@
+{
+ "config": {
+  "collection": "heading_v2_ctx",
+  "mode": "hybrid",
+  "fusion": "weighted",
+  "alpha": 0.5,
+  "rerank": true,
+  "rerank_top_n": 20,
+  "rerank_beta": 0.8,
+  "top_k": 5,
+  "retrieve_k": 10,
+  "provider": "local",
+  "model": "-",
+  "base_url": "-",
+  "max_tokens": 512,
+  "refuse_below": null,
+  "prompt_sha": "99c37bdc",
+  "kb_sig": "cce85157f1"
+ },
+ "rules_version": 2,
+ "n_inkb": 139,
+ "n_ood": 5,
+ "groups": {
+  "全部": {
+   "n": 139,
+   "chunk": {
+    "hit@1": 0.82,
+    "hit@3": 0.957,
+    "hit@5": 0.978,
+    "mrr": 0.89
+   },
+   "doc": {
+    "hit@1": 0.986,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.992
+   },
+   "gen": {}
+  },
+  "查参数": {
+   "n": 55,
+   "chunk": {
+    "hit@1": 0.8,
+    "hit@3": 0.964,
+    "hit@5": 0.982,
+    "mrr": 0.882
+   },
+   "doc": {
+    "hit@1": 0.982,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.988
+   },
+   "gen": {}
+  },
+  "故障排查": {
+   "n": 41,
+   "chunk": {
+    "hit@1": 0.829,
+    "hit@3": 0.976,
+    "hit@5": 0.976,
+    "mrr": 0.902
+   },
+   "doc": {
+    "hit@1": 0.976,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.988
+   },
+   "gen": {}
+  },
+  "操作步骤": {
+   "n": 43,
+   "chunk": {
+    "hit@1": 0.837,
+    "hit@3": 0.93,
+    "hit@5": 0.977,
+    "mrr": 0.886
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  },
+  "中文": {
+   "n": 113,
+   "chunk": {
+    "hit@1": 0.85,
+    "hit@3": 0.947,
+    "hit@5": 0.973,
+    "mrr": 0.9
+   },
+   "doc": {
+    "hit@1": 0.982,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.99
+   },
+   "gen": {}
+  },
+  "英文": {
+   "n": 26,
+   "chunk": {
+    "hit@1": 0.692,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 0.846
+   },
+   "doc": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "hit@5": 1.0,
+    "mrr": 1.0
+   },
+   "gen": {}
+  }
+ },
+ "timing": {
+  "retrieval": 2.43,
+  "rerank": 2.27,
+  "generation": null,
+  "first_token": null,
+  "total": null
+ },
+ "run_dir": "output/eval_runs/v3_ctx_20261011-125125"
+}
