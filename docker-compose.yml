@@ -1,0 +1,33 @@
+# docker compose up -d   → api :8000（加载模型、读写索引） + web :8501（纯前端，只调 api）
+# 未在本机实际构建验证（box 无 docker）。索引需先在宿主机按 README 构建，或进入 api 容器执行 build_v2.py / embed_index.py / bm25_index.py。
+services:
+  api:
+    build: .
+    command: uvicorn api:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    env_file: [.env]                 # SILICONFLOW_API_KEY、KB_API_TOKEN 等只给 api
+    environment:
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434/v1}   # 本地 ollama 跑在宿主机时
+      KB_CORS_ORIGINS: http://localhost:8501
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - ./chroma_db:/app/chroma_db
+      - ./bm25_index:/app/bm25_index
+      - ./emb_cache:/app/emb_cache
+      - ./output:/app/output
+      - ./uploads:/app/uploads
+      - hf_models:/models            # bge-m3 / reranker 缓存（约 4.5 GB）
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://127.0.0.1:8000/health').raise_for_status()"]
+      interval: 30s
+      start_period: 120s
+  web:
+    build: .
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    ports: ["8501:8501"]
+    environment:
+      KB_API_URL: http://api:8000
+      KB_API_TOKEN: ${KB_API_TOKEN:-}
+    depends_on: [api]
+volumes:
+  hf_models:

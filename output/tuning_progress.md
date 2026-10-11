@@ -110,3 +110,6 @@
 - [16:47] DONE xl_v3mismatch
 - [16:51] DONE xl_v3cap
 - [16:53] Day18 收尾：cap 设为云端默认；p3 不默认；文档已更新
+- [16:54] Day18 收尾：zip/push/streamlit 完成
+- [17:15] API：api.py + app.py 纯前端 + tests/test_api.py，开始跑测试
+- [17:20] API 测试 14 passed/1 skipped（云端 1 次通过），截图完成，README/DEVLOG/Docker 已写

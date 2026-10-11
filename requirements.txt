@@ -30,3 +30,8 @@ pdfplumber>=0.11       # 仅用于与 PyMuPDF find_tables 对比，管线不依�
 #   VIRTUAL_ENV=/workspace/paddle_env uv pip install "paddleocr[doc-parser]==3.7.0"
 #   （ocr.py 通过 paddle/paddle_worker.py 子进程调用；PADDLE_PY 环境变量可改解释器路径）
 matplotlib>=3.8        # 阈值曲线图
+# --- Day 19：API 服务 ---
+fastapi>=0.115         # 实测 0.143.0
+uvicorn>=0.30          # 实测 0.54.0
+python-multipart>=0.0.9  # 文件上传
+pytest>=8              # tests/

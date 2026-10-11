@@ -22,7 +22,7 @@
 | 表格题 | 本地 3B 模型、9 道表格题：正确 33% → **56%**（表格父子块切分） | `output/baseline_scores.md` |
 | 拒答 | 库外题拒答 **100%**；重排分阈值 0.3 在库内 139 题上误拒 0%，44% 的库外题在调用 LLM 之前就被拦下 | `output/threshold_scan.md` |
 | 成本 | 云端跑 144 题评测约 ¥0.68（硅基流动 DeepSeek-V3，按公开价估算） | `output/version_scores.md` |
-| 部署 | CPU 可跑；本地 qwen2.5:3b 离线模式 / 云端 OpenAI 兼容接口一键切换；Streamlit 支持上传文档增量入库 | `app.py` |
+| 部署 | 前后端分离：FastAPI 服务（检索 / 问答 / SSE 流式 / 异步入库，可选 Token 鉴权）+ Streamlit 纯前端；CPU 可跑，本地 3B / 云端接口一键切换；API 集成测试 14 项通过 | `api.py`、`app.py`、`tests/test_api.py` |
 
 ## 界面截图
 
@@ -34,6 +34,9 @@
 
 ```mermaid
 flowchart LR
+    U[Streamlit 前端 app.py<br/>/ curl / 其他客户端] -- HTTP + SSE<br/>KB_API_URL --> API[FastAPI 服务 api.py<br/>lifespan 一次加载模型 · 鉴权 · 写锁 · 线程池]
+    API -- POST /documents<br/>异步任务 --> A
+    API -- /search /ask /ask/stream --> Q
     subgraph 入库
         A[PDF / DOCX] --> B{文字层?}
         B -- 有 --> C[PyMuPDF 正文 + find_tables 表格]
@@ -69,7 +72,8 @@ flowchart LR
 | 关键词 | rank_bm25 + jieba | 自定义电力词典，数值和单位不拆开（`dict/`） |
 | 重排 | BAAI/bge-reranker-v2-m3（CrossEncoder） | 一阶段 Top-20 重排，最终分 = 0.8·重排分 + 0.2·一阶段分 |
 | LLM | OpenAI 兼容接口：硅基流动、DeepSeek、OpenAI、xAI、本地 Ollama | 环境变量配置；429/5xx 自动退避重试 |
-| 界面 | Streamlit | 流式输出、出处展开、增量入库、按哈希去重 |
+| 服务 | FastAPI + uvicorn | lifespan 预加载模型；Pydantic 模型 + OpenAPI 文档；SSE 流式；入库异步任务 + 写锁；可选 `KB_API_TOKEN` 鉴权、CORS、上传大小限制、统一错误格式、请求日志 |
+| 界面 | Streamlit（纯前端，httpx 调 API） | 流式输出、出处展开、上传进度轮询、按哈希去重；不加载任何模型 |
 | 评测 | 自研 `evaluate.py` | 检索 Hit@k/MRR、要点覆盖自动评分、引用、拒答、耗时；支持缓存续跑和并发 |
 
 ## 快速开始
@@ -115,14 +119,18 @@ cp .env.example .env    # 只是变量清单；程序读取的是进程环境变
 
 其它可选变量：`RAG_PROMPT`（p0/p1/p2，默认本地 p1、云端 p2）、`RAG_EXPAND`（默认 none）、`RAG_REFUSE_BELOW`（默认 0.3，填 off 关闭）、`LLM_TIMEOUT`（默认 180 秒）。
 
-### 4. 启动 Web 界面
+### 4. 启动 API 服务与 Web 前端
 
 ```bash
-sh deploy/start_app.sh      # 后台运行 streamlit run app.py --server.port 8501，日志写到 /workspace/streamlit.log
-# 或在前台运行：streamlit run app.py
+sh deploy/start_api.sh      # 后台 uvicorn api:app :8000（启动时加载 bge-m3 / 重排 / BM25 / Chroma，约 15 s），日志 /workspace/api.log
+sh deploy/start_app.sh      # 若 API 未运行先启动它，再后台起 Streamlit :8501（纯前端），日志 /workspace/streamlit.log
+# 前台运行：uvicorn api:app --port 8000   和   KB_API_URL=http://127.0.0.1:8000 streamlit run app.py
 ```
 
-浏览器打开 `http://localhost:8501`。侧栏选择 LLM 提供方；可以上传新的 PDF/DOCX，入库后立即可检索。
+浏览器打开 `http://localhost:8501`（前端），接口文档在 `http://127.0.0.1:8000/docs`。云端 key 只需配置在 **API 进程**的环境变量里，前端拿不到 key；API 开了鉴权时，前端进程设置同一个 `KB_API_TOKEN` 即可。
+API 没启动时，前端会提示“后端 API 不可达”并给出启动命令。
+
+Docker（可选，`Dockerfile` + `docker-compose.yml`，api + web 两个服务，挂载索引/模型缓存卷）：`docker compose up -d`。本机没有 docker，这两个文件**未实际构建验证**。
 
 ### 5. 命令行问答 / 检索
 
@@ -145,10 +153,46 @@ python version_scores.py                                        # 汇总 → out
 python evaluate.py --input eval_xling.jsonl --collection heading_v2 --retrieval-only --xlang llm --tag xl   # 可选：跨语言改写
 python evaluate.py --rescore output/eval_runs/<run> --rules 3   # 重算分数 + Context Recall/忠实度/归因，不调 LLM
 python -m pytest tests/test_numcheck.py -q                      # 数值校验回归测试
+python -m pytest tests/test_api.py -v                           # API 集成测试（需先 start_api.sh）
 ```
 
 每次运行输出到 `output/eval_runs/<tag>_<时间>/`（`per_item.jsonl`、`summary.json`、`report.md`），摘要追加到 `output/baseline_scores.md`。
 注意：`evaluate.py` 的 `--collection` 默认是 `heading`、`--prompt` 默认是 `p0`，这是为了能复现历史结果，评当前推荐配置时要显式传参（见上）。
+
+## API 接口
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/health` | 状态、模型是否已加载、Chroma / BM25 块数、文档数、运行中任务数（不鉴权） |
+| GET | `/config` | 各 provider 是否可用（只报告有没有 key，不返回 key）、默认 Prompt / 跨语言 / Top-k / 阈值、检索配置、上传限制 |
+| POST | `/search` | `query, top_k, rerank, sources, filters, xlang, include_text` → 命中块 + 一阶段分 + 重排分 + 元数据 |
+| POST | `/ask` | `question, provider, model, prompt, top_k, rerank, expand, refuse_below, sources, xlang` → `answer, citations, invalid_citations, warnings, retrieved, timing, usage` |
+| POST | `/ask/stream` | 同 `/ask`，SSE：`start` → 多个 `token`（`{"t": "..."}`）→ `done`（完整结果，与 `/ask` 相同）；出错为 `error` 事件 |
+| POST | `/documents` | multipart 上传 PDF/DOCX → 202 + `job_id`；后台单线程入库（写锁） |
+| GET | `/jobs/{job_id}` | 入库进度 `queued/running/done/duplicate/error`、`progress` 0–1、`message`、`result` |
+| GET | `/documents` | 库中文档（上传文档 `id` 为 sha256 前 12 位；基础库为 `base:<文件名>`） |
+| DELETE | `/documents/{id}` | 删除上传文档（同时删 Chroma、切块文件，重建 BM25）；基础库文档返回 403 |
+
+`refuse_below`：不传 = 服务端默认 0.3；`null` = 关闭阈值拒答。所有错误统一为 `{"error": {"code", "message", "detail", "request_id"}}`，每个响应带 `X-Request-ID`。
+环境变量：`KB_API_TOKEN`（非空即开启鉴权，`Authorization: Bearer` 或 `X-API-Key`）、`KB_CORS_ORIGINS`、`KB_MAX_UPLOAD_MB`（默认 50）、`KB_MAX_CONCURRENCY`（同时执行的检索/问答数，默认 2）。
+
+```bash
+curl -s localhost:8000/health
+curl -s localhost:8000/search -H 'Content-Type: application/json' \
+     -d '{"query": "运行中SF6设备灭弧气室湿度限值", "top_k": 3}'
+curl -s localhost:8000/ask -H 'Content-Type: application/json' \
+     -d '{"question": "阀控蓄电池多久做一次核对性放电？", "provider": "local", "top_k": 4}'
+curl -N localhost:8000/ask/stream -H 'Content-Type: application/json' \
+     -d '{"question": "SafeRing压力表指针在红区时怎么办？", "provider": "siliconflow"}'
+curl -s -F file=@某手册.pdf localhost:8000/documents          # → {"job_id": "...", "status": "queued"}
+curl -s localhost:8000/jobs/<job_id>
+curl -s -X DELETE localhost:8000/documents/<sha12>
+# 开启鉴权后每个请求加：-H "Authorization: Bearer $KB_API_TOKEN"
+```
+
+测试：`python -m pytest tests/test_api.py -v`（需先启动 API 和本地 Ollama；`KB_TEST_CLOUD=1` 额外跑 1 次硅基流动端到端）。
+
+![前端经 API 问答](output/app_api_screenshot.png)
 
 ## 目录结构
 
@@ -161,7 +205,10 @@ power_kb/
 ├── retrieve.py / rerank.py            # 混合检索、融合、重排、表格行→整表展开
 ├── context_expand.py                  # 上下文扩展 none|neighbor|parent（实验用，默认关闭）
 ├── rag.py                             # Prompt、LLM 调用、引用校验、拒答阈值、CLI
-├── kb_store.py / app.py               # 上传增量入库 / 删除；Streamlit 界面
+├── api.py                             # FastAPI 服务（/health /config /search /ask /ask/stream /documents /jobs）
+├── kb_store.py / app.py               # 上传增量入库 / 删除；Streamlit 纯前端（只调 API）
+├── tests/                             # test_api.py（接口集成测试）、test_numcheck.py
+├── Dockerfile / docker-compose.yml    # 可选容器化（未实际构建）
 ├── evaluate.py / judge_eval.py        # 统一评测入口；LLM 评委对比
 ├── threshold_scan.py / sf_cost.py     # 拒答阈值扫描；云端 token 与费用统计
 ├── eval_set_50.* / eval_set_v3.*      # 评测集（jsonl / md / xlsx）

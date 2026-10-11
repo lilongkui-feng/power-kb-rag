@@ -1084,3 +1084,15 @@ p3 在子集上得分 +0.09（1 题 ≈ 4.5 个百分点，样本小）；reflec
 注意：V3 llm 一行的译句融合权重是 0.7（Day 17 门控改动时全局改了），与 dict/本地 llm 的 1.0 不可直接比；mismatch/cap 不使用该权重。
 cap 在 139 题上逐题：变好 1（F40 未命中→1）、变差 2（P17 2→未进 Top-10、O03 2→3）；中文题持平。
 **结论：cap 设为云端默认**（`rag.py`：provider 为 siliconflow/deepseek/openai/xai 且未设 `RAG_XLANG` 时 `xlang=cap`，翻译走同一云端模型；本地默认 none）。成本：每问多 1 次短翻译调用（数十 token，可忽略）+ 1 路检索（CPU 上约 +1–2 s）。
+
+## Day 19：FastAPI 服务化 + Streamlit 纯前端
+
+- **api.py**（FastAPI 0.143 + uvicorn 0.54）：lifespan 中用线程池一次加载 bge-m3 / bge-reranker-v2-m3 / BM25 / Chroma（约 11–15 s，失败也启动并在 /health 报 error）。接口 /health、/config、/search、/ask、/ask/stream（SSE：start → token… → done/error）、POST /documents（202 + job_id）、/jobs/{id}、GET /documents、DELETE /documents/{id}。
+- 并发：search/ask 用 `run_in_threadpool` + `asyncio.Semaphore(KB_MAX_CONCURRENCY=2)`；入库走单线程池 + `WRITE_LOCK`（Chroma + 切块文件 + BM25 + 登记表一起改），删除拿不到锁返回 409。流式：工作线程用 `loop.call_soon_threadsafe` 把 token 推进 asyncio.Queue。
+- 鉴权 `KB_API_TOKEN`（Bearer 或 X-API-Key，/health 豁免）、CORS（`KB_CORS_ORIGINS`）、上传上限 `KB_MAX_UPLOAD_MB`（流式写盘边写边计数，超限 413）、统一错误 `{"error": {code, message, detail, request_id}}`（含 422 校验错误、400 provider 未就绪、502 LLM 错误、500）、请求日志 + `X-Request-ID`。`/config` 只报告 provider 是否就绪，不返回 key。
+- **app.py** 改为纯前端：只 import httpx/streamlit；上传 → 轮询 /jobs；文档列表/删除；流式解析 SSE；API 不可达时显示启动提示。
+- 修复：/health 原先读 BM25 内存缓存与启动时的 Chroma 计数，入库/删除后缓存失效 → 返回 null；改为实时读取。
+- **测试** tests/test_api.py：15 项（针对真实服务 :8000 + 另起 :8011 鉴权实例 KB_PRELOAD=0、上限 1 MB）。结果 14 passed + 1 skipped（云端用例默认跳过；`KB_TEST_CLOUD=1` 单独跑过 1 次硅基流动，通过）。覆盖 health、config 不泄露 key、OpenAPI 路径、search（含 sources 过滤/不重排）、422、provider 未就绪 400、本地 3B ask、阈值拒答、SSE 流式、上传→进度→检索→重复上传 duplicate→删除、415/404/403、401 鉴权、413 超限。
+- 截图 output/app_api_screenshot.png（本地 qwen2.5:3b 经 API 回答 DL/T 724 核对性放电周期，13.1 s）。
+- Dockerfile + docker-compose.yml（api + web，卷挂载 chroma_db/bm25_index/emb_cache/output/uploads/模型缓存）：box 无 docker，未构建验证。
+- 局限：任务记录存在内存（重启丢失）；检索读与入库写之间没有读写锁（BM25 按 mtime 自动重载，写入期间的查询可能看到旧索引）；单进程 uvicorn（多 worker 会重复加载 ~5 GB 模型）；SSE 不支持断点续传。
