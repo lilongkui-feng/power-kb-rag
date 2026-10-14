@@ -10,10 +10,10 @@
 ![UI](https://img.shields.io/badge/UI-Streamlit-red)
 ![LLM](https://img.shields.io/badge/LLM-DeepSeek--V3%20%7C%20Qwen2.5%20%7C%20Ollama-purple)
 ![Deploy](https://img.shields.io/badge/Deploy-Docker%20Compose-2496ED)
-![Tests](https://img.shields.io/badge/pytest-91%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/pytest-89%20passed%20(offline)-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT%20(code%20only)-lightgrey)
 
-技术细节与实验过程见 [docs/DEVLOG.md](docs/DEVLOG.md)，部署手册见 [docs/DEPLOY.md](docs/DEPLOY.md)。
+技术细节与实验过程见 [docs/DEVLOG.md](docs/DEVLOG.md)，部署手册见 [docs/DEPLOY.md](docs/DEPLOY.md)；真实部署实录：[麒麟 V10 服务器](docs/DEPLOY_KYLIN.md)、[Windows 16 GB 纯 CPU](docs/DEPLOY_WINDOWS.md)。
 
 ## 核心成果
 
@@ -26,7 +26,7 @@
 | 回答 | 139 题新评测集，DeepSeek-V3：正确 **85%**、得分 0.91、引用命中标注块 94%、引用编号合法 100% | `output/version_scores.md` |
 | 拒答 | 库外题拒答 **100%**；重排分阈值 0.3：库内误拒 0%，44% 的库外题不调用 LLM 直接拦截 | `output/threshold_scan.md` |
 | 成本 | 云端跑一轮 144 题评测约 ¥0.68（硅基流动 DeepSeek-V3，按公开价估算） | `output/version_scores.md` |
-| 工程 | FastAPI 服务 + Streamlit 纯前端；向量库抽象（Chroma / Milvus 检索结果逐题一致）；集中配置、结构化日志与自动打码、统一错误码、LLM 失败降级；Docker Compose 一键部署；pytest 91 项通过 | `api.py`、`vector_store.py`、`config.py`、`tests/` |
+| 工程 | FastAPI 服务 + Streamlit 纯前端；向量库抽象（Chroma / Milvus 检索结果逐题一致）；集中配置、结构化日志与自动打码、统一错误码、LLM 失败降级；Docker Compose 一键部署；pytest 离线 89 项通过（另 15 项 API 集成测试需运行中的服务） | `api.py`、`vector_store.py`、`config.py`、`tests/` |
 
 ## 效果截图
 
@@ -135,7 +135,18 @@ flowchart TB
 
 ## 部署（实体服务器 / 任意 Linux 主机）
 
-完整步骤、Nginx + HTTPS、内网 / 离线部署、故障排查见 **[docs/DEPLOY.md](docs/DEPLOY.md)**。下面是最短路径。
+完整步骤、Nginx + HTTPS、内网 / 离线部署、故障排查见 **[docs/DEPLOY.md](docs/DEPLOY.md)**。麒麟 V10 / 受限网络 / 隔离区：[docs/DEPLOY_KYLIN.md](docs/DEPLOY_KYLIN.md) 与离线包脚本 [deploy/kylin/](deploy/kylin/)；Windows 原生（不用 Docker）：[docs/DEPLOY_WINDOWS.md](docs/DEPLOY_WINDOWS.md)。
+
+### 实际部署
+
+| 环境 | 方式 | 生成模型 | 数据校验 | 端到端耗时 | 记录 |
+|---|---|---|---|---|---|
+| Windows 10，16 GB 内存，纯 CPU（按现场约束模拟） | 原生 Python，无 Docker | glm-5.3-flash（OpenAI 兼容中转） | 3543 / 3543 / 19 | 非冷态约 **30 s/题**（重排 Top-10；Top-20 为 36 s） | [DEPLOY_WINDOWS.md](docs/DEPLOY_WINDOWS.md) |
+| 银河麒麟 V10，Xeon Gold 6142 32 核，61 GB，受限网络 | Docker Compose（docker-ce 26.1.3） | cn:glm-5.3-flash（内网网关） | 3543 / 3543 / 19；139 题检索 Hit@1 84% / Hit@5 97% / MRR 0.893 | 热态约 **8.5 s/题**（重排约 4.9 s，Top-20） | [DEPLOY_KYLIN.md](docs/DEPLOY_KYLIN.md) |
+
+> 下文[评测结果](#评测结果)里的回答正确率是用 **DeepSeek-V3** 测的；两次部署生成用的是 **glm-5.3-flash** 网关，只做了人工抽检，没有跑全量回答评测。检索指标与模型无关，麒麟上复测与开发环境一致。
+
+下面是最短路径。
 
 **1. 硬件**：x86_64，**8 核 / 16 GB 内存起步**（实测 API 空闲约 1.6 GB、问答时重排有峰值，Ollama 3B 约 2.4 GB，首次建索引更高）；磁盘建议 100 GB（镜像约 2.8 + 5.6 GB、HF 模型约 5–8 GB、Ollama 模型约 2 GB、索引约 1 GB，外加构建缓存）。不需要 GPU。系统推荐 Ubuntu 22.04 / 24.04。
 
@@ -154,7 +165,7 @@ sudo START=0 APP_DIR=$(pwd) bash deploy/bootstrap.sh       # 装 Docker（国内
 **5. 一键启动**
 
 ```bash
-sh deploy/up.sh                 # = docker compose up -d --build：api + web + ollama（Chroma）
+sh deploy/up.sh                 # = docker compose up -d --build：api + web + ollama（Chroma；.env 里 COMPOSE_PROFILES= 留空则不起 ollama）
 sh deploy/up.sh milvus          # 可选：Milvus Standalone
 sh deploy/up.sh --hostnet       # 容器 bridge 网络异常时改用宿主机网络
 sh deploy/up.sh down            # 停止（数据保留）
@@ -197,7 +208,10 @@ python retrieve.py "阀控蓄电池核对性放电周期" -k 5
 |---|---|---|
 | `SILICONFLOW_API_KEY` / `DEEPSEEK_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` | — | 云端 provider 的 key（只放 .env / 环境变量） |
 | `KB_API_TOKEN` | — | 非空即开启 API 鉴权（`Authorization: Bearer` 或 `X-API-Key`），前端用同一值 |
-| `SILICONFLOW_MODEL` / `LOCAL_LLM_MODEL` / `LOCAL_LLM_URL` | `deepseek-ai/DeepSeek-V3` / `qwen2.5:3b-instruct` / `http://127.0.0.1:11434/v1` | 模型名与本地地址 |
+| `SILICONFLOW_MODEL` / `LOCAL_LLM_MODEL` / `LOCAL_LLM_URL` | `deepseek-ai/DeepSeek-V3` / `qwen2.5:3b-instruct` / `http://127.0.0.1:11434/v1`（compose 内默认 `http://ollama:11434/v1`） | 模型名与 provider=local 的地址 |
+| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | — | **自定义 / OpenAI 兼容网关**（provider=`custom`，如内网 glm 网关、vLLM、One-API）；设了 `LLM_BASE_URL` 后网页下拉出现「自定义网关」并默认选中 |
+| `KB_STREAMING` / `KB_STREAM_IDLE_TIMEOUT` / `KB_SSE_PING_SECS` | `true` / 90 / 10 | 前端是否流式；流式两次数据间最长等待（超时或断流自动回退非流式 `/ask`）；服务端 SSE 保活间隔 |
+| `COMPOSE_PROFILES` | `ollama`（.env.example） | 留空 = 不启动本地 ollama 容器（只用网关 / 云端）；加 `milvus` 启用 Milvus |
 | `LLM_FALLBACK` | `retrieval` | LLM 失败时：`retrieval` 仅检索结果 / `local` 改用本地 / `local_then_retrieval` / `none` 报错 |
 | `LLM_TIMEOUT` / `LLM_MAX_RETRIES` / `LLM_TIMEOUT_RETRIES` | 180 / 5 / 1 | 读超时（秒）；429·5xx·网络错误重试次数；超时重试次数 |
 | `RAG_PROMPT` / `RAG_XLANG` | 空 | 空 = 本地 p1 + 不改写；云端 p2 + `cap` |
@@ -208,7 +222,12 @@ python retrieve.py "阀控蓄电池核对性放电周期" -k 5
 | `LOG_LEVEL` / `LOG_FORMAT` / `LOG_DIR` / `LOG_QUESTIONS` | `INFO` / `text` / `logs` / `false` | 日志级别、`text｜json`、目录（容器内 `data/logs`）、是否记录问句原文 |
 | `KB_MAX_UPLOAD_MB` / `KB_MAX_CONCURRENCY` / `KB_CORS_ORIGINS` | 50 / 2 / 本机 8501 | 上传上限、并发检索问答数、CORS |
 | `KB_API_PORT` / `KB_WEB_PORT` / `KB_BIND` | 8000 / 8501 / `0.0.0.0` | Docker 端口与绑定地址 |
-| `PIP_MIRROR` / `TORCH_INDEX_URL` | 空 / PyTorch CPU 源 | 构建镜像时的 pip / torch 源 |
+| `PIP_INDEX_URL`（旧名 `PIP_MIRROR`）/ `PIP_EXTRA_INDEX_URL` / `TORCH_INDEX_URL` / `APT_MIRROR` | 空 / 空 / PyTorch CPU 源 / 空 | 构建镜像时的源，compose 从 `.env` 作为 build args 传入；torch 那一行也会从 `PIP_INDEX_URL` 拉依赖。例：`PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/`、`APT_MIRROR=mirrors.aliyun.com` |
+
+**LLM provider 解析顺序**（`rag.llm_config`）：
+1. 请求显式指定 provider（API 请求体 `provider`、`rag.py --provider`、网页下拉）：`local` → `LOCAL_LLM_URL` + `LOCAL_LLM_MODEL`；`custom` → `LLM_BASE_URL` + `LLM_MODEL` + `LLM_API_KEY`；云端档（siliconflow / deepseek / openai / xai）→ 固定官方地址 + `<NAME>_MODEL` + `<NAME>_API_KEY`，**不受 `LLM_BASE_URL` 影响**。
+2. provider 留空：设了 `LLM_BASE_URL` → 等同 `custom`；否则等同 `local`（此时若只设了 `LLM_MODEL`，它覆盖本地模型名，兼容旧用法）。
+3. local / custom 的 key 用 `LLM_API_KEY`，未设置时发占位值（ollama 不校验）。`GET /config` 的 `default_provider` 返回第 2 步的结果。
 
 完整列表见 `config.example.yaml` 与 `.env.example`。
 
@@ -238,6 +257,8 @@ curl -s -F file=@某手册.pdf localhost:8000/documents && curl -s localhost:800
 主要错误码：400 `provider_not_ready` · 401 `unauthorized` · 404 `not_found` · 413 `payload_too_large` · 415 `unsupported_type` · 422 `validation_error` / `document_parse_error` · 429 `llm_rate_limited` · 502 `llm_auth_failed` / `llm_error` · 503 `llm_unavailable` / `index_not_ready` · 504 `llm_timeout` · 500 `internal_error`（完整表与日志格式见 [DEVLOG](docs/DEVLOG.md)）。
 
 ## 评测结果
+
+> 回答类指标（正确率、得分）均为 **DeepSeek-V3**（硅基流动）生成时测得；检索类指标与生成模型无关。实际部署所用的 glm-5.3-flash 网关未做全量回答评测，见[实际部署](#实际部署)。
 
 ### 演进总表
 

@@ -119,6 +119,9 @@ class Settings(BaseSettings):
     kb_api_host: str = "127.0.0.1"
     kb_api_port: int = Field(8000, ge=1, le=65535)
     kb_api_url: str = Field("http://127.0.0.1:8000", description="前端访问 API 的地址")
+    kb_streaming: bool = Field(True, description="前端是否用 /ask/stream 流式输出；false = 一律走 /ask 非流式（链路不稳时）。流式出错会自动回退非流式")
+    kb_stream_idle_timeout: float = Field(90, gt=0, description="前端流式读取：两次数据（含 ping）之间最长等待秒数，超时即回退非流式")
+    kb_sse_ping_secs: float = Field(10, gt=0, description="API 流式接口无输出时发送 SSE 保活注释的间隔（秒）")
     kb_cors_origins: str = "http://localhost:8501,http://127.0.0.1:8501"
     kb_max_upload_mb: int = Field(50, ge=1, le=2048)
     kb_max_concurrency: int = Field(2, ge=1, le=64)

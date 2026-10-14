@@ -134,7 +134,9 @@ $ nano .env
 | `HF_ENDPOINT` | 国内服务器：`https://hf-mirror.com`（bootstrap 已自动写入） |
 | `KB_BIND` | 配 Nginx 后设 `127.0.0.1` |
 | `LLM_FALLBACK` | 云端失败时的降级：`retrieval`（默认，返回仅检索结果）/ `local`（改用本地模型）/ `local_then_retrieval` / `none`（直接报错） |
-| `PIP_MIRROR` | 国内构建镜像慢时填 `https://mirrors.aliyun.com/pypi/simple/` |
+| `PIP_INDEX_URL`（旧名 `PIP_MIRROR`）/ `APT_MIRROR` | 国内构建镜像慢时填 `https://mirrors.aliyun.com/pypi/simple/` / `mirrors.aliyun.com`；torch 行与依赖行都会用（compose 作为 build args 传入） |
+| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | 内网 / 自建 OpenAI 兼容网关（provider=`custom`，网页下拉「自定义网关」）；provider 解析顺序见 README「配置」 |
+| `COMPOSE_PROFILES` | `ollama` = 启动本地 ollama 容器；只用网关/云端时留空 |
 | `OLLAMA_MODEL` | 默认 `qwen2.5:3b-instruct` |
 | `KB_API_PORT` / `KB_WEB_PORT` | 端口冲突时修改（默认 8000 / 8501） |
 
@@ -307,7 +309,7 @@ $ echo 'LOG_FORMAT=json' >> .env && docker compose up -d --force-recreate api   
 | 网页提示“前端与 API 的 KB_API_TOKEN 不一致” | 改了 token 但只重启了 api | `docker compose up -d --force-recreate api web` |
 | 服务启动即退出，日志 `ConfigError: config.yaml 中不允许出现密钥类配置` | 把 key 写进了 config.yaml | 挪到 .env |
 | 磁盘被占满 | Docker 构建缓存 / 旧镜像越积越多 | `docker system df` 查看；`docker builder prune -af` 和 `docker image prune -f` 清理（不会删除数据卷） |
-| 构建镜像时 pip 下载很慢 / 超时 | PyPI 访问慢 | `.env` 里设 `PIP_MIRROR=https://mirrors.aliyun.com/pypi/simple/` 后重新 `sh deploy/up.sh` |
+| 构建镜像时 pip 下载很慢 / 超时 | PyPI 访问慢 | `.env` 里设 `PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/`（可加 `APT_MIRROR=mirrors.aliyun.com`）后重新 `sh deploy/up.sh`；构建要几十分钟时用 `nohup sh deploy/up.sh > up.log 2>&1 &` 防 SSH 断开 |
 
 ## 10. 更新、备份与成本控制
 

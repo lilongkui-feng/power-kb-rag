@@ -1,4 +1,5 @@
-# 一条命令启动：docker compose up -d                （api + web + ollama，向量库 Chroma）
+# 一条命令启动：sh deploy/up.sh 或 COMPOSE_PROFILES=ollama docker compose up -d   （api + web + ollama，向量库 Chroma）
+#             docker compose up -d                    （只有 api + web；LLM 走 .env 里的 LLM_BASE_URL 网关 / 云端）
 #             docker compose --profile milvus up -d （再加 etcd + minio + milvus-standalone；需在 .env 设 VECTOR_STORE=milvus、MILVUS_URI=http://milvus:19530，或用 deploy/up.sh milvus）
 # 本地模型：首次 up 时 ollama-pull 自动拉 ${OLLAMA_MODEL:-qwen2.5:3b-instruct}（约 2 GB，已存在则跳过）
 # 数据：${KB_DATA_DIR:-./data} 挂到 /data（索引、切块、上传文件）；原件目录 ${POWER_DOCS_DIR:-./power_docs} 只读挂到 /data/power_docs，
@@ -9,8 +10,12 @@ x-app: &app
   build:
     context: .
     args:
+      # 构建源：在 .env 设置（compose 读取项目目录的 .env 做变量替换，再作为 build args 传给 Dockerfile）
+      PIP_INDEX_URL: ${PIP_INDEX_URL:-}
       PIP_MIRROR: ${PIP_MIRROR:-}
+      PIP_EXTRA_INDEX_URL: ${PIP_EXTRA_INDEX_URL:-}
       TORCH_INDEX_URL: ${TORCH_INDEX_URL:-https://download.pytorch.org/whl/cpu}
+      APT_MIRROR: ${APT_MIRROR:-}
   image: powerkb:latest
   env_file:
     - path: .env
@@ -18,7 +23,9 @@ x-app: &app
   restart: unless-stopped
 
 services:
+  # 本地 ollama 为可选（profile ollama）：.env 里 COMPOSE_PROFILES=ollama 才启动；接 OpenAI 兼容网关时可去掉，api 不依赖它
   ollama:
+    profiles: ["ollama"]
     image: ollama/ollama:${OLLAMA_TAG:-latest}
     environment:
       OLLAMA_KEEP_ALIVE: 30m
@@ -34,6 +41,7 @@ services:
     restart: unless-stopped
 
   ollama-pull:                       # 一次性初始化：模型不存在才拉取
+    profiles: ["ollama"]
     image: ollama/ollama:${OLLAMA_TAG:-latest}
     environment:
       OLLAMA_HOST: http://ollama:11434
@@ -49,8 +57,10 @@ services:
     ports: ["${KB_BIND:-0.0.0.0}:${KB_API_PORT:-8000}:8000"]                # KB_BIND=127.0.0.1 = 只允许本机/Nginx 访问
     environment:
       HF_HOME: /models/hf                                          # 显式指定，优先于 .env
-      LOCAL_LLM_URL: http://ollama:11434/v1                        # provider=local → ollama 容器
-      LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434/v1}        # 不指定 provider 时
+      LOCAL_LLM_URL: ${LOCAL_LLM_URL:-http://ollama:11434/v1}      # provider=local；默认 ollama 容器，可在 .env 改指任意 OpenAI 兼容地址
+      LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-${OLLAMA_MODEL:-qwen2.5:3b-instruct}}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}                              # 非空 → 出现 provider=custom，且 provider 留空时默认走它
+      LLM_MODEL: ${LLM_MODEL:-}
       VECTOR_STORE: ${VECTOR_STORE:-chroma}
       MILVUS_URI: ${MILVUS_URI:-/data/milvus_db/power_kb.db}
       KB_CORS_ORIGINS: ${KB_CORS_ORIGINS:-http://localhost:8501,http://127.0.0.1:8501}
@@ -61,6 +71,7 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+        required: false               # 只有 profile ollama 启用时才等待
       milvus:
         condition: service_healthy
         required: false               # 只有 --profile milvus 时才等待

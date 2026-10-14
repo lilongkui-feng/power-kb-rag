@@ -156,7 +156,7 @@ def need_models():
             raise IndexNotReady(f"模型/索引未就绪（{type(e).__name__}），请稍后重试或查看服务端日志") from None
 
 # ---------------- 数据模型 ----------------
-Provider = Literal["local", "siliconflow", "deepseek", "openai", "xai"]
+Provider = Literal["local", "custom", "siliconflow", "deepseek", "openai", "xai"]
 XLang = Literal["none", "dict", "llm", "cap", "mismatch", "auto"]
 
 class Health(BaseModel):
@@ -218,7 +218,7 @@ class SearchResp(BaseModel):
 
 class AskReq(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000, examples=["阀控蓄电池多久做一次核对性放电？"])
-    provider: Optional[Provider] = Field(None, description="空 = 服务端默认（LLM_BASE_URL 或本地 ollama）")
+    provider: Optional[Provider] = Field(None, description="空 = 服务端默认（设了 LLM_BASE_URL → custom，否则 local）；custom = LLM_BASE_URL/LLM_MODEL/LLM_API_KEY 指定的 OpenAI 兼容网关")
     model: Optional[str] = Field(None, description="覆盖提供方默认模型，如 Qwen/Qwen2.5-72B-Instruct")
     prompt: Optional[Literal["p0", "p1", "p2", "p3"]] = Field(None, description="空 = 本地 p1 / 云端 p2")
     top_k: int = Field(min(settings().top_k, 10), ge=1, le=10)
@@ -297,12 +297,12 @@ def health():
 @app.get("/config", response_model=ConfigResp, tags=["system"], dependencies=[Depends(auth)], responses=ERR, summary="可用 provider 与默认参数（不含任何 key）")
 def config():
     ps = []
-    for name in rag.PROVIDERS:
+    for name in rag._PROVIDER_DEF:
         ok, info = rag.provider_ready(name)
         cloud = name in rag.CLOUD_PROVIDERS
         ps.append(ProviderInfo(name=name, ready=ok, info=info, default_prompt=CFG.rag_prompt or ("p2" if cloud else rag.DEFAULT_PROMPT),
                                default_xlang=CFG.rag_xlang or ("cap" if cloud else "none")))
-    return ConfigResp(providers=ps, default_provider="local",
+    return ConfigResp(providers=ps, default_provider=rag.default_provider(),
                       defaults={"top_k": CFG.top_k, "rerank": CFG.rerank, "expand": rag.DEFAULT_EXPAND, "refuse_below": rag.DEFAULT_REFUSE_BELOW,
                                 "recommended_refuse_below": rag.RECOMMENDED_REFUSE_BELOW, "numcheck": rag.NUMCHECK},
                       retrieval={"collection": kb_store.METHOD, "mode": CFG.retrieval_mode, "alpha": CFG.hybrid_alpha, "rerank_model": CFG.rerank_model,
@@ -340,7 +340,7 @@ async def search(req: SearchReq):
 
 # ---------------- qa ----------------
 def _check_provider(p):
-    if p and p in rag.PROVIDERS:
+    if p:
         ok, info = rag.provider_ready(p)
         if not ok:
             raise ProviderNotReady(info)
@@ -401,7 +401,11 @@ async def ask_stream(req: AskReq):
             yield _sse("start", {"question": req.question})
             fut = loop.run_in_executor(None, contextvars.copy_context().run, work)     # request_id 带进线程
             while True:
-                item = await q.get()
+                try:                                          # 长时间无 token（重排/首 token 慢）时发 SSE 注释保活，防代理/浏览器链路空闲断开
+                    item = await asyncio.wait_for(q.get(), timeout=CFG.kb_sse_ping_secs)
+                except asyncio.TimeoutError:
+                    yield b": ping\n\n"
+                    continue
                 if item is None:
                     break
                 yield _sse(*item)

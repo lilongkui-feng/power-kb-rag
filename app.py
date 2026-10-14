@@ -104,15 +104,22 @@ with st.sidebar:
     th = st.slider("阈值", 0.05, 0.9, dft["refuse_below"] or dft["recommended_refuse_below"], 0.05, disabled=not (use_th and use_rerank))
     sel = st.multiselect("只在这些文档中检索（留空=全部）", [d["source"] for d in docs])
     pinfo = {p["name"]: p for p in cfg["providers"]}
-    labels = {"local": "本地 ollama · qwen2.5:3b-instruct", "siliconflow": "硅基流动 · DeepSeek-V3", "siliconflow:qwen72b": "硅基流动 · Qwen2.5-72B-Instruct",
+    _model = lambda n: pinfo[n]["info"].split(" · ")[-1] if n in pinfo and pinfo[n]["ready"] else ""
+    labels = {"custom": f"自定义网关（OpenAI 兼容）· {_model('custom')}", "local": f"本地 ollama · {_model('local')}",
+              "siliconflow": "硅基流动 · DeepSeek-V3", "siliconflow:qwen72b": "硅基流动 · Qwen2.5-72B-Instruct",
               "deepseek": "DeepSeek", "openai": "OpenAI", "xai": "xAI"}
-    choice = st.selectbox("LLM 提供方", [k for k in labels if k.split(":")[0] in pinfo], format_func=labels.get)
+    opts = [k for k in labels if k.split(":")[0] in pinfo]
+    dflt = cfg.get("default_provider", "local")
+    choice = st.selectbox("LLM 提供方", opts, index=opts.index(dflt) if dflt in opts else 0, format_func=labels.get,
+                          help="自定义网关 = API 服务端的 LLM_BASE_URL / LLM_MODEL / LLM_API_KEY；本地 = LOCAL_LLM_URL / LOCAL_LLM_MODEL")
     provider = choice.split(":")[0]
     model_override = {"siliconflow:qwen72b": "Qwen/Qwen2.5-72B-Instruct"}.get(choice)
     p = pinfo[provider]
     ok = p["ready"]
     info = p["info"].split(" · ")[0] + " · " + model_override if (model_override and ok) else p["info"]
-    (st.caption if ok else st.error)(("✅ " if ok else "⚠️ ") + info + ("" if ok else "（key 需在 API 服务端的环境变量中配置）"))
+    (st.caption if ok else st.error)(("✅ " if ok else "⚠️ ") + info + ("" if ok else "（需在 API 服务端的环境变量 / .env 中配置）"))
+    use_stream = st.toggle("流式输出（链路不稳时关闭，改用一次性返回）", value=settings().kb_streaming,
+                           help="默认取 KB_STREAMING；流式中断或超时会自动改用非流式 /ask 重试一次")
     if ok:
         st.caption(f"默认 Prompt {p['default_prompt']} · 跨语言检索 {p['default_xlang']}")
     if st.button("清空对话"):
@@ -144,29 +151,63 @@ def show_details(r: dict):
                        "分数": round(h["score"], 3) if h.get("score") is not None else None, "重排分": h["rerank_score"]} for h in r["retrieved"]],
                      hide_index=True, use_container_width=True)
 
+class StreamBroken(Exception):
+    """流式链路问题（断开 / 空闲超时 / 没收到 done），可回退非流式重试；API 明确返回的业务错误不属于此类"""
+
+def _api_error(resp) -> RuntimeError:
+    try:
+        e = resp.json()["error"]
+    except (ValueError, KeyError):
+        return RuntimeError(f"HTTP {resp.status_code}（API 返回了非标准错误）")
+    return RuntimeError(friendly(e["code"], e["message"], e.get("request_id")))
+
 def ask_stream(body: dict, ph):
-    """POST /ask/stream，解析 SSE：token 事件逐段显示，done 事件返回完整结果"""
+    """POST /ask/stream，解析 SSE：token 事件逐段显示，done 事件返回完整结果；': ping' 保活注释忽略。
+    读超时 = KB_STREAM_IDLE_TIMEOUT（两次数据之间的最长间隔，服务端每 KB_SSE_PING_SECS 秒发保活）"""
     acc, ev, result = "", None, None
-    with httpx.stream("POST", API + "/ask/stream", json=body, headers=HDR, timeout=httpx.Timeout(600, connect=5)) as resp:
-        if resp.status_code >= 400:
-            resp.read()
-            try:
-                e = resp.json()["error"]
-            except (ValueError, KeyError):
-                raise RuntimeError(f"HTTP {resp.status_code}（API 返回了非标准错误）")
-            raise RuntimeError(friendly(e["code"], e["message"], e.get("request_id")))
-        for line in resp.iter_lines():
-            if line.startswith("event:"):
-                ev = line[6:].strip()
-            elif line.startswith("data:"):
-                data = json.loads(line[5:])
-                if ev == "token":
-                    acc += data["t"]; ph.markdown(acc + "▌")
-                elif ev == "done":
-                    result = data
-                elif ev == "error":
-                    raise RuntimeError(friendly(data["code"], data["message"], data.get("request_id")))
+    idle = settings().kb_stream_idle_timeout
+    try:
+        with httpx.stream("POST", API + "/ask/stream", json=body, headers=HDR,
+                          timeout=httpx.Timeout(connect=5, read=idle, write=30, pool=5)) as resp:
+            if resp.status_code >= 400:
+                resp.read()
+                raise _api_error(resp)
+            for line in resp.iter_lines():
+                if line.startswith(":"):
+                    continue
+                if line.startswith("event:"):
+                    ev = line[6:].strip()
+                elif line.startswith("data:"):
+                    data = json.loads(line[5:])
+                    if ev == "token":
+                        acc += data["t"]; ph.markdown(acc + "▌")
+                    elif ev == "done":
+                        result = data
+                    elif ev == "error":
+                        raise RuntimeError(friendly(data["code"], data["message"], data.get("request_id")))
+    except httpx.ConnectError:
+        raise                                           # API 根本连不上：回退也没用
+    except (httpx.TransportError, json.JSONDecodeError) as e:
+        raise StreamBroken(type(e).__name__) from e
+    if result is None:
+        raise StreamBroken("流结束但未收到 done 事件")
     return result
+
+def ask_once(body: dict):
+    """POST /ask 非流式（一次性返回）"""
+    r = httpx.post(API + "/ask", json=body, headers=HDR, timeout=httpx.Timeout(600, connect=5))
+    if r.status_code >= 400:
+        raise _api_error(r)
+    return r.json()
+
+def ask(body: dict, ph, stream: bool):
+    if not stream:
+        return ask_once(body)
+    try:
+        return ask_stream(body, ph)
+    except StreamBroken as e:
+        ph.empty(); st.toast(f"流式输出中断（{e}），已自动改用非流式重试")
+        return ask_once(body)
 
 for m in ss.messages:
     with st.chat_message(m["role"]):
@@ -187,7 +228,7 @@ if q:
         ph = st.empty()
         try:
             with st.spinner("检索、重排中…（经 API）"):
-                r = ask_stream(body, ph)
+                r = ask(body, ph, use_stream)
         except httpx.HTTPError as e:
             ph.empty(); msg = f"无法连接 API {API}（{type(e).__name__}），请确认后端已启动"
             st.error(msg); ss.messages.append({"role": "assistant", "content": msg}); st.stop()

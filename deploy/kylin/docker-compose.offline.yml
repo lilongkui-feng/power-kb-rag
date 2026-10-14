@@ -1,0 +1,18 @@
+# 离线部署覆盖文件（不含 ollama）。主 docker-compose.yml 现已默认把 ollama 放进 profile 且 api 不强依赖，本文件保留作兼容：ollama / ollama-pull 移到 profile "ollama"，默认不启动；api 不再等待 ollama。
+# 由 install_offline.sh 通过 .env 中的 COMPOSE_FILE 自动叠加，日常直接 `docker compose ...` 即可。
+# 以后要用本地模型：docker load 好 ollama 镜像并准备模型后，在 .env 的 COMPOSE_PROFILES 里加上 ollama。
+# 需要 Docker Compose ≥ 2.24（支持 !override）。
+services:
+  ollama:
+    profiles: ["ollama"]
+  ollama-pull:
+    profiles: ["ollama"]
+  api:
+    depends_on: !override
+      milvus:
+        condition: service_healthy
+        required: false
+    environment:
+      # 本地/内网大模型地址（Ollama、vLLM 等 OpenAI 兼容接口），在 .env 里设置 LOCAL_LLM_URL / LOCAL_LLM_MODEL
+      LOCAL_LLM_URL: ${LOCAL_LLM_URL:-http://ollama:11434/v1}
+      # 内网 OpenAI 兼容网关请设 LLM_BASE_URL / LLM_MODEL / LLM_API_KEY（网页选「自定义网关」）；此处不再把 LLM_BASE_URL 指向 ollama

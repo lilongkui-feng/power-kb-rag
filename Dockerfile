@@ -5,16 +5,29 @@ FROM python:3.12-slim AS builder
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1
 RUN python -m venv /opt/venv
 ENV PATH=/opt/venv/bin:$PATH
-# 国内构建可加速：PIP_MIRROR=https://mirrors.aliyun.com/pypi/simple/（compose 从 .env 传入）；TORCH_INDEX_URL 可换成可用的 CPU wheel 源
+# 构建源（compose 从 .env 传入 build args；全部留空 = 官方 PyPI / PyTorch / Debian 源）：
+#   PIP_INDEX_URL       主 pip 源，如 https://mirrors.aliyun.com/pypi/simple/（旧名 PIP_MIRROR 仍兼容，PIP_INDEX_URL 优先）
+#   PIP_EXTRA_INDEX_URL 额外 pip 源（可选）
+#   TORCH_INDEX_URL     torch CPU wheel 源；torch 的依赖（sympy/networkx/jinja2…）会再从 PIP_INDEX_URL 拉，避免受限网络卡在 pypi.org
+#   APT_MIRROR          Debian 镜像主机名，如 mirrors.aliyun.com 或 mirrors.tuna.tsinghua.edu.cn（运行阶段 apt-get 用）
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 ARG PIP_MIRROR=
-RUN pip install torch==2.14.1 --index-url "$TORCH_INDEX_URL"
+ARG PIP_INDEX_URL=
+ARG PIP_EXTRA_INDEX_URL=
+ENV PIP_DEFAULT_TIMEOUT=60 PIP_RETRIES=5
+RUN IDX="${PIP_INDEX_URL:-$PIP_MIRROR}"; \
+    set -x; pip install torch==2.14.1 --index-url "$TORCH_INDEX_URL" \
+      ${IDX:+--extra-index-url "$IDX"} ${PIP_EXTRA_INDEX_URL:+--extra-index-url "$PIP_EXTRA_INDEX_URL"}
 COPY requirements-docker.txt /tmp/requirements-docker.txt
-RUN pip install ${PIP_MIRROR:+-i "$PIP_MIRROR"} -r /tmp/requirements-docker.txt
+RUN IDX="${PIP_INDEX_URL:-$PIP_MIRROR}"; \
+    set -x; pip install ${IDX:+-i "$IDX"} ${PIP_EXTRA_INDEX_URL:+--extra-index-url "$PIP_EXTRA_INDEX_URL"} -r /tmp/requirements-docker.txt
 
 FROM python:3.12-slim
+ARG APT_MIRROR=
 # hadolint ignore=DL3008
-RUN apt-get update \
+RUN if [ -n "$APT_MIRROR" ]; then \
+      sed -i "s|deb.debian.org|$APT_MIRROR|g" /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list 2>/dev/null || true; fi \
+ && apt-get update \
  && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libgomp1 curl tini \
  && rm -rf /var/lib/apt/lists/* \
  && useradd -m -u 1000 -s /bin/sh app

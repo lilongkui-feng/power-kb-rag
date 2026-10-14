@@ -1,0 +1,18 @@
+# PowerKB（Docker 路线）开机自启：由 install_docker_offline.sh 自动安装到 /etc/systemd/system/
+# 原生路线不用这个文件，使用 install_native_offline.sh 生成的 powerkb-api.service / powerkb-web.service
+[Unit]
+Description=PowerKB 电力运维知识库（docker compose）
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/powerkb/app
+ExecStart=/usr/local/bin/docker compose up -d
+ExecStop=/usr/local/bin/docker compose stop
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

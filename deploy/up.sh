@@ -10,10 +10,12 @@ F=""
 if [ "$1" = "--hostnet" ]; then F="-f docker-compose.yml -f docker-compose.hostnet.yml"; shift; fi   # bridge 网络不可用时
 MURI=http://milvus:19530; [ -n "$F" ] && MURI=http://127.0.0.1:19530
 [ -f .env ] || { cp .env.example .env; echo "已从 .env.example 生成 .env（按需填写 key）"; }
+# 本地 ollama 是可选 profile：.env / 环境变量都没设 COMPOSE_PROFILES 时默认启用（保持旧行为）；接网关时在 .env 写 COMPOSE_PROFILES= 留空即可关闭
+if [ -z "${COMPOSE_PROFILES+x}" ] && ! grep -q '^COMPOSE_PROFILES=' .env 2>/dev/null; then export COMPOSE_PROFILES=ollama; fi
 mkdir -p "${KB_DATA_DIR:-./data}" "${POWER_DOCS_DIR:-./power_docs}"
 case "${1:-up}" in
   milvus) VECTOR_STORE=milvus MILVUS_URI=$MURI docker compose $F --profile milvus up -d --build ;;
-  down)   docker compose $F --profile milvus down ;;
+  down)   docker compose $F --profile milvus --profile ollama down ;;
   *)      docker compose $F up -d --build ;;
 esac
 docker compose $F ps

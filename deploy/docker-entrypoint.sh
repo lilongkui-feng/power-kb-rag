@@ -9,7 +9,29 @@ for v in $(env | sed -n "s/^\([A-Za-z_][A-Za-z0-9_]*\)=$/\1/p"); do unset "$v"; 
 export HF_HOME="${HF_HOME:-/models/hf}"           # .env 里的空 HF_HOME= 会覆盖镜像 ENV，这里兜底
 D=${KB_DATA:-/data}
 mkdir -p "$D/output" "$D/chroma_db" "$D/bm25_index" "$D/emb_cache" "$D/uploads" "$D/milvus_db" "$D/power_docs" "$D/logs" 2>/dev/null || true
-cp -rn /app/output.dist/. "$D/output/" 2>/dev/null || true          # 报告等小文件（不覆盖卷里已有的）
+# 数据目录容错（麒麟部署踩坑）：期望布局见 docs/DEPLOY_KYLIN.md「数据目录」——$D/{output,chroma_db,bm25_index,emb_cache,uploads,logs,milvus_db}
+#   ① data/output/output 套娃（在入口已建 output/ 后再整个拷入 output/）→ 把内层内容提上来
+#   ② 切块文件放在了 data/ 根目录或 data/kbdata/output 等 → 移进 data/output
+if [ -d "$D/output/output" ]; then
+  echo "[entrypoint] 发现 $D/output/output 嵌套，内层文件上移一层"
+  cp -rn "$D/output/output/." "$D/output/" 2>/dev/null && rm -rf "$D/output/output" 2>/dev/null || echo "[entrypoint] ⚠ 上移失败（权限？），请手动：mv $D/output/output/* $D/output/"
+fi
+if [ ! -f "$D/output/chunks_heading_v2.jsonl" ]; then
+  f=$(find "$D" -maxdepth 3 -name chunks_heading_v2.jsonl -not -path "$D/power_docs/*" -print -quit 2>/dev/null)
+  if [ -n "$f" ]; then
+    echo "[entrypoint] 切块文件不在 $D/output/，从 $(dirname "$f") 复制过来"
+    cp -n "$(dirname "$f")"/chunks*.jsonl "$D/output/" 2>/dev/null || echo "[entrypoint] ⚠ 复制失败（权限？）"
+  fi
+fi
+cp -rn /app/output.dist/. "$D/output/" 2>/dev/null || true
+# 权限自检：容器以 uid 1000(app) 运行；/data 与 HF 缓存须对它可写/可读（HF 缓存不要放在 /root 下，/root 默认 700）
+mkdir -p "$D/output/eval_runs" 2>/dev/null || true
+for w in "$D/output" "$D/output/eval_runs" "$D/logs" "$D/uploads"; do
+  [ -w "$w" ] || echo "[entrypoint] ⚠ $w 对 uid $(id -u) 不可写：宿主机执行 chown -R 1000:1000 \${KB_DATA_DIR:-./data}"
+done
+if [ -d "$HF_HOME" ] && ! { [ -r "$HF_HOME" ] && [ -x "$HF_HOME" ]; }; then
+  echo "[entrypoint] ⚠ HF 缓存 $HF_HOME 对 uid $(id -u) 不可读：把宿主机缓存目录（HF_CACHE_DIR）放到 /opt/hf_cache 之类位置并 chmod -R a+rX"
+fi          # 报告等小文件（不覆盖卷里已有的）
 for x in output chroma_db bm25_index emb_cache uploads milvus_db logs; do
   [ -L "/app/$x" ] || { rm -rf "/app/$x"; ln -s "$D/$x" "/app/$x"; }
 done

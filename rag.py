@@ -32,11 +32,25 @@ _PROVIDER_DEF = {
     "openai": ("https://api.openai.com/v1", "openai_model", "OPENAI_API_KEY"),
     "siliconflow": ("https://api.siliconflow.cn/v1", "siliconflow_model", "SILICONFLOW_API_KEY"),   # 备选 Qwen/Qwen2.5-72B-Instruct
     "xai": ("https://api.x.ai/v1", "xai_model", "XAI_API_KEY"),
+    "custom": (None, "llm_model", None),     # 自定义 / OpenAI 兼容网关：LLM_BASE_URL + LLM_MODEL + LLM_API_KEY（如内网 glm 网关、vLLM、One-API）
 }
 
 def providers() -> dict:
+    """provider → {base_url, model, key_env}。custom 只在设置了 LLM_BASE_URL 时出现。"""
     st = settings()
-    return {n: {"base_url": base or st.local_llm_url, "model": getattr(st, mf), "key_env": ke} for n, (base, mf, ke) in _PROVIDER_DEF.items()}
+    out = {}
+    for n, (base, mf, ke) in _PROVIDER_DEF.items():
+        if n == "custom":
+            if not st.llm_base_url:
+                continue
+            out[n] = {"base_url": st.llm_base_url, "model": st.llm_model or st.local_llm_model, "key_env": None}
+        else:
+            out[n] = {"base_url": base or st.local_llm_url, "model": getattr(st, mf), "key_env": ke}
+    return out
+
+def default_provider() -> str:
+    """provider 留空时的解析结果：设置了 LLM_BASE_URL → custom，否则 local"""
+    return "custom" if settings().llm_base_url else "local"
 
 PROVIDERS = providers()
 
@@ -46,8 +60,11 @@ def retrieval_defaults() -> dict:
     return {"mode": st.retrieval_mode, "alpha": st.hybrid_alpha, "rerank_top_n": st.rerank_top_n, "rerank_beta": st.rerank_beta}
 
 def provider_ready(provider: str) -> tuple[bool, str]:
-    """界面用：检查提供方是否可用（只检查 key 是否存在，不发请求）"""
-    p = providers()[provider]
+    """界面用：检查提供方是否可用（只检查 key / 地址是否存在，不发请求）"""
+    ps = providers()
+    if provider not in ps:
+        return False, "未设置 LLM_BASE_URL，无法使用 custom" if provider == "custom" else f"未知的 LLM 提供方：{provider}"
+    p = ps[provider]
     if p["key_env"] and not secret(p["key_env"]):
         return False, f"未设置环境变量 {p['key_env']}，无法使用 {provider}"
     return True, f"{p['base_url']} · {p['model']}"
@@ -100,16 +117,26 @@ def reflect(question: str, hits: list[dict], cfg: dict, max_chars: int = 700) ->
 DEFAULT_PROMPT = settings().rag_prompt or "p1"   # 调参结论：p1（逐条作答+步骤编号），见 output/version_scores.md
 
 def llm_config(provider: str | None = None) -> dict:
+    """解析 LLM 调用配置。优先级（高→低）：
+    1. 显式 provider（请求体 / --provider / 网页下拉）：local=LOCAL_LLM_URL+LOCAL_LLM_MODEL；custom=LLM_BASE_URL+LLM_MODEL+LLM_API_KEY；
+       云端档=写死的官方地址 + <NAME>_MODEL + <NAME>_API_KEY（LLM_BASE_URL 对它们不生效）
+    2. provider 留空：设置了 LLM_BASE_URL → 等同 custom；否则等同 local
+    API key：云端档用各自的 <NAME>_API_KEY（缺失则 ProviderNotReady）；local/custom 用 LLM_API_KEY，未设置时填占位 "ollama"
+    """
+    st = settings()
+    if provider == "custom" and not st.llm_base_url:
+        raise ProviderNotReady("未设置 LLM_BASE_URL，无法使用 custom（自定义 OpenAI 兼容网关）")
     ps = providers()
     if provider is not None and provider not in ps:
         raise ProviderNotReady(f"未知的 LLM 提供方：{provider}（可选 {', '.join(ps)}）")
-    p = ps[provider or "local"]
-    st = settings()
+    name = provider or default_provider()
+    p = ps[name]
     if p["key_env"] and not secret(p["key_env"]):
         raise ProviderNotReady(f"未设置环境变量 {p['key_env']}，无法使用 {provider}")
-    base = st.llm_base_url if provider is None else None
-    return {"provider": provider or ("custom" if base else "local"), "base_url": (base or p["base_url"]).rstrip("/"),
-            "model": (st.llm_model if provider is None else None) or p["model"],
+    model = p["model"]
+    if provider is None and name == "local" and st.llm_model:    # 兼容旧用法：只设 LLM_MODEL 时覆盖本地模型名
+        model = st.llm_model
+    return {"provider": name, "base_url": p["base_url"].rstrip("/"), "model": model,
             "api_key": (secret(p["key_env"]) if p["key_env"] else None) or secret("llm_api_key") or "ollama"}
 
 TABLE_RULE = "\n5. 参考资料中的表格以 Markdown 给出（首行为表头）。引用表格数值时须对应正确的行和列，并写明该数值所在列的表头含义（如单位、适用条件）。"
@@ -505,7 +532,7 @@ if __name__ == "__main__":
     ap.add_argument("question")
     ap.add_argument("-k", type=int, default=5)
     ap.add_argument("--no-rerank", action="store_true")
-    ap.add_argument("--provider", choices=list(PROVIDERS), default=None, help="不填=按环境变量/本地；deepseek=用 DEEPSEEK_API_KEY")
+    ap.add_argument("--provider", choices=list(_PROVIDER_DEF), default=None, help="不填=设了 LLM_BASE_URL 走 custom，否则本地；custom=LLM_BASE_URL 网关；deepseek=用 DEEPSEEK_API_KEY")
     ap.add_argument("--model", default=None, help="覆盖提供方的默认模型，如 Qwen/Qwen2.5-72B-Instruct")
     ap.add_argument("--reflect", action="store_true", help="生成前自检 + 缺失点补检 1 轮")
     ap.add_argument("--prompt", default=None, choices=["p0", "p1", "p2", "p3"], help="默认：本地 p1，云端 p2（或 RAG_PROMPT）")
